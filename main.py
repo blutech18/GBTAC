@@ -8,6 +8,9 @@ database = 'gbtac_db'
 driver_name = '{ODBC Driver 17 for SQL Server}'
 connection_str = f'DRIVER={driver_name};SERVER={server};DATABASE={database};Trusted_Connection=Yes;Encrypt=no;'
 
+# extra vars
+sensor_pre = "SaitSolarLab_"
+
 # create app and allow access from different origins
 app = FastAPI()
 app.add_middleware( CORSMiddleware, allow_origins=["http://localhost:3000"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"], )
@@ -30,8 +33,6 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
     # sets end date range to the same day as start if it wasn't included
     if end == "":
         end = start
-
-    sensor_pre = "SaitSolarLab_"
 
     query = f"""
         SELECT ts, {sensor_pre}{sensor_code}
@@ -57,6 +58,7 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
     #close connection and send data
     conn.close()
     return res
+
 
 @app.get("/name/{sensor_code}")
 # url format: "http://127.0.0.1:8000/name/{sensor code}"
