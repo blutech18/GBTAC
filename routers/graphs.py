@@ -1,5 +1,4 @@
 from routers import *
-
 router = APIRouter(prefix="/graphs")
 
 
