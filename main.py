@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# import routers here
 from routers.graphs import router as graph_router
 
-# create app and allow access from different origins
 app = FastAPI()
 app.add_middleware( CORSMiddleware, allow_origins=["http://localhost:3000"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"], )
 
+# add routers here
 app.include_router(graph_router)
 
 @app.get("/")
