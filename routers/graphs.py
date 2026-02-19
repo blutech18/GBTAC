@@ -63,4 +63,5 @@ async def get_name(sensor_code):
     rows = curs.fetchall()
 
     res = rows[0][2]
+    conn.close()
     return res
