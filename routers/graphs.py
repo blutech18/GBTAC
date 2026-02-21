@@ -65,3 +65,27 @@ async def get_name(sensor_code):
     res = rows[0][2]
     conn.close()
     return res
+
+@router.get("/codesnames")
+async def get_codesnames():
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = f"""
+        SELECT sensor_name_source, sensor_name_report FROM sensor_names
+        """    
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    res = []
+    for row in rows:
+        res.append({
+            "code": row[0],
+            "name": row[1]
+        })
+
+    conn.close()
+    return res
