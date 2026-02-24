@@ -1,4 +1,5 @@
 //This component contains various settings for customizing the chart display such as titles, axis, and chart type. 
+//This component also has two other dropdowns containing the times (Hourly, Daily, Monthly, Yearly) and the aggregation.
 "use client";
 
 import { useState } from "react";
@@ -7,6 +8,8 @@ export default function ChartSettings() {
   const [chartTitle, setChartTitle] = useState("");
   const [xAxisTitle, setXAxisTitle] = useState("");
   const [yAxisTitle, setYAxisTitle] = useState("");
+  const [timeInterval, setTimeInterval] = useState("hourly");
+  const [aggregation, setAggregation] = useState("sum");
   const [chartType, setChartType] = useState("line");
 
   return (
@@ -47,12 +50,34 @@ export default function ChartSettings() {
           onChange={(e) => setYAxisTitle(e.target.value)}
           className="border p-2 rounded text-gray-500"
         />
+
+      <select 
+        value={timeInterval}
+        onChange={(e) => setTimeInterval(e.target.value)}
+        className="border p-2 rounded text-gray-500"
+      >
+        <option value="hourly">Hourly</option>
+        <option value="daily">Daily</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+
+      <select 
+        value={aggregation}
+        onChange={(e) => setAggregation(e.target.value)}
+        className="border p-2 rounded text-gray-500"
+      >
+        <option value="sum">Sum</option>
+        <option value="average">Average</option>
+      </select>
+
       </div>
+
       {/* Info text */}
       <div className="mt-2 text-gray-500">
         {chartTitle
-          ? "Chart title set. You can change it anytime."
-          : "Set a title for your customized chart to easily identify it later."}
+          ? "Chart settings implemented. You can change it anytime."
+          : "Implement the chart settings to customize your chart and easily identify it later."}
       </div>
     </div>
   );
