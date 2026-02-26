@@ -9,6 +9,7 @@ import GraphPlaceholder from "../../../_components/GraphPlaceholder";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
 import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
+import PieHandler from "@/app/_components/graphs/handlers/PieHandler";
 
 const STORAGE_KEY = "dashboard-energy";
 
@@ -71,6 +72,7 @@ export default function EnergyDashboard() {
         <GraphPlaceholder />
       </div>
 
+<<<<<<< main
       <div className="flex justify-end mt-6">
         <button
           onClick={handleSaveScreen}
@@ -78,6 +80,33 @@ export default function EnergyDashboard() {
         >
           Save Screen
         </button>
+=======
+        <LineHandler 
+          sensorList={[
+            "30000_TL340", // GBT Generation Hourly Wh
+            "30000_TL341", // GBT Consumption Hourly Wh
+            "30000_TL339", // GBT Net Energy Hourly Wh   
+          ]}
+          startDate={state.fromDate}
+          endDate={state.toDate}
+          graphTitle={"Consumption vs Generation"}
+          yTitle={"Wh"}
+          xTitle={"hours"}
+          xUnit={"hour"}
+        />
+
+        <PieHandler
+          sensorList={[
+            "30000_TL252", // PV-CarportSolar_Total
+            "30000_TL253", // PV-RooftopSolar_Total
+          ]}
+          startDate={state.fromDate}
+          endDate={state.toDate}
+          graphTitle={"Solar Panel Generation"}
+          label={"kWh"} // **check: unsure if right unit
+        />
+        
+>>>>>>> kiera/custom
       </div>
       <div className="flex justify-end mt-6">
         <button

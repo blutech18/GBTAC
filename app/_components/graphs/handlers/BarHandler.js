@@ -3,7 +3,7 @@
 import Chart from "chart.js/auto";
 import { CategoryScale, TimeScale } from "chart.js";
 import { useState, useEffect } from "react";
-import LineChart from "../LineChart"
+import BarChart from "../BarChart"
 import "chartjs-adapter-date-fns";
 import zoomPlugin from 'chartjs-plugin-zoom'
 
@@ -11,7 +11,7 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function LineHandler({sensorList, startDate, endDate, graphTitle, yTitle, xTitle, xUnit}){
+export default function BarHandler({sensorList, startDate, endDate, graphTitle, yTitle, xTitle, xUnit}){
     
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
@@ -139,18 +139,18 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
         scales: {
             x: {
                 title: {
-                display: true,
-                text: xTitle
+                    display: true,
+                    text: xTitle
                 },
                 type: "time",
                 time: {
-                unit: xUnit, // ** might change to scale automatically
+                    unit: xUnit, // ** might change to scale automatically
                 }
             },
             y: {
                 title: {
-                display: true,
-                text: yTitle
+                    display: true,
+                    text: yTitle
                 }
             }
         },
@@ -174,7 +174,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                     x: {
                         min: xMin,
                         max: xMax,
-                        minRange: 1  * 60 * 60 * 1000, // hours * minutes * seconds * milliseconds
+                        minRange: 1 * 60 * 60 * 1000, // hours * minutes * seconds * milliseconds
                     },
                     y: {
                         min: yMin,
@@ -190,8 +190,9 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
 
     // passes graph info onto LineChart component and displays it
     return (
-        <div>
-            <LineChart options={graphOptions} data={graphData}/>
+        <div className="bg-black">
+            <BarChart options={graphOptions} data={graphData}/>
+            
         </div>
     )
 }
