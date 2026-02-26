@@ -43,7 +43,7 @@ export default function ExportPDFButton({ chartRef, fileName }) {
   return (
     <button
       onClick={handleExport}
-      className="bg-[#912932] text-white px-4 py-2 rounded-sm hover:bg-red-700"
+      className="bg-[#912932] text-white font-semibold px-4 py-2 rounded-sm hover:bg-red-700 transition"
     >
       Export PDF
     </button>

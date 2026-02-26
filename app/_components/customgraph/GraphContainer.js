@@ -4,7 +4,6 @@
 
 import CustomHandler from "../graphs/handlers/CustomHandler";
 
-
 export default function GraphContainer({selectedSensors, dateRange, settings}) {
   return (
     <div className="bg-white rounded-sm shadow-sm p-4 mb-8">
