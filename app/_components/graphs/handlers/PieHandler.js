@@ -77,7 +77,7 @@ export default function PieHandler({sensorList, startDate, endDate, graphTitle, 
                     {
                         label: label,
                         data: sensors.map((sensor) => sensor.sum),
-                        borderColor: "black",
+                        borderColor: colours,
                         backgroundColor: colours,
                         borderWidth: 2,
                         radius: '90%'

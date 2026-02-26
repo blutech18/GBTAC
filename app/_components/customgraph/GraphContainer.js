@@ -15,7 +15,7 @@ export default function GraphContainer({selectedSensors, dateRange, settings}) {
       >
         Graph Container
       </p>
-      <div className="h-64 bg-gray-200 rounded-sm flex items-center justify-center mb-4">
+      <div className="w-full bg-gray-200 rounded-sm flex items-center justify-center mb-4">
         {/* <p className="text-gray-500">Graph will be rendered here</p> */}
         <CustomHandler
           selectedSensors={selectedSensors} 

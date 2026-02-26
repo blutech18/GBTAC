@@ -1,13 +1,13 @@
 "use client"
 
 import Chart from "chart.js/auto";
-import { CategoryScale, TimeScale } from "chart.js";
+import { CategoryScale, TimeScale, Filler } from "chart.js";
 import { useState, useEffect } from "react";
 import LineChart from "../LineChart"
 import "chartjs-adapter-date-fns";
 import zoomPlugin from 'chartjs-plugin-zoom'
 
-Chart.register(CategoryScale, TimeScale, zoomPlugin);
+Chart.register(CategoryScale, TimeScale, zoomPlugin, Filler);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
@@ -124,7 +124,8 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                 data: sensorData[sensor.id].map(d => d.data),
                 borderColor: colours[sensor.id],
                 backgroundColor: colours[sensor.id],
-                borderWidth: 2
+                borderWidth: 2,
+                fill: 'stack',
             }));
             
             setGraphData({
@@ -174,7 +175,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                     x: {
                         min: xMin,
                         max: xMax,
-                        minRange: 1  * 60 * 60 * 1000, // hours * minutes * seconds * milliseconds
+                        minRange: 3 * 60 * 60 * 1000, // hours * minutes * seconds * milliseconds
                     },
                     y: {
                         min: yMin,

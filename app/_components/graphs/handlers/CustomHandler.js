@@ -15,7 +15,7 @@ export default function CustomHandler({selectedSensors, dateRange, settings}){
             
             if(settings.chartType == "line"){
                 return(
-                    <div>
+                    <div className="w-full h-full">
                         <LineHandler
                             sensorList={sensors}
                             startDate={dateRange.from}
@@ -29,7 +29,7 @@ export default function CustomHandler({selectedSensors, dateRange, settings}){
                 )
             }else if(settings.chartType == "bar"){
                 return(
-                    <div>
+                    <div className="w-full h-full">
                         <BarHandler
                             sensorList={sensors}
                             startDate={dateRange.from}
