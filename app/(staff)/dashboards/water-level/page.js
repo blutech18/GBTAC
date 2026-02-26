@@ -31,7 +31,7 @@ export default function WaterLevelDashboard() {
 
     saveRecentDashboard({
       id: "water-level",
-      title: "Water Level Dashboard",
+      title: "Cistern Level Dashboard",
       path: "/dashboards/water-level",
       summary: {
         fromDate: state.fromDate,
@@ -40,7 +40,7 @@ export default function WaterLevelDashboard() {
           (g) => state.visibleGraphs[g],
         ),
       },
-      saved: true, // mark as explicitly saved
+      saved: true,
     });
 
     alert(
@@ -49,13 +49,13 @@ export default function WaterLevelDashboard() {
   };
 
   return (
-    <DashboardLayout title="Water Level Dashboard">
+    <DashboardLayout title="Cistern Level Dashboard">
       <InfoCard
         items={[
-          { label: "Current Level", value: "3.2 m" },
-          { label: "Daily Avg", value: "3.0 m" },
-          { label: "Weekly Max", value: "3.8 m" },
-          { label: "Difference vs Yesterday", value: "1.0 m" },
+          { label: "Current Level", value: "82%" },
+          { label: "Daily Avg", value: "78%" },
+          { label: "Past 7 Days Max", value: "95%" },
+          { label: "Difference vs Yesterday", value: "+2%" },
         ]}
       />
 

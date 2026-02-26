@@ -69,7 +69,7 @@ export default function StaffHome({ employeeName = "John Doe" }) {
                   </button>
                 </Link>
                 <Link href="/profile">
-                  <button className="px-6 py-3 bg-[#A6192E] text-white rounded-sm hover:bg-[#7F121F] font-bold transition">
+                  <button className="px-6 py-3 bg-[#6D2077] text-white rounded-sm hover:bg-[#7F121F] font-bold transition">
                     Profile
                   </button>
                 </Link>
