@@ -19,6 +19,24 @@ const FLOOR_SENSOR_MAP = {
   "1st Floor": ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
   "2nd Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2"],
 };
+
+// Orientation derived from display names in sensor_names table
+const SENSOR_ORIENTATION = {
+  "20004_TL2": "North",  // Basement - North Wall
+  "20005_TL2": "West",   // Basement - West Wall
+  "20006_TL2": "South",  // Basement - South Wall
+  "20007_TL2": "West",   // 1st Floor - West Wall
+  "20008_TL2": "South",  // 1st Floor - South Wall (West)
+  "20009_TL2": "South",  // 1st Floor - South Wall (East)
+  "20010_TL2": "East",   // 1st Floor - East Wall
+  "20011_TL2": "North",  // 1st Floor - North Wall
+  "20012_TL2": "West",   // 2nd Floor - West Wall
+  "20013_TL2": "North",  // 2nd Floor - North Wall
+  "20014_TL2": "East",   // 2nd Floor - East Wall
+  "20015_TL2": "South",  // 2nd Floor - South Wall (East)
+  "20016_TL2": "South",  // 2nd Floor - South Wall (West)
+};
+
 const FLOOR_OPTIONS  = Object.keys(FLOOR_SENSOR_MAP);
 const ORIENT_OPTIONS = ["All", "North", "South", "East", "West"];
 
@@ -36,11 +54,17 @@ export default function AmbientTempDashboard() {
 
   const { fromDate, toDate, floors = [], orientation } = state;
 
-  // If no floor selected show all 13 sensors, otherwise show selected floors only
-  const activeSensors =
+  // Step 1: filter by floor
+  const floorFiltered =
     floors.length === 0
       ? Object.values(FLOOR_SENSOR_MAP).flat()
       : floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
+
+  // Step 2: filter by orientation
+  const activeSensors =
+    orientation === "All"
+      ? floorFiltered
+      : floorFiltered.filter((code) => SENSOR_ORIENTATION[code] === orientation);
 
   const toggleFloor = (floor) => {
     const updated = floors.includes(floor)

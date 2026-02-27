@@ -24,6 +24,16 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
         } catch { return "month"; }
     };
 
+    // X-axis display format per tier — client spec:
+    // yearly=2020,2021 | monthly=January,February | daily=1,2..31 | hourly=0..23 | minute=0..59
+    const getDisplayFormats = () => ({
+        minute: "m",    // 0, 1, 2 ... 59
+        hour:   "H",    // 0, 1, 2 ... 23
+        day:    "d",    // 1, 2, 3 ... 31
+        month:  "MMMM", // January, February ...
+        year:   "yyyy", // 2020, 2021 ...
+    });
+
     // const [errorFlag, setErrorFlag] = useState(false)
 
     // if(endDate < startDate){
@@ -131,7 +141,8 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                 borderColor: colours[sensor.id % colours.length],
                 backgroundColor: colours[sensor.id % colours.length],
                 borderWidth: 2,
-                pointRadius: 0,       // skip dots — massively faster rendering
+                pointRadius: 3,
+                pointHoverRadius: 6,
                 tension: 0.1
             }));
             
@@ -152,7 +163,9 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                 },
                 type: "time",
                 time: {
-                unit: getTimeUnit(),
+                    unit: getTimeUnit(),
+                    displayFormats: getDisplayFormats(),
+                    tooltipFormat: "PPpp", // full date+time in tooltip
                 }
             },
             y: {
