@@ -74,6 +74,7 @@ async def get_codesnames():
 
     query = f"""
         SELECT sensor_name_source, sensor_name_report FROM sensor_names
+        ORDER BY sensor_name_source
         """    
 
     #query database

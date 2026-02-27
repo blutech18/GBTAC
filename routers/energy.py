@@ -30,49 +30,31 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
     conn.close()
     return res
 
-@router.get("/panelTotals")
-async def get_data(start="2025-12-31", end=""):
-
-    sensors = [
-        "30000_TL252",
-        "30000_TL253",
-    ]
-
-    temp_str = ""
-    for sensor in sensors:
-        temp_str += "SUM(" + sensor_pre + sensor + "), "
-    select_str = temp_str[:-2]
-
-    # open connection
+# daily average over the last 7 days
+@router.get("/dailyAvg/{sensor_code}")
+async def get_data(sensor_code):
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # date format = YYYY-MM-DD
-    # sets end date range to the same day as start if it wasn't included
-    if end == "":
-        end = start
-
     query = f"""
-        SELECT {select_str}
-        FROM GBTAC_data 
-        WHERE CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
-        """
+        SELECT 
+    AVG({sensor_pre}{sensor_code})
+FROM gbtac_data
+    WHERE ts >= (
+        SELECT DATEADD(day, -7, MAX(ts))
+        FROM GBTAC_data
+    )
+    AND ts <= (
+        SELECT MAX(ts)
+        FROM GBTAC_data
+    );
+    """
 
     #query database
     curs.execute(query)
     rows = curs.fetchall()
 
-    res = []
-    counter = 0
-    for row in rows:
-        for sum in row:
-            res.append({
-                "code": sensors[counter],
-                "sum": sum 
-            })
-            counter += 1
+    res = rows[0][0]
 
-    #close connection and send data
     conn.close()
     return res
