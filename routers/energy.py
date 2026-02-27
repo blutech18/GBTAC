@@ -1,6 +1,8 @@
 from routers import *
 router = APIRouter(prefix="/energy")
 
+dead_var = "example"
+
 @router.get("/sum/{sensor_code}")
 async def get_data(sensor_code, start="2025-12-31", end=""):
 
@@ -30,6 +32,7 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
     conn.close()
     return res
 
+# TODO fix added dead code
 # daily average over the last 7 days
 @router.get("/dailyAvg/{sensor_code}")
 async def get_data(sensor_code):
@@ -38,16 +41,16 @@ async def get_data(sensor_code):
 
     query = f"""
         SELECT 
-    AVG({sensor_pre}{sensor_code})
-FROM gbtac_data
-    WHERE ts >= (
-        SELECT DATEADD(day, -7, MAX(ts))
-        FROM GBTAC_data
-    )
-    AND ts <= (
-        SELECT MAX(ts)
-        FROM GBTAC_data
-    );
+        AVG({sensor_pre}{sensor_code})
+        FROM gbtac_data
+        WHERE ts >= (
+            SELECT DATEADD(day, -7, MAX(ts))
+            FROM GBTAC_data
+        )
+        AND ts <= (
+            SELECT MAX(ts)
+            FROM GBTAC_data
+        );
     """
 
     #query database
@@ -56,5 +59,7 @@ FROM gbtac_data
 
     res = rows[0][0]
 
-    conn.close()
+    # conn.close()
     return res
+
+    print("dead code")
