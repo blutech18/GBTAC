@@ -6,6 +6,7 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import InfoCard from "../../../_components/InfoCard";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
+import ExportPDFButton from "../../../_components/ExportPDFButton";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
 const STORAGE_KEY = "dashboard-ambient-temp-v2";
@@ -130,7 +131,8 @@ export default function AmbientTempDashboard() {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-end gap-3 mt-6">
+        <ExportPDFButton />
         <button
           onClick={handleSaveScreen}
           className="px-5 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
