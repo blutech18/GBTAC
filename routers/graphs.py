@@ -72,10 +72,11 @@ async def get_codesnames():
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    query = f"""
-        SELECT sensor_name_source, sensor_name_report FROM sensor_names
+    query = """
+        SELECT sensor_name_source, sensor_name_report 
+        FROM sensor_names
         ORDER BY sensor_name_source
-        """    
+        """ 
 
     #query database
     curs.execute(query)
