@@ -38,7 +38,7 @@ const SENSOR_ORIENTATION = {
 };
 
 const FLOOR_OPTIONS  = Object.keys(FLOOR_SENSOR_MAP);
-const ORIENT_OPTIONS = ["All", "North", "South", "East", "West"];
+const ORIENT_OPTIONS = ["North", "South", "East", "West"];
 
 export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
@@ -47,30 +47,37 @@ export default function AmbientTempDashboard() {
       fromDate: DEFAULT_FROM,
       toDate: DEFAULT_TO,
       floors: [],
-      orientation: "All",
+      orientations: [],
       ...saved,
     };
   });
 
-  const { fromDate, toDate, floors = [], orientation } = state;
+  const { fromDate, toDate, floors = [], orientations = [] } = state;
 
-  // Step 1: filter by floor
+  // Step 1: filter by floor (empty = all floors)
   const floorFiltered =
     floors.length === 0
       ? Object.values(FLOOR_SENSOR_MAP).flat()
       : floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
 
-  // Step 2: filter by orientation
+  // Step 2: filter by orientation (empty = all orientations)
   const activeSensors =
-    orientation === "All"
+    orientations.length === 0
       ? floorFiltered
-      : floorFiltered.filter((code) => SENSOR_ORIENTATION[code] === orientation);
+      : floorFiltered.filter((code) => orientations.includes(SENSOR_ORIENTATION[code]));
 
   const toggleFloor = (floor) => {
     const updated = floors.includes(floor)
       ? floors.filter((f) => f !== floor)
       : [...floors, floor];
     setState((prev) => ({ ...prev, floors: updated }));
+  };
+
+  const toggleOrientation = (dir) => {
+    const updated = orientations.includes(dir)
+      ? orientations.filter((o) => o !== dir)
+      : [...orientations, dir];
+    setState((prev) => ({ ...prev, orientations: updated }));
   };
 
   useEffect(() => {
@@ -83,7 +90,12 @@ export default function AmbientTempDashboard() {
       id: "ambient-temperature",
       title: "Ambient Temperature Dashboard",
       path: "/dashboards/ambient-temperature",
-      summary: { fromDate: state.fromDate, toDate: state.toDate, floors: state.floors },
+      summary: {
+        fromDate: state.fromDate,
+        toDate: state.toDate,
+        floors: state.floors,
+        orientations: state.orientations,
+      },
       saved: true,
     });
     alert("Dashboard state saved! Your graph settings are restored for next login.");
@@ -101,7 +113,7 @@ export default function AmbientTempDashboard() {
       />
 
       {/* Controls row */}
-      <div className="flex flex-wrap gap-6 items-end mt-6">
+      <div className="flex flex-wrap gap-6 items-end mb-6">
         <DatePicker
           fromDate={fromDate}
           toDate={toDate}
@@ -111,15 +123,13 @@ export default function AmbientTempDashboard() {
         />
 
         {/* Floor filter — multi-select */}
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700">Floor Levels</label>
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setState((prev) => ({ ...prev, floors: [] }))}
-              className={`px-3 py-1 text-sm border rounded transition ${
-                floors.length === 0
-                  ? "bg-[#6D2077] text-white border-[#6D2077]"
-                  : "bg-white text-gray-700 hover:bg-gray-100"
+              className={`px-2 py-1 text-lg border rounded ${
+                floors.length === 0 ? "bg-[#6D2077] text-white" : ""
               }`}
             >
               All
@@ -128,10 +138,8 @@ export default function AmbientTempDashboard() {
               <button
                 key={f}
                 onClick={() => toggleFloor(f)}
-                className={`px-3 py-1 text-sm border rounded transition ${
-                  floors.includes(f)
-                    ? "bg-[#6D2077] text-white border-[#6D2077]"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                className={`px-2 py-1 text-lg border rounded ${
+                  floors.includes(f) ? "bg-[#6D2077] text-white" : ""
                 }`}
               >
                 {f}
@@ -140,21 +148,27 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
 
-        {/* Orientation filter */}
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700">Orientation</label>
+        {/* Orientation filter — multi-select */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
-            {ORIENT_OPTIONS.map((o) => (
+            <button
+              onClick={() => setState((prev) => ({ ...prev, orientations: [] }))}
+              className={`px-2 py-1 text-lg border rounded ${
+                orientations.length === 0 ? "bg-[#6D2077] text-white" : ""
+              }`}
+            >
+              All
+            </button>
+            {ORIENT_OPTIONS.map((dir) => (
               <button
-                key={o}
-                onClick={() => setState((prev) => ({ ...prev, orientation: o }))}
-                className={`px-3 py-1 text-sm border rounded transition ${
-                  orientation === o
-                    ? "bg-[#6D2077] text-white border-[#6D2077]"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                key={dir}
+                onClick={() => toggleOrientation(dir)}
+                className={`px-2 py-1 text-lg border rounded ${
+                  orientations.includes(dir) ? "bg-[#6D2077] text-white" : ""
                 }`}
               >
-                {o}
+                {dir}
               </button>
             ))}
           </div>
