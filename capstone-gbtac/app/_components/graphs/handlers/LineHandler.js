@@ -43,68 +43,65 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
     
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
-        sensorList.map((code, i) => ({
-            id: i, 
-            code: code, 
-            name: null
-        }))
+        sensorList.map((code, i) => ({ id: i, code, name: null }))
     );
     
     const [fetched, setFetched] = useState(false); // if data has been fetched or not
     const [loading, setLoading] = useState(true);   // loading state for UI
     const [sensorData, setSensorData] = useState([]); // holds all the sensor data
-    
-    // takes sensors array and fetches data in parallel, puts it in the sensorData array
-    const fetchData = async () => {
+
+    // Always read from sensorList prop directly — avoids stale-closure on sensor state
+    const fetchData = async (list = sensorList, from = startDate, to = endDate) => {
         try {
             setLoading(true);
-
             const results = await Promise.all(
-                sensors.map((sensor) =>
-                    fetch(`${API_ENDPOINT}/graphs/data/${sensor.code}?start=${startDate}&end=${endDate}`)
+                list.map((code) =>
+                    fetch(`${API_ENDPOINT}/graphs/data/${code}?start=${from}&end=${to}`)
                         .then((r) => r.json())
                         .catch(() => [])
                 )
             );
-
             setSensorData(results);
             setFetched(true);
-
-        } catch(e){
+        } catch(e) {
             console.log("Error fetching data");
         } finally {
             setLoading(false);
         }
-    }
+    };
 
-    const fetchNames = async () => {
-        try{
+    const fetchNames = async (list = sensorList) => {
+        try {
             const named = await Promise.all(
-                sensors.map(async (sensor) =>{
-                    try{
-                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${sensor.code}`);
+                list.map(async (code, i) => {
+                    try {
+                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`);
                         const data = await res.json();
-                        return {...sensor, name: data}
+                        return { id: i, code, name: data };
                     } catch {
-                        return {...sensor, name: sensor.code}
+                        return { id: i, code, name: code };
                     }
                 })
-            )
-            setSensors(named)
-
-        } catch (e){
-            console.log("error fetching sensor name")
+            );
+            setSensors(named);
+        } catch(e) {
+            console.log("error fetching sensor name");
         }
-    }
+    };
 
-    // fetches data on render and date changes
+    // Re-initialize + re-fetch immediately when the sensor list changes (filter click)
     useEffect(() => {
-        fetchData();
-    }, [startDate, endDate]);
-
-    useEffect(() => {
-        fetchNames();
+        setSensors(sensorList.map((code, i) => ({ id: i, code, name: null })));
+        setSensorData([]);
+        setFetched(false);
+        fetchData(sensorList, startDate, endDate);
+        fetchNames(sensorList);
     }, [sensorList]);
+
+    // Re-fetch when dates change (sensors unchanged)
+    useEffect(() => {
+        fetchData(sensorList, startDate, endDate);
+    }, [startDate, endDate]);
     
     // sets defaults
     const labels = 0; // x axis labels

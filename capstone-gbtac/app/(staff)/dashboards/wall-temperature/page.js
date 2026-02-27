@@ -153,6 +153,7 @@ export default function WallTempDashboard() {
 
           <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4">
             <LineHandler
+              key={activeSensors.join(",")}
               sensorList={activeSensors}
               startDate={fromDate || DEFAULT_FROM}
               endDate={toDate || DEFAULT_TO}
