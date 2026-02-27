@@ -13,10 +13,14 @@ const STORAGE_KEY = "dashboard-ambient-temp-v2";
 const DEFAULT_FROM = "2018-10-13";
 const DEFAULT_TO   = "2025-12-31";
 
-const AMBIENT_SENSORS = ["20000_TL92", "20000_TL93"];
-
-const FLOOR_OPTIONS    = ["All", "Basement", "1st Floor", "2nd Floor"];
-const ORIENT_OPTIONS   = ["All", "North", "South", "East", "West"];
+// 13 sensors mapped by floor from building floor plans
+const FLOOR_SENSOR_MAP = {
+  "Basement":  ["20004_TL2", "20005_TL2", "20006_TL2"],
+  "1st Floor": ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
+  "2nd Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2"],
+};
+const FLOOR_OPTIONS  = Object.keys(FLOOR_SENSOR_MAP);
+const ORIENT_OPTIONS = ["All", "North", "South", "East", "West"];
 
 export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
@@ -24,13 +28,26 @@ export default function AmbientTempDashboard() {
     return {
       fromDate: DEFAULT_FROM,
       toDate: DEFAULT_TO,
-      floor: "All",
+      floors: [],
       orientation: "All",
       ...saved,
     };
   });
 
-  const { fromDate, toDate, floor, orientation } = state;
+  const { fromDate, toDate, floors = [], orientation } = state;
+
+  // If no floor selected show all 13 sensors, otherwise show selected floors only
+  const activeSensors =
+    floors.length === 0
+      ? Object.values(FLOOR_SENSOR_MAP).flat()
+      : floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
+
+  const toggleFloor = (floor) => {
+    const updated = floors.includes(floor)
+      ? floors.filter((f) => f !== floor)
+      : [...floors, floor];
+    setState((prev) => ({ ...prev, floors: updated }));
+  };
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
@@ -42,7 +59,7 @@ export default function AmbientTempDashboard() {
       id: "ambient-temperature",
       title: "Ambient Temperature Dashboard",
       path: "/dashboards/ambient-temperature",
-      summary: { fromDate: state.fromDate, toDate: state.toDate },
+      summary: { fromDate: state.fromDate, toDate: state.toDate, floors: state.floors },
       saved: true,
     });
     alert("Dashboard state saved! Your graph settings are restored for next login.");
@@ -69,16 +86,26 @@ export default function AmbientTempDashboard() {
           }
         />
 
-        {/* Floor filter */}
+        {/* Floor filter — multi-select */}
         <div>
           <label className="block text-sm font-medium mb-1 text-gray-700">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setState((prev) => ({ ...prev, floors: [] }))}
+              className={`px-3 py-1 text-sm border rounded transition ${
+                floors.length === 0
+                  ? "bg-[#6D2077] text-white border-[#6D2077]"
+                  : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              All
+            </button>
             {FLOOR_OPTIONS.map((f) => (
               <button
                 key={f}
-                onClick={() => setState((prev) => ({ ...prev, floor: f }))}
+                onClick={() => toggleFloor(f)}
                 className={`px-3 py-1 text-sm border rounded transition ${
-                  floor === f
+                  floors.includes(f)
                     ? "bg-[#6D2077] text-white border-[#6D2077]"
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 }`}
@@ -113,7 +140,7 @@ export default function AmbientTempDashboard() {
       {/* Chart */}
       <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4 mt-6">
         <LineHandler
-          sensorList={AMBIENT_SENSORS}
+          sensorList={activeSensors}
           startDate={fromDate || DEFAULT_FROM}
           endDate={toDate || DEFAULT_TO}
           graphTitle="Ambient Temperature"
