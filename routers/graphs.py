@@ -1,91 +1,105 @@
 from routers import *
+from datetime import datetime
+
 router = APIRouter(prefix="/graphs")
 
-
-# url format "http://127.0.0.1:8000/graphs/data/{sensor code}?start={start date}&end={end date}"
-# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-14
-# code is the end part of the sensor name (not including the 'SaitSolarLab' part)
-# start and end date are optional, currently start defaults to dec 31st 2025 and end defaults to start
+# Adaptive aggregation per client spec:
+#   > 730 days  → yearly averages   (x-axis: 2020, 2021, ...)
+#   > 60  days  → monthly averages  (x-axis: January, February, ...)
+#   > 1   day   → daily averages    (x-axis: 1, 2, ... 31)
+#   <= 1  day   → hourly averages   (x-axis: 0, 1, ... 23)
 @router.get("/data/{sensor_code}")
-async def get_data(sensor_code, start="2025-12-31", end=""):
+async def get_data(sensor_code, start="2018-10-13", end="2025-12-31"):
 
-    # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # date format = YYYY-MM-DD
-    # sets end date range to the same day as start if it wasn't included
     if end == "":
         end = start
 
-    query = f"""
-        SELECT ts, {sensor_pre}{sensor_code}
-        FROM GBTAC_data 
-        WHERE {sensor_pre}{sensor_code} IS NOT NULL 
-        AND CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
-        ORDER BY ts
+    try:
+        days = (datetime.strptime(end, "%Y-%m-%d") - datetime.strptime(start, "%Y-%m-%d")).days + 1
+    except Exception:
+        days = 1
+
+    col = f"{sensor_pre}{sensor_code}"
+
+    if days <= 1:
+        # Hourly averages for a single day (x-axis: 0..23)
+        query = f"""
+            SELECT DATEADD(hour, DATEDIFF(hour, 0, ts), 0) AS ts,
+                   AVG({col}) AS data
+            FROM GBTAC_data
+            WHERE {col} IS NOT NULL
+              AND CAST(ts AS DATE) >= '{start}'
+              AND CAST(ts AS DATE) <= '{end}'
+            GROUP BY DATEADD(hour, DATEDIFF(hour, 0, ts), 0)
+            ORDER BY ts
+        """
+    elif days <= 60:
+        # Daily averages — x-axis: day numbers 1..31
+        query = f"""
+            SELECT CAST(ts AS DATE) AS ts,
+                   AVG({col}) AS data
+            FROM GBTAC_data
+            WHERE {col} IS NOT NULL
+              AND CAST(ts AS DATE) >= '{start}'
+              AND CAST(ts AS DATE) <= '{end}'
+            GROUP BY CAST(ts AS DATE)
+            ORDER BY ts
+        """
+    elif days <= 730:
+        # Monthly averages — x-axis: January, February, ...
+        query = f"""
+            SELECT DATEADD(month, DATEDIFF(month, 0, ts), 0) AS ts,
+                   AVG({col}) AS data
+            FROM GBTAC_data
+            WHERE {col} IS NOT NULL
+              AND CAST(ts AS DATE) >= '{start}'
+              AND CAST(ts AS DATE) <= '{end}'
+            GROUP BY DATEADD(month, DATEDIFF(month, 0, ts), 0)
+            ORDER BY ts
+        """
+    else:
+        # Yearly averages — x-axis: 2020, 2021, ...
+        query = f"""
+            SELECT DATEFROMPARTS(YEAR(ts), 1, 1) AS ts,
+                   AVG({col}) AS data
+            FROM GBTAC_data
+            WHERE {col} IS NOT NULL
+              AND CAST(ts AS DATE) >= '{start}'
+              AND CAST(ts AS DATE) <= '{end}'
+            GROUP BY YEAR(ts)
+            ORDER BY ts
         """
 
-    #query database
     curs.execute(query)
     rows = curs.fetchall()
 
-    #format data 
-    res = []
-    for row in rows:
-        res.append({
-            "ts": row[0],
-            "data": row[1]
-        })
+    res = [{"ts": row[0], "data": row[1]} for row in rows]
 
-    #close connection and send data
     conn.close()
     return res
-
 
 # url format: "http://127.0.0.1:8000/graphs/name/{sensor code}"
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
-async def get_name(sensor_code):
-
-    # open connection
+async def get_name(sensor_code: str):
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    query = f"""
-        SELECT * FROM sensor_names
-        WHERE sensor_name_source = '{sensor_code}'
-        """    
+    query = """
+        SELECT display_name
+        FROM dbo.sensor_names
+        WHERE sensor_name_source = ?
+    """
 
-    #query database
-    curs.execute(query)
-    rows = curs.fetchall()
-
-    res = rows[0][2]
-    conn.close()
-    return res
-
-@router.get("/codesnames")
-async def get_codesnames():
-    # open connection
-    conn = pyodbc.connect(connection_str)
-    curs = conn.cursor()
-
-    query = f"""
-        SELECT sensor_name_source, sensor_name_report FROM sensor_names
-        """    
-
-    #query database
-    curs.execute(query)
-    rows = curs.fetchall()
-
-    res = []
-    for row in rows:
-        res.append({
-            "code": row[0],
-            "name": row[1]
-        })
+    curs.execute(query, (sensor_code,))
+    row = curs.fetchone()
 
     conn.close()
-    return res
+
+    if not row:
+        return sensor_code
+
+    return row[0]
