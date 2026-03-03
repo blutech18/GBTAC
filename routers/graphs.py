@@ -1,13 +1,16 @@
 from routers import *
+import pandas as pd
+
 router = APIRouter(prefix="/graphs")
 
-
-# url format "http://127.0.0.1:8000/graphs/data/{sensor code}?start={start date}&end={end date}"
-# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-14
-# code is the end part of the sensor name (not including the 'SaitSolarLab' part)
-# start and end date are optional, currently start defaults to dec 31st 2025 and end defaults to start
 @router.get("/data/{sensor_code}")
-async def get_data(sensor_code, start="2025-12-31", end=""):
+# url format "http://127.0.0.1:8000/graphs/data/{sensor code}?start={start date}&end={end date}&agg={aggregation time range}&type={aggregation type}"
+# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-14
+# - code is the end part of the sensor name (not including the 'SaitSolarLab' part), mandatory
+# - start and end date, YYYY-MM-DD
+# - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
+# - type is for kind of aggregation, mean or sum
+async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="mean"):
 
     # open connection
     conn = pyodbc.connect(connection_str)
@@ -41,6 +44,19 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
 
     #close connection and send data
     conn.close()
+
+    if agg != "none":
+        df = pd.DataFrame(res)
+        df["ts"] = pd.to_datetime(df["ts"])
+        df = df.set_index("ts")
+
+        if type == "mean":
+            df_agg = df.resample(agg).mean()
+        else:
+            df_agg = df.resample(agg).sum()
+            
+        res = df_agg.reset_index().to_dict(orient="records")
+
     return res
 
 
