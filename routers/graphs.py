@@ -55,6 +55,7 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
         else:
             df_agg = df.resample(agg).sum()
             
+        df_agg = df_agg.dropna()
         res = df_agg.reset_index().to_dict(orient="records")
 
     return res
