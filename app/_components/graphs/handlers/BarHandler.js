@@ -11,7 +11,7 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function BarHandler({sensorList, startDate, endDate, graphTitle, yTitle, xTitle, xUnit}){
+export default function BarHandler({sensorList, startDate, endDate, graphTitle, yTitle, xTitle, xUnit, aggTime, aggType}){
     
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
@@ -44,7 +44,7 @@ export default function BarHandler({sensorList, startDate, endDate, graphTitle, 
 
     useEffect(() => {
         setFetched(false)
-    }, [startDate, endDate])
+    }, [startDate, endDate, aggTime, aggType])
 
     // takes sensors array and fetches data based off of codes, puts it in the sensorData array
     // ** NOTE: add warning if no data is available (no sensor data during time period) 
@@ -53,7 +53,7 @@ export default function BarHandler({sensorList, startDate, endDate, graphTitle, 
             let arr = [];
             
             for(let i = 0; i < sensors.length; i++){
-                const res = await fetch(`${API_ENDPOINT}/graphs/data/${sensors[i].code}?start=${startDate}&end=${endDate}`);
+                const res = await fetch(`${API_ENDPOINT}/graphs/data/${sensors[i].code}?start=${startDate}&end=${endDate}&agg=${aggTime}&type=${aggType}`);
                 const data = await res.json();
                 arr.push(data);
             }
@@ -191,8 +191,7 @@ export default function BarHandler({sensorList, startDate, endDate, graphTitle, 
     // passes graph info onto LineChart component and displays it
     return (
         <div className="bg-black">
-            <BarChart options={graphOptions} data={graphData}/>
-            
+            <BarChart options={graphOptions} data={graphData}/>       
         </div>
     )
 }

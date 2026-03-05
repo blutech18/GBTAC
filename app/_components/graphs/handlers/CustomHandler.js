@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import LineHandler from "./LineHandler"
 import BarHandler from "./BarHandler"
 
-export default function CustomHandler({selectedSensors, dateRange, settings}){
+export default function CustomHandler({selectedSensors, dateRange, settings, aggSettings}){
     try{
         const [sensors, setSensors] = useState(selectedSensors.map(sensor => sensor.code))
         useEffect(() => {
@@ -24,6 +24,8 @@ export default function CustomHandler({selectedSensors, dateRange, settings}){
                             yTitle={settings.xAxisTitle}
                             xTitle={settings.yAxisTitle}
                             xUnit={"hour"}
+                            aggTime={aggSettings.time}
+                            aggType={aggSettings.type}                            
                         />
                     </div>
                 )
@@ -38,6 +40,8 @@ export default function CustomHandler({selectedSensors, dateRange, settings}){
                             yTitle={settings.xAxisTitle}
                             xTitle={settings.yAxisTitle}
                             xUnit={"hour"}
+                            aggTime={aggSettings.time}
+                            aggType={aggSettings.type}
                         />                    
                     </div>
                 )

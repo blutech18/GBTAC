@@ -15,7 +15,7 @@ import GraphContainer from "@/app/_components/customgraph/GraphContainer";
 
 export default function Page() {
 
-  // State for erros
+  // State for errors
   const [error, setError] = useState(null);
 
   // Chart ref for PDF export
@@ -23,19 +23,27 @@ export default function Page() {
 
   // Applied chart state (what GraphContainer actually reads)
   const [currentChartId, setCurrentChartId] = useState(null);
-  const [selectedSensors, setSelectedSensors] = useState([]);
+  // const [selectedSensors, setSelectedSensors] = useState([]);
   const [dateRange, setDateRange] = useState({ from: "2025-12-31", to: "2025-12-31" });
   const [chartSettings, setChartSettings] = useState({
     chartTitle: "",
     xAxisTitle: "",
     yAxisTitle: "",
-    chartType: "line",
+    // chartType: "line",
+    chartType: "bar",
   })
-
+  const [selectedSensors, setSelectedSensors] = useState([ // temp for testing
+    {code: "30000_TL252", name: "Carport"},
+    {code: "30000_TL253", name: "Rooftop"}
+  ]);
+  const [aggregationSettings, setAggregationSettings] = useState({time: "H", type: "sum"})
+  
+  
   // Temp state (user edits these before clicking Apply)
   const [tempSelectedSensors, setTempSelectedSensors] = useState(selectedSensors);
   const [tempDateRange, setTempDateRange] = useState(dateRange);
   const [tempChartSettings, setTempChartSettings] = useState(chartSettings)
+  const [tempAggregationSettings, setTempAggregationSettings] = useState(aggregationSettings)
   
   // full list of sensors and codes
   const [sensorList, setSensorList] = useState([])
@@ -64,6 +72,7 @@ export default function Page() {
     })
     setSelectedSensors([]);
     setDateRange({ from: null, to: null });
+    setAggregationSettings({time: null, type: null})
 
     // Also reset temp state
     setTempChartSettings({
@@ -74,6 +83,7 @@ export default function Page() {
     })
     setTempSelectedSensors([]);
     setTempDateRange({ from: null, to: null });
+    setTempAggregationSettings({time: null, type: null})
   }
 
   // Load a chart into state
@@ -82,11 +92,13 @@ export default function Page() {
     setChartSettings(chart.settings);
     setSelectedSensors(chart.sensors);
     setDateRange({ from: chart.dateFrom, to: chart.dateTo });
-
+    setAggregationSettings({time: chart.time, type:chart.type})
+    
     // Also update temp state so the inputs match loaded chart
     setTempChartSettings(chart.settings);
     setTempSelectedSensors(chart.sensors);
     setTempDateRange({ from: chart.dateFrom, to: chart.dateTo });
+    setTempAggregationSettings({time: chart.time, type:chart.type})
   }
 
   // Apply button handler
@@ -113,6 +125,7 @@ export default function Page() {
     setChartSettings(tempChartSettings);
     setSelectedSensors(tempSelectedSensors);
     setDateRange(tempDateRange);
+    setAggregationSettings(tempAggregationSettings);
   }
 
   return (
@@ -145,6 +158,8 @@ export default function Page() {
           <DateRange
             dateRange={tempDateRange}
             setDateRange={setTempDateRange}
+            aggSettings={tempAggregationSettings}
+            setAggSettings={setTempAggregationSettings}
           />
         </div>
 
@@ -185,6 +200,7 @@ export default function Page() {
             selectedSensors={selectedSensors} 
             dateRange={dateRange}
             settings={chartSettings}
+            aggSettings={aggregationSettings}
           />
         </div>
 
