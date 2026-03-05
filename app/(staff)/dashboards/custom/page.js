@@ -1,3 +1,4 @@
+"use client";
 
 //Page for Customizable Graph Section
 import SecondaryNav from "@/app/_components/SecondaryNav";
@@ -9,7 +10,7 @@ import SelectedSensors from "../../../_components/customgraph/SelectedSensors";
 import GraphPlaceholder from "@/app/_components/GraphPlaceholder";
 import DateRange from "../../../_components/customgraph/DateRange";
 import ExportPDFButton from "@/app/_components/ExportPDFButton";
-import {useeRef } from "react";
+import { useRef } from "react";
 
 export default function Page() {
   const chartRef = useRef(null);

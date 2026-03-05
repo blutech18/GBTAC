@@ -1,9 +1,9 @@
 //This component is for the Staff to view and edit their profile information.
-//They can add a profile photo, change their name, email, and password.
+//They can add change their name, email, and password.
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Link from "next/link";
 
 export default function ProfileForm({canChangePassword = false}) {
   const [formData, setFormData] = useState({
@@ -13,25 +13,11 @@ export default function ProfileForm({canChangePassword = false}) {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-    profilePicture: null,
   });
 
-  const [preview, setPreview] = useState("/default-profile-picture.jpg");
-
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-
-    if (files) {
-      const file = files[0];
-      if (file) {
-        setFormData({ ...formData, [name]: file });
-
-        const imageUrl = URL.createObjectURL(file);
-        setPreview(imageUrl);
-      }
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = (e) => {
@@ -43,31 +29,9 @@ export default function ProfileForm({canChangePassword = false}) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-10"
+      className="space-y-10 text-[#212529]"
       style={{ fontFamily: "var(--font-titillium)" }}
     >
-      <div className="flex flex-col items-center space-y-4">
-        <div className="relative group">
-          <Image
-            src={preview}
-            alt="profile picture"
-            width={144}
-            height={144}
-            className="w-36 h-36 rounded-full object-cover ring-4 ring-gray-100 shadow-md transition group-hover:ring-black"
-          />
-
-          <label className="absolute bottom-0 right-0 bg-black text-white text-xs px-4 py-1 rounded-full cursor-pointer shadow-md hover:bg-gray-800 transition">
-            Edit
-            <input
-              type="file"
-              name="profilePicture"
-              accept="image/*"
-              onChange={handleChange}
-              className="hidden"
-            />
-          </label>
-        </div>
-      </div>
 
       <div className="space-y-6">
         <h2 className="text-lg border-b pb-2 font-semibold text-gray-800">
@@ -139,15 +103,17 @@ export default function ProfileForm({canChangePassword = false}) {
           </div>
         </div>
                  )}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8 border-t mt-8">  
+        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8 border-t mt-8"> 
+          <Link href="/home">
+            <button type="button" className="px-5 py-3 bg-[#912932] text-white  font-semibold rounded hover:bg-[#8B1625] transition">
+              Cancel
+            </button>
+          </Link>
           <button
             type="submit"
             className="px-5 py-3 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
           >
             Save Changes
-          </button>
-          <button type="button" className="px-5 py-3 bg-[#912932] text-white  font-semibold rounded hover:bg-[#8B1625] transition">
-            Cancel
           </button>
         </div>
     </form>

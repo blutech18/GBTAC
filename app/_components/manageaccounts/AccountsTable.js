@@ -1,4 +1,6 @@
-// components/AccountsTable.js
+//This component will display a table of user accounts with options to edit or delete each account.
+import Link from "next/link";
+
 export default function AccountsTable() {
   // Static data for now
  const accounts = [
@@ -26,7 +28,7 @@ export default function AccountsTable() {
   
   return (
     <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 max-h-96">
-  <table className="min-w-full divide-y divide-gray-200">
+  <table className="min-w-full divide-y table-fixed divide-gray-200">
     <thead className="sticky top-0 z-10" style={{ backgroundColor: "#F6F7F9" }}>
       <tr>
         <th style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-3 text-left text-lg font-medium text-black">#</th>
@@ -45,17 +47,17 @@ export default function AccountsTable() {
           <td className="px-6 py-4 whitespace-nowrap flex items-center gap-2">
             <span
               className="h-3 w-3 rounded-full"
-              style={{ color: "text-black", backgroundColor: account.status === "Active" ? "#8dc074" : "#912932" }}
+              style={{ color: "text-black", backgroundColor: account.status === "Active" ? "#8dc075" : "#912932" }}
             ></span>
-            <span className="text-black">{account.status}</span>
+            <span className="text-black font-semi">{account.status}</span>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap">
-            <button className="bg-[#912932] hover:bg-[#8B1625] text-white  px-3 py-1 mr-2.5 rounded-md transition-colors"
-              style={{ fontFamily: "var(--font-titillium)" }}>
-              Edit
-            </button>
-            <button className="bg-[#912932] hover:bg-[#8B1625] text-white  px-3 py-1 rounded-md transition-colors"
-              style={{ fontFamily: "var(--font-titillium)" }}>
+          <td className="px-6 py-4 whitespace-nowrap place-items-center gap-2">
+            <Link href={`/admin/edit-staff/${account.id}`}>
+              <button className="bg-[#005EB8] hover:bg-[#004080] text-white font-semibold px-4 py-2 mr-2.5 rounded-md transition-colors">
+                Edit
+              </button>
+            </Link>
+            <button className="bg-[#912932] hover:bg-[#8B1625] text-white font-semibold px-4 py-2 rounded-md transition-colors">
               Delete
             </button>
           </td>
