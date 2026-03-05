@@ -1,8 +1,9 @@
-//This component will display a table of user accounts with options to edit or delete each account.
-import Link from "next/link";
+//This component will display a table of accounts with columns for ID, Name, Email, Status, and Action buttons (Edit/Delete).
+//It uses the AccountRow component to render each row and accepts a `search` prop to filter the displayed accounts based on the search term.
 
-export default function AccountsTable() {
-  // Static data for now
+import AccountRow from "./AccountRow";
+export default function AccountsTable({search = ""}) {
+  //Static data for now
  const accounts = [
     { id: 1, name: "Temi Bankole", email: "temibankole5@gmail.com", role: "staff", status: "Active" },
     { id: 2, name: "Jane Doe", email: "jane@example.com", role: "admin", status: "Inactive" },
@@ -25,6 +26,11 @@ export default function AccountsTable() {
     { id: 19, name: "Paula Patton", email: "paula@example.com", role: "staff", status: "Active" },
     { id: 20, name: "Quentin Tarantino", email: "quentin@example.com", role: "admin", status: "Active" },
   ];
+
+  const filteredAccounts = accounts.filter(account =>
+    account.name.toLowerCase().includes(search.toLowerCase()) ||
+    account.email.toLowerCase().includes(search.toLowerCase())
+  );
   
   return (
     <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 max-h-96">
@@ -39,29 +45,8 @@ export default function AccountsTable() {
       </tr>
     </thead>
     <tbody className="bg-white divide-y divide-gray-200 overflow-y-auto">
-      {accounts.map((account) => (
-        <tr key={account.id}>
-          <td style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-4 whitespace-nowrap text-black">{account.id}</td>
-          <td style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-4 whitespace-nowrap text-black">{account.name}</td>
-          <td style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-4 whitespace-nowrap text-black">{account.email}</td>
-          <td className="px-6 py-4 whitespace-nowrap flex items-center gap-2">
-            <span
-              className="h-3 w-3 rounded-full"
-              style={{ color: "text-black", backgroundColor: account.status === "Active" ? "#8dc075" : "#912932" }}
-            ></span>
-            <span className="text-black font-semi">{account.status}</span>
-          </td>
-          <td className="px-6 py-4 whitespace-nowrap place-items-center gap-2">
-            <Link href={`/admin/edit-staff/${account.id}`}>
-              <button className="bg-[#005EB8] hover:bg-[#004080] text-white font-semibold px-4 py-2 mr-2.5 rounded-md transition-colors">
-                Edit
-              </button>
-            </Link>
-            <button className="bg-[#912932] hover:bg-[#8B1625] text-white font-semibold px-4 py-2 rounded-md transition-colors">
-              Delete
-            </button>
-          </td>
-        </tr>
+      {filteredAccounts.map((account) => (
+        <AccountRow key={account.id} account={account} />
       ))}
     </tbody>
   </table>
