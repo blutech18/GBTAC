@@ -17,7 +17,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
     const getTimeUnit = () => {
         try {
             const days = (new Date(endDate) - new Date(startDate)) / 86400000 + 1;
-            if (days <= 1)   return "minute"; // per-minute for single day
+            if (days <= 1)   return "hour";   // hourly averages (0..23)
             if (days <= 60)  return "day";    // daily averages
             if (days <= 730) return "month";  // monthly averages
             return "year";                    // yearly averages
@@ -134,7 +134,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
             // for each sensor in sensors array it sets the line label, data, and colour
             const dataset = sensors.map(sensor => ({
                 label: sensor.name || sensor.code,
-                data: sensorData[sensor.id].map(d => d.data),
+                data: (sensorData[sensor.id] || []).map((d) => d.data),
                 borderColor: colours[sensor.id % colours.length],
                 backgroundColor: colours[sensor.id % colours.length],
                 borderWidth: 2,
@@ -148,7 +148,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                 datasets: dataset
             });
         }
-    }, [sensorData, sensors]);
+    }, [sensorData, sensors, fetched]);
 
     // options for graph display to be passed on to LineChart component
     const graphOptions = {

@@ -15,30 +15,30 @@ const DEFAULT_TO   = "2025-12-31";
 
 // 13 sensors mapped by floor from building floor plans
 const FLOOR_SENSOR_MAP = {
-  "Basement":  ["20004_TL2", "20005_TL2", "20006_TL2"],
-  "1st Floor": ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
-  "2nd Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2"],
+  "Basement":    ["20004_TL2", "20005_TL2", "20006_TL2"],
+  "Main Floor":  ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
+  "Upper Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2"],
 };
 
-// Orientation derived from display names in sensor_names table
+// Orientation derived from client-provided sensor locations
 const SENSOR_ORIENTATION = {
-  "20004_TL2": "North",  // Basement - North Wall
-  "20005_TL2": "West",   // Basement - West Wall
-  "20006_TL2": "South",  // Basement - South Wall
-  "20007_TL2": "West",   // 1st Floor - West Wall
-  "20008_TL2": "South",  // 1st Floor - South Wall (West)
-  "20009_TL2": "South",  // 1st Floor - South Wall (East)
-  "20010_TL2": "East",   // 1st Floor - East Wall
-  "20011_TL2": "North",  // 1st Floor - North Wall
-  "20012_TL2": "West",   // 2nd Floor - West Wall
-  "20013_TL2": "North",  // 2nd Floor - North Wall
-  "20014_TL2": "East",   // 2nd Floor - East Wall
-  "20015_TL2": "South",  // 2nd Floor - South Wall (East)
-  "20016_TL2": "South",  // 2nd Floor - South Wall (West)
+  "20004_TL2": "East",      // Basement - East 1
+  "20005_TL2": "West",      // Basement - West
+  "20006_TL2": "East",      // Basement - East 2
+  "20007_TL2": "Northwest", // Main Floor - Northwest
+  "20008_TL2": "South",     // Main Floor - South 1
+  "20009_TL2": "South",     // Main Floor - South 2
+  "20010_TL2": "East",      // Main Floor - East
+  "20011_TL2": "Middle",    // Main Floor - Middle
+  "20012_TL2": "West",      // Upper Floor - West
+  "20013_TL2": "Middle",    // Upper Floor - Middle
+  "20014_TL2": "East",      // Upper Floor - East
+  "20015_TL2": "South",     // Upper Floor - South 2
+  "20016_TL2": "South",     // Upper Floor - South 1
 };
 
 const FLOOR_OPTIONS  = Object.keys(FLOOR_SENSOR_MAP);
-const ORIENT_OPTIONS = ["North", "South", "East", "West"];
+const ORIENT_OPTIONS = ["East", "West", "South", "Northwest", "Middle"];
 
 export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
