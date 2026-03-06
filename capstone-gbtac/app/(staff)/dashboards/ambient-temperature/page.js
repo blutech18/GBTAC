@@ -6,10 +6,9 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import InfoCard from "../../../_components/InfoCard";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
-import ExportPDFButton from "../../../_components/ExportPDFButton";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
-const STORAGE_KEY = "dashboard-ambient-temp-v2";
+const STORAGE_KEY = "dashboard-ambient-temp-v3";
 const DEFAULT_FROM = "2018-10-13";
 const DEFAULT_TO   = "2025-12-31";
 
@@ -103,17 +102,9 @@ export default function AmbientTempDashboard() {
 
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
-      <InfoCard
-        items={[
-          { label: "Current Temp", value: (21.256).toFixed(2) + "°C" },
-          { label: "Daily Avg",    value: (20.254).toFixed(2) + "°C" },
-          { label: "High",         value: (24.789).toFixed(2) + "°C" },
-          { label: "Low",          value: (17.7789).toFixed(2) + "°C" },
-        ]}
-      />
 
-      {/* Controls row */}
-      <div className="flex flex-wrap gap-6 items-end mb-6">
+      {/* Controls row — all filters in one horizontal bar */}
+      <div className="flex flex-nowrap gap-6 items-end mb-6 overflow-x-auto pb-1">
         <DatePicker
           fromDate={fromDate}
           toDate={toDate}
@@ -123,13 +114,13 @@ export default function AmbientTempDashboard() {
         />
 
         {/* Floor filter — multi-select */}
-        <div className="mb-6">
+        <div className="shrink-0">
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <button
               onClick={() => setState((prev) => ({ ...prev, floors: [] }))}
-              className={`px-2 py-1 text-lg border rounded ${
-                floors.length === 0 ? "bg-[#6D2077] text-white" : ""
+              className={`px-2 py-1 text-sm border rounded whitespace-nowrap ${
+                floors.length === 0 ? "bg-[#005EB8] text-white" : "bg-white text-gray-700"
               }`}
             >
               All
@@ -138,8 +129,8 @@ export default function AmbientTempDashboard() {
               <button
                 key={f}
                 onClick={() => toggleFloor(f)}
-                className={`px-2 py-1 text-lg border rounded ${
-                  floors.includes(f) ? "bg-[#6D2077] text-white" : ""
+                className={`px-2 py-1 text-sm border rounded whitespace-nowrap ${
+                  floors.includes(f) ? "bg-[#005EB8] text-white" : "bg-white text-gray-700"
                 }`}
               >
                 {f}
@@ -149,13 +140,13 @@ export default function AmbientTempDashboard() {
         </div>
 
         {/* Orientation filter — multi-select */}
-        <div className="mb-6">
+        <div className="shrink-0">
           <label className="block text-sm font-medium mb-1">Orientation</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <button
               onClick={() => setState((prev) => ({ ...prev, orientations: [] }))}
-              className={`px-2 py-1 text-lg border rounded ${
-                orientations.length === 0 ? "bg-[#6D2077] text-white" : ""
+              className={`px-2 py-1 text-sm border rounded whitespace-nowrap ${
+                orientations.length === 0 ? "bg-[#005EB8] text-white" : "bg-white text-gray-700"
               }`}
             >
               All
@@ -164,8 +155,8 @@ export default function AmbientTempDashboard() {
               <button
                 key={dir}
                 onClick={() => toggleOrientation(dir)}
-                className={`px-2 py-1 text-lg border rounded ${
-                  orientations.includes(dir) ? "bg-[#6D2077] text-white" : ""
+                className={`px-2 py-1 text-sm border rounded whitespace-nowrap ${
+                  orientations.includes(dir) ? "bg-[#005EB8] text-white" : "bg-white text-gray-700"
                 }`}
               >
                 {dir}
@@ -175,8 +166,18 @@ export default function AmbientTempDashboard() {
         </div>
       </div>
 
+      {/* Info cards */}
+      <InfoCard
+        items={[
+          { label: "Current Temp", value: (21.256).toFixed(2) + "°C" },
+          { label: "Daily Avg",    value: (20.254).toFixed(2) + "°C" },
+          { label: "High",         value: (24.789).toFixed(2) + "°C" },
+          { label: "Low",          value: (17.7789).toFixed(2) + "°C" },
+        ]}
+      />
+
       {/* Chart */}
-      <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4 mt-6">
+      <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4">
         <LineHandler
           key={activeSensors.join(",")}
           sensorList={activeSensors}
@@ -188,17 +189,18 @@ export default function AmbientTempDashboard() {
         />
       </div>
 
-      {/* PDF Screenshot section */}
+      {/* Selected Floor Layout */}
       <div className="mt-6 bg-white rounded-lg shadow-md p-4">
-        <h2 className="text-base font-semibold text-gray-700 mb-3">PDF Labelled Screenshot</h2>
+        <h2 className="text-base font-semibold text-gray-700 mb-3">Selected Floor Layout</h2>
         <div className="border border-dashed border-gray-300 rounded p-6 min-h-24 flex items-center justify-center text-sm text-gray-400">
-          Screenshot preview will appear here.<br />(Exported PDF version of this dashboard)
+          {floors.length === 1
+            ? `${floors[0]} layout preview`
+            : "Select a floor to preview layout."}
         </div>
       </div>
 
       {/* Actions */}
       <div className="flex justify-end gap-3 mt-6">
-        <ExportPDFButton />
         <button
           onClick={handleSaveScreen}
           className="px-5 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
