@@ -40,6 +40,12 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
     //     console.log("date error")
     //     setErrorFlag(true)
     // }
+
+    const canFetch =
+        Array.isArray(sensorList) &&
+        sensorList.length > 0 &&
+        startDate &&
+        endDate;
     
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
@@ -91,17 +97,20 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
 
     // Re-initialize + re-fetch immediately when the sensor list changes (filter click)
     useEffect(() => {
+        if (!canFetch) {
+            setSensors([]);
+            setSensorData([]);
+            setFetched(false);
+            setLoading(false);
+            return;
+        }
+
         setSensors(sensorList.map((code, i) => ({ id: i, code, name: null })));
         setSensorData([]);
         setFetched(false);
         fetchData(sensorList, startDate, endDate);
         fetchNames(sensorList);
-    }, [sensorList]);
-
-    // Re-fetch when dates change (sensors unchanged)
-    useEffect(() => {
-        fetchData(sensorList, startDate, endDate);
-    }, [startDate, endDate]);
+    }, [sensorList, startDate, endDate, canFetch]);
     
     // sets defaults
     const labels = 0; // x axis labels
@@ -199,6 +208,14 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
     };
 
     // passes graph info onto LineChart component and displays it
+    if (!canFetch) {
+        return (
+            <div className="relative min-h-75 flex items-center justify-center text-gray-400 text-sm">
+                Graph Placeholder
+            </div>
+        );
+    }
+
     return (
         <div className="relative min-h-75">
             {loading && (

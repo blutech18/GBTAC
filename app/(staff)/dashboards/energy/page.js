@@ -5,10 +5,10 @@ import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import CardCarousel from "../../../_components/CardCarousel";
-import GraphPlaceholder from "../../../_components/GraphPlaceholder";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
 import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
+import PieHandler from "@/app/_components/graphs/handlers/PieHandler";
 
 const STORAGE_KEY = "dashboard-energy";
 
@@ -47,6 +47,11 @@ export default function EnergyDashboard() {
 
   return (
     <DashboardLayout title="Energy Dashboard">
+      <DatePicker
+        fromDate={state.fromDate}
+        toDate={state.toDate}
+        setDate={setState}
+      />
       <CardCarousel
         items={[
           { label: "Current Usage", value: "120 kWh" },
@@ -59,25 +64,31 @@ export default function EnergyDashboard() {
         horizontal
       />
 
-      <DatePicker
-        fromDate={fromDate}
-        toDate={toDate}
-        setFromDate={setFromDate}
-        setToDate={setToDate}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-6">
+        <LineHandler
+          sensorList={[
+            "30000_TL340", // GBT Generation Hourly Wh
+            "30000_TL341", // GBT Consumption Hourly Wh
+            "30000_TL339", // GBT Net Energy Hourly Wh
+          ]}
+          startDate={state.fromDate}
+          endDate={state.toDate}
+          graphTitle={"Consumption vs Generation"}
+          yTitle={"Wh"}
+          xTitle={"hours"}
+          xUnit={"hour"}
+        />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <GraphPlaceholder />
-        <GraphPlaceholder />
-      </div>
-
-      <div className="flex justify-end mt-6">
-        <button
-          onClick={handleSaveScreen}
-          className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
-        >
-          Save Screen
-        </button>
+        <PieHandler
+          sensorList={[
+            "30000_TL252", // PV-CarportSolar_Total
+            "30000_TL253", // PV-RooftopSolar_Total
+          ]}
+          startDate={state.fromDate}
+          endDate={state.toDate}
+          graphTitle={"Solar Panel Generation"}
+          label={"kWh"} // **check: unsure if right unit
+        />
       </div>
       <div className="flex justify-end mt-6">
         <button

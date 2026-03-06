@@ -29,11 +29,12 @@ export default function Page() {
             <FiInfo className="w-10 h-8 text-black cursor-pointer hover:text-gray-700 transition-colors" />
 
             <div className="absolute right-0 top-8 w-80 p-3 bg-white text-black text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
-              Values are converted to kWh using a standard conversion factor of X kWh per unit of gas.
+              Values are converted to kWh using a standard conversion factor of
+              X kWh per unit of gas.
             </div>
           </div>
         </div>
-
+        <DateRangePicker />
         <InfoCard
           items={[
             { label: "Total Energy Consumption", value: "134,350 kWh" },
@@ -45,8 +46,6 @@ export default function Page() {
 
         {/* Chart Section */}
         <div className="mt-10 flex flex-col gap-4 relative">
-            <DateRangePicker />
-
           {/* Line Chart Placeholder */}
           <div className="bg-white rounded-lg shadow-md h-96 flex items-center justify-center text-gray-400 relative">
             Natural Gas and Electricity Consumption LINE Chart Placeholder
@@ -57,7 +56,7 @@ export default function Page() {
           </div>
           {/*Disclaimer at the bottom of the charts*/}
           <div className="text-sm text-center text-gray-500 mt-2">
-            All information is displayed for educational purposes only.  
+            All information is displayed for educational purposes only.
           </div>
         </div>
       </div>

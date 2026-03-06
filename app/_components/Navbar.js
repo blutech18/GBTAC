@@ -92,7 +92,7 @@ export default function Navbar({
                 </li>
                 <li>
                   <Link
-                    href="/dashboards/customizable-graphs"
+                    href="/dashboards/custom"
                     className="block px-4 py-2 hover:bg-gray-100"
                   >
                     Customizable Graphs
