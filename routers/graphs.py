@@ -1,5 +1,6 @@
 from routers import *
 import pandas as pd
+import re
 
 router = APIRouter(prefix="/graphs")
 
@@ -11,22 +12,38 @@ router = APIRouter(prefix="/graphs")
 # - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
 # - type is for kind of aggregation, mean or sum
 async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="mean"):
+    
+    #validation:
+    sanCode = validateCode(sensor_code)
+    if sanCode == False:
+        return "enter valid sensor code"
+
+    sanStart = validateDate(start)
+    if sanStart == False:
+        return "invalid start date"
+    
+    # sets end date range to the same day as start if it wasn't included
+    if end == "":
+        end = sanStart
+    
+    sanEnd = validateDate(end)
+    if sanStart == False:
+        return "invalid end date"
+    
+    if sanEnd < sanStart:
+        return "end cannot be bigger than start"
+
 
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # date format = YYYY-MM-DD
-    # sets end date range to the same day as start if it wasn't included
-    if end == "":
-        end = start
-
     query = f"""
-        SELECT ts, {sensor_pre}{sensor_code}
+        SELECT ts, {sensor_pre}{sanCode}
         FROM GBTAC_data 
-        WHERE {sensor_pre}{sensor_code} IS NOT NULL 
-        AND CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
+        WHERE {sensor_pre}{sanCode} IS NOT NULL 
+        AND CAST(ts AS DATE) >= '{sanStart}'
+        AND CAST(ts AS DATE) <= '{sanEnd}'
         ORDER BY ts
         """
 
@@ -65,6 +82,11 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
 async def get_name(sensor_code):
+
+    # validation
+    sanCode = validateCode(sensor_code)
+    if sanCode == False:
+        return "enter valid sensor code"
 
     # open connection
     conn = pyodbc.connect(connection_str)

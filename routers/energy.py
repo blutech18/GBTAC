@@ -4,6 +4,27 @@ router = APIRouter(prefix="/energy")
 @router.get("/sum/{sensor_code}")
 async def get_data(sensor_code, start="2025-12-31", end=""):
 
+    #validation:
+    sanCode = validateCode(sensor_code)
+    if sanCode == False:
+        return "enter valid sensor code"
+
+    sanStart = validateDate(start)
+    if sanStart == False:
+        return "invalid start date"
+    
+    # sets end date range to the same day as start if it wasn't included
+    if end == "":
+        end = sanStart
+    
+    sanEnd = validateDate(end)
+    if sanStart == False:
+        return "invalid end date"
+    
+    if sanEnd < sanStart:
+        return "end cannot be bigger than start"
+
+
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
@@ -30,9 +51,16 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
     conn.close()
     return res
 
+
 # daily average over the last 7 days
 @router.get("/dailyAvg/{sensor_code}")
 async def get_data(sensor_code):
+    
+    # validation
+    sanCode = validateCode(sensor_code)
+    if sanCode == False:
+        return "enter valid sensor code"
+    
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
