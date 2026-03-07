@@ -14,28 +14,21 @@ router = APIRouter(prefix="/graphs")
 async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="mean"):
     
     #validation:
-    x = re.search("[0-9]{5}_TL[0-9]+", sensor_code)
-    sanCode = x.group() if x != None else ""
+    sanCode = validateCode(sensor_code)
+    if sanCode == False:
+        return "enter valid sensor code"
 
-    x = re.search("20[0-9]{2}-[0-1][0-9]-[0-3][0-9]", start)
-    sanStart = x.group() if x != None else ""
+    sanStart = validateDate(start)
+    if sanStart == False:
+        return "invalid start date"
     
     # sets end date range to the same day as start if it wasn't included
     if end == "":
         end = sanStart
     
-    x = re.search("20[0-9]{2}-[0-1][0-9]-[0-3][0-9]", end)
-    sanEnd = x.group() if x != None else ""
-
-    if sanCode == "" or sanStart == "" or sanEnd == "":
-        return "enter code, start and end params"
-
-    # may change
-    if sanStart > "2025-12-31" or sanEnd > "2025-12-31":
-        return "date outside range"
-    
-    if end < "2018-04-08" or start < "2018-04-08":
-        return "date outside range"
+    sanEnd = validateDate(end)
+    if sanStart == False:
+        return "invalid end date"
     
     if sanEnd < sanStart:
         return "end cannot be bigger than start"
@@ -89,6 +82,11 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
 async def get_name(sensor_code):
+
+    # validation
+    sanCode = validateCode(sensor_code)
+    if sanCode == False:
+        return "enter valid sensor code"
 
     # open connection
     conn = pyodbc.connect(connection_str)
