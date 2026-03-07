@@ -30,6 +30,7 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
     conn.close()
     return res
 
+
 # daily average over the last 7 days
 @router.get("/dailyAvg/{sensor_code}")
 async def get_data(sensor_code):

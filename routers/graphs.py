@@ -1,5 +1,6 @@
 from routers import *
 import pandas as pd
+import re
 
 router = APIRouter(prefix="/graphs")
 
@@ -11,22 +12,45 @@ router = APIRouter(prefix="/graphs")
 # - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
 # - type is for kind of aggregation, mean or sum
 async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="mean"):
+    
+    #validation:
+    x = re.search("[0-9]{5}_TL[0-9]+", sensor_code)
+    sanCode = x.group() if x != None else ""
+
+    x = re.search("20[0-9]{2}-[0-1][0-9]-[0-3][0-9]", start)
+    sanStart = x.group() if x != None else ""
+    
+    # sets end date range to the same day as start if it wasn't included
+    if end == "":
+        end = sanStart
+    
+    x = re.search("20[0-9]{2}-[0-1][0-9]-[0-3][0-9]", end)
+    sanEnd = x.group() if x != None else ""
+
+    if sanCode == "" or sanStart == "" or sanEnd == "":
+        return "enter code, start and end params"
+
+    # may change
+    if sanStart > "2025-12-31" or sanEnd > "2025-12-31":
+        return "date outside range"
+    
+    if end < "2018-04-08" or start < "2018-04-08":
+        return "date outside range"
+    
+    if sanEnd < sanStart:
+        return "end cannot be bigger than start"
+
 
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # date format = YYYY-MM-DD
-    # sets end date range to the same day as start if it wasn't included
-    if end == "":
-        end = start
-
     query = f"""
-        SELECT ts, {sensor_pre}{sensor_code}
+        SELECT ts, {sensor_pre}{sanCode}
         FROM GBTAC_data 
-        WHERE {sensor_pre}{sensor_code} IS NOT NULL 
-        AND CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
+        WHERE {sensor_pre}{sanCode} IS NOT NULL 
+        AND CAST(ts AS DATE) >= '{sanStart}'
+        AND CAST(ts AS DATE) <= '{sanEnd}'
         ORDER BY ts
         """
 
