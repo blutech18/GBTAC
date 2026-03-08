@@ -104,3 +104,37 @@ async def get_name(sensor_code):
 
     res = rows[0][2]
     return res
+
+
+# Wall sensors = same data as ambient (client: "yung data na ginamit sa ambient, same lang sa wall").
+# Returns sensors where display name contains 'FTH' and column exists in GBTAC_data (e.g. 24 sensors).
+# If your DB uses sensor_name_report, add a view or use sensor_name_display for the FTH tag.
+@router.get("/sensors/wall")
+async def get_wall_sensors():
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+    # Sensors with display name containing 'FTH' (client's 24 wall sensors, same data as ambient).
+    # If your DB uses sensor_name_report, add a view or column alias as sensor_name_display.
+    query = """
+        SELECT sn.sensor_name_source, sn.sensor_name_display
+        FROM sensor_names sn
+        WHERE sn.sensor_name_display LIKE '%FTH%'
+        AND EXISTS (
+            SELECT 1 FROM sys.columns c
+            WHERE c.object_id = OBJECT_ID('GBTAC_data')
+            AND c.name = 'SaitSolarLab_' + sn.sensor_name_source
+        )
+        ORDER BY sn.sensor_name_display
+    """
+    try:
+        curs.execute(query)
+        rows = curs.fetchall()
+        out = [
+            {"code": row[0], "name": row[1] if len(row) > 1 else row[0]}
+            for row in rows
+        ]
+        return out
+    except Exception as e:
+        return []
+    finally:
+        conn.close()

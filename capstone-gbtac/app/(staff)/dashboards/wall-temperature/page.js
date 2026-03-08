@@ -1,69 +1,130 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
-import SecondaryNav from "../../../_components/SecondaryNav";
-import Navbar from "../../../_components/Navbar";
-import Footer from "../../../_components/Footer";
+import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import InfoCard from "../../../_components/InfoCard";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
-import ExportPDFButton from "../../../_components/ExportPDFButton";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
-import { FiInfo } from "react-icons/fi";
+import {
+  FLOOR_OPTIONS,
+  ORIENTATION_OPTIONS,
+  FLOOR_SENSOR_MAP,
+  SENSOR_ORIENTATION,
+} from "./wallSensorConfig";
 
+const STORAGE_KEY = "dashboard-wall-temp";
+const API_ENDPOINT = "http://127.0.0.1:8000";
 
-const STORAGE_KEY = "dashboard-wall-temp-v2"; // v2 clears old cached dates
-const DEFAULT_FROM = "2018-10-13"; // earliest date in DB
-const DEFAULT_TO   = "2025-12-31"; // latest date in DB
-
-// Real wall temperature sensor codes per floor (from building floor plans)
-const FLOOR_SENSOR_MAP = {
-  "Basement":  ["20003_TL2", "20004_TL2", "20005_TL2", "20006_TL2"],
-  "1st Floor": ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
-  "2nd Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2", "20016_TL5"],
+const FLOOR_IMAGES = {
+  Basement: "/floors/GBTAC-basement-level.png",
+  "1st Floor": "/floors/GBTAC-level1.png",
+  "2nd Floor": "/floors/GBTAC-level2.png",
+  Roof: "/floors/GBTAC-level2.png", // reuse or add roof image when available
 };
-const FLOOR_OPTIONS = Object.keys(FLOOR_SENSOR_MAP);
 
 export default function WallTempDashboard() {
   const [state, setState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
     return {
-      fromDate: DEFAULT_FROM,
-      toDate: DEFAULT_TO,
+      fromDate: "",
+      toDate: "",
       floors: [],
+      orientations: [],
       ...saved,
     };
   });
 
-  const { fromDate, toDate, floors = [] } = state;
+  const [appliedState, setAppliedState] = useState(null);
+  // Wall sensors from API (same data as ambient) — client: "yung data sa ambient, same lang sa wall"
+  const [apiWallSensors, setApiWallSensors] = useState([]);
 
-  // Compute which sensors to show based on floor selection
-  const activeSensors =
-    floors.length === 0
-      ? Object.values(FLOOR_SENSOR_MAP).flat()
-      : floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
+  const { fromDate, toDate, floors = [], orientations = [] } = state;
+  const useApiWallSensors = apiWallSensors.length > 0;
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
 
-  const toggleFloor = (floor) => {
-    const updated = floors.includes(floor)
-      ? floors.filter((f) => f !== floor)
-      : [...floors, floor];
-    setState((prev) => ({ ...prev, floors: updated }));
+  useEffect(() => {
+    fetch(`${API_ENDPOINT}/graphs/sensors/wall`)
+      .then((r) => r.json())
+      .then((list) => Array.isArray(list) && setApiWallSensors(list))
+      .catch(() => setApiWallSensors([]));
+  }, []);
+
+  // When API returns wall sensors (e.g. 24 with data), use them; else use 74 from config
+  const floorFiltered =
+    !appliedState
+      ? []
+      : useApiWallSensors
+        ? apiWallSensors.map((s) => s.code)
+        : appliedState.floors.length === 0
+          ? Object.values(FLOOR_SENSOR_MAP).flat()
+          : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
+
+  const activeSensors =
+    !appliedState
+      ? []
+      : useApiWallSensors
+        ? floorFiltered
+        : appliedState.orientations.length === 0
+          ? floorFiltered
+          : floorFiltered.filter((code) =>
+              appliedState.orientations.includes(SENSOR_ORIENTATION[code]),
+            );
+
+  const handleMultiSelect = (key, value) => {
+    setState((prev) => {
+      const currentValues = prev[key] || [];
+      const updatedValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+      const optionOrder =
+        key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
+      const sortedValues = optionOrder.filter((option) =>
+        updatedValues.includes(option),
+      );
+      const nextState = { ...prev, [key]: sortedValues };
+
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
+
+      return nextState;
+    });
   };
 
-  const toggleAllFloors = () => {
-    setState((prev) => ({
-      ...prev,
-      floors: prev.floors.length === FLOOR_OPTIONS.length ? [] : FLOOR_OPTIONS,
-    }));
+  const handleSelectAll = (key, options) => {
+    setState((prev) => {
+      const currentValues = prev[key] || [];
+      const updatedValues =
+        currentValues.length === options.length ? [] : [...options];
+      const nextState = { ...prev, [key]: updatedValues };
+
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
+
+      return nextState;
+    });
   };
 
   const handleSaveScreen = () => {
     saveDashboardState(STORAGE_KEY, state);
+
     saveRecentDashboard({
       id: "wall-temperature",
       title: "Wall Temperature Dashboard",
@@ -72,76 +133,63 @@ export default function WallTempDashboard() {
         fromDate: state.fromDate,
         toDate: state.toDate,
         floors: state.floors,
+        orientations: state.orientations,
       },
       saved: true,
     });
+
     alert(
       "Dashboard state saved! Your graph settings are restored for next login.",
     );
   };
 
   return (
-    <main className="bg-gray-50 min-h-screen">
-      <SecondaryNav displayLogout={true} displayProfile={true} displayLogin={false} />
-      <Navbar displayDashboards displayHome={false} displayAbout={false} />
+    <DashboardLayout title="Wall Temperature Dashboard">
+      <div className="flex flex-wrap gap-6 items-end mb-6">
+        <DatePicker
+          fromDate={fromDate}
+          toDate={toDate}
+          setDate={({ fromDate, toDate }) => {
+            const nextState = { ...state, fromDate, toDate };
+            setState(nextState);
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-10">
-          <h1
-            className="text-4xl font-bold dark:text-black"
-            style={{ fontFamily: "var(--font-titillium)" }}
-          >
-            Wall Temperature Dashboard
-          </h1>
-          <div className="relative group">
-            <FiInfo className="w-10 h-8 text-black cursor-pointer hover:text-gray-700 transition-colors" />
-            <div className="absolute right-0 top-8 w-80 p-3 bg-white text-black text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
-              Wall temperature sensors monitor surface temperatures on building walls across all floors and orientations.
-            </div>
-          </div>
-        </div>
-
-        <InfoCard
-          items={[
-            { label: "Basement Avg", value: "—" },
-            { label: "1st Floor Avg", value: "—" },
-            { label: "2nd Floor Avg", value: "—" },
-          ]}
+            if (fromDate && toDate) {
+              setAppliedState({
+                fromDate,
+                toDate,
+                floors: nextState.floors,
+                orientations: nextState.orientations,
+              });
+            } else {
+              setAppliedState(null);
+            }
+          }}
         />
 
-        {/* Chart Section */}
-        <div className="mt-10 flex flex-col gap-4 relative">
-          <div className="flex flex-wrap gap-6 items-end">
-            <DatePicker
-              fromDate={fromDate}
-              toDate={toDate}
-              setDate={({ fromDate: f, toDate: t }) =>
-                setState((prev) => ({ ...prev, fromDate: f, toDate: t }))
-              }
-            />
+        {useApiWallSensors && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            Using {apiWallSensors.length} wall sensors (same data source as ambient).
+          </p>
+        )}
 
-            <div>
-              <label className="block text-sm font-medium mb-1 dark:text-black">Floor Levels</label>
+        {!useApiWallSensors && (
+          <>
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-1">Floor Levels</label>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={toggleAllFloors}
-                  className={`px-3 py-1 text-sm border rounded transition ${
-                    floors.length === FLOOR_OPTIONS.length
-                      ? "bg-[#6D2077] text-white border-[#6D2077]"
-                      : "bg-white text-gray-700 hover:bg-gray-100"
-                  }`}
+                  onClick={() => handleSelectAll("floors", FLOOR_OPTIONS)}
+                  className="px-2 py-1 text-lg border rounded"
                 >
                   All
                 </button>
+
                 {FLOOR_OPTIONS.map((floor) => (
                   <button
                     key={floor}
-                    onClick={() => toggleFloor(floor)}
-                    className={`px-3 py-1 text-sm border rounded transition ${
-                      floors.includes(floor)
-                        ? "bg-[#6D2077] text-white border-[#6D2077]"
-                        : "bg-white text-gray-700 hover:bg-gray-100"
+                    onClick={() => handleMultiSelect("floors", floor)}
+                    className={`px-2 py-1 text-lg border rounded ${
+                      floors.includes(floor) ? "bg-[#6D2077] text-white" : ""
                     }`}
                   >
                     {floor}
@@ -149,37 +197,109 @@ export default function WallTempDashboard() {
                 ))}
               </div>
             </div>
-          </div>
 
-          <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4">
-            <LineHandler
-              key={activeSensors.join(",")}
-              sensorList={activeSensors}
-              startDate={fromDate || DEFAULT_FROM}
-              endDate={toDate || DEFAULT_TO}
-              graphTitle="Wall Temperature"
-              yTitle="Temperature (°C)"
-              xTitle="Time"
-            />
-          </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-1">Orientation</label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() =>
+                    handleSelectAll("orientations", ORIENTATION_OPTIONS)
+                  }
+                  className="px-2 py-1 text-lg border rounded"
+                >
+                  All
+                </button>
 
-          <div className="text-sm text-center text-gray-500 mt-2">
-            All information is displayed for educational purposes only.
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <ExportPDFButton />
-          <button
-            onClick={handleSaveScreen}
-            className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
-          >
-            Save Screen
-          </button>
-        </div>
+                {ORIENTATION_OPTIONS.map((dir) => (
+                  <button
+                    key={dir}
+                    onClick={() => handleMultiSelect("orientations", dir)}
+                    className={`px-2 py-1 text-lg border rounded ${
+                      orientations.includes(dir) ? "bg-[#6D2077] text-white" : ""
+                    }`}
+                  >
+                    {dir}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      <Footer />
-    </main>
+      <InfoCard
+        items={[
+          {
+            label: "Average Wall Temperature",
+            value: (24.356).toFixed(2) + "°C",
+          },
+          {
+            label: "Minimum Wall Temperature",
+            value: (20.254).toFixed(2) + "°C",
+          },
+          {
+            label: "Maximum Wall Temperature",
+            value: (24.789).toFixed(2) + "°C",
+          },
+          { label: "Temperature Range", value: (7.7789).toFixed(2) + "°C" },
+        ]}
+      />
+
+      <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4 mt-6">
+        {appliedState && activeSensors.length > 0 ? (
+          <LineHandler
+            key={`${appliedState.fromDate}-${appliedState.toDate}-${activeSensors.join(",")}`}
+            sensorList={activeSensors}
+            startDate={appliedState.fromDate}
+            endDate={appliedState.toDate}
+            graphTitle="Wall Temperature"
+            yTitle="Temperature (°C)"
+            xTitle="Time"
+          />
+        ) : (
+          <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+            Select date range and at least one floor or orientation to view the graph.
+          </div>
+        )}
+      </div>
+
+      {/* PDF Labelled Screenshot */}
+      <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
+        <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
+
+        {floors.length === 0 ? (
+          <div className="border border-dashed p-6 text-center text-sm text-gray-500">
+            Select a floor to preview layout.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 justify-center">
+            {floors.map((floor) =>
+              FLOOR_IMAGES[floor] ? (
+                <div key={floor} className="text-center">
+                  <p className="text-sm mb-2 font-medium">{floor}</p>
+
+                  <Image
+                    src={FLOOR_IMAGES[floor]}
+                    alt={floor}
+                    width={1300}
+                    height={500}
+                    className="border rounded-lg shadow-md hover:shadow-lg transition"
+                  />
+                </div>
+              ) : null,
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end mt-6">
+        <button
+          onClick={handleSaveScreen}
+          className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
+        >
+          Save Screen
+        </button>
+      </div>
+    </DashboardLayout>
   );
 }
