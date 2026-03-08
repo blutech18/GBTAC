@@ -29,8 +29,8 @@ export default function Page() {
     chartTitle: "",
     xAxisTitle: "",
     yAxisTitle: "",
-    // chartType: "line",
-    chartType: "bar",
+    chartType: "line",
+    // chartType: "bar",
   })
   const [selectedSensors, setSelectedSensors] = useState([ // temp for testing
     {code: "30000_TL252", name: "Carport"},

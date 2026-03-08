@@ -67,6 +67,7 @@ export default function EnergyDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-6">
         <LineHandler 
+          chartType={"line"}
           sensorList={[
             "30000_TL340", // GBT Generation Hourly Wh
             "30000_TL341", // GBT Consumption Hourly Wh
@@ -74,10 +75,11 @@ export default function EnergyDashboard() {
           ]}
           startDate={state.fromDate}
           endDate={state.toDate}
-          graphTitle={"Consumption vs Generation"}
+          graphTitle={`Consumption vs Generation, ${state.fromDate} to ${state.toDate}`}
           yTitle={"Wh"}
           xTitle={"hours"}
-          xUnit={"hour"}
+          aggTime={"none"}
+          aggType={"sum"}
         />
 
         <PieHandler

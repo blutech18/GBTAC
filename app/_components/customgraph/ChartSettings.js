@@ -24,7 +24,6 @@ export default function ChartSettings({settings, setSettings}) {
         >
           <option value="line">Line</option>
           <option value="bar">Bar</option>
-          <option value="area">Area</option>
         </select>
 
         <input
