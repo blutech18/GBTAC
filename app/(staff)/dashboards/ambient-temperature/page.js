@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
@@ -10,8 +11,13 @@ import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
 const STORAGE_KEY = "dashboard-ambient-temp";
 
-const FLOOR_OPTIONS = ["Basement", "1st Floor", "2nd Floor", "Roof"];
+const FLOOR_OPTIONS = ["Basement ", "1st Floor", "2nd Floor"];
 const ORIENTATION_OPTIONS = ["North", "South", "East", "West"];
+const FLOOR_IMAGES = {
+  "Basement ": "/floors/GBTAC-basement-level.png",
+  "1st Floor": "/floors/GBTAC-level1.png",
+  "2nd Floor": "/floors/GBTAC-level2.png",
+};
 
 export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
@@ -75,15 +81,6 @@ export default function AmbientTempDashboard() {
 
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
-      <InfoCard
-        items={[
-          { label: "Current Temp", value: (21.256).toFixed(2) + "°C" },
-          { label: "Daily Avg", value: (20.254).toFixed(2) + "°C" },
-          { label: "High", value: (24.789).toFixed(2) + "°C" },
-          { label: "Low", value: (17.7789).toFixed(2) + "°C" },
-        ]}
-      />
-
       <div className="flex flex-wrap gap-6 items-end mb-6">
         <DatePicker
           fromDate={fromDate}
@@ -142,18 +139,44 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
       </div>
+      <InfoCard
+        items={[
+          { label: "Current Temp", value: (21.256).toFixed(2) + "°C" },
+          { label: "Daily Avg", value: (20.254).toFixed(2) + "°C" },
+          { label: "High", value: (24.789).toFixed(2) + "°C" },
+          { label: "Low", value: (17.7789).toFixed(2) + "°C" },
+        ]}
+      />
 
       <GraphPlaceholder />
 
       {/* PDF Labelled Screenshot */}
       <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
-        <h3 className="font-semibold mb-2">PDF Labelled Screenshot</h3>
+        <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
 
-        <div className="border border-dashed p-6 text-center text-sm text-gray-500">
-          Screenshot preview will appear here.
-          <br />
-          (Exported PDF version of this dashboard)
-        </div>
+        {floors.length === 0 ? (
+          <div className="border border-dashed p-6 text-center text-sm text-gray-500">
+            Select a floor to preview layout.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 justify-center">
+            {floors.map((floor) =>
+              FLOOR_IMAGES[floor] ? ( // only render if the image exists
+                <div key={floor} className="text-center">
+                  <p className="text-sm mb-2 font-medium">{floor}</p>
+
+                  <Image
+                    src={FLOOR_IMAGES[floor]}
+                    alt={floor}
+                    width={1300}
+                    height={500}
+                    className="border rounded-lg shadow-md hover:shadow-lg transition"
+                  />
+                </div>
+              ) : null,
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end mt-6">

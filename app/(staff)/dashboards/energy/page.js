@@ -47,6 +47,11 @@ export default function EnergyDashboard() {
 
   return (
     <DashboardLayout title="Energy Dashboard">
+      <DatePicker
+        fromDate={state.fromDate}
+        toDate={state.toDate}
+        setDate={setState}
+      />
       <CardCarousel
         items={[
           { label: "Current Usage", value: "120 kWh" },
@@ -59,19 +64,13 @@ export default function EnergyDashboard() {
         horizontal
       />
 
-      <DatePicker
-        fromDate={state.fromDate}
-        toDate={state.toDate}
-        setDate={setState}
-      />
-
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-6">
         <LineHandler 
           chartType={"line"}
           sensorList={[
             "30000_TL340", // GBT Generation Hourly Wh
             "30000_TL341", // GBT Consumption Hourly Wh
-            "30000_TL339", // GBT Net Energy Hourly Wh   
+            "30000_TL339", // GBT Net Energy Hourly Wh
           ]}
           startDate={state.fromDate}
           endDate={state.toDate}
@@ -92,7 +91,6 @@ export default function EnergyDashboard() {
           graphTitle={"Solar Panel Generation"}
           label={"kWh"} // **check: unsure if right unit
         />
-        
       </div>
       <div className="flex justify-end mt-6">
         <button

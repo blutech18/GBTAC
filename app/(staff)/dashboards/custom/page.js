@@ -33,10 +33,10 @@ export default function Page() {
     // chartType: "bar",
   })
   const [selectedSensors, setSelectedSensors] = useState([ // temp for testing
-    {code: "30000_TL252", name: "Carport"},
-    {code: "30000_TL253", name: "Rooftop"}
+    // {code: "30000_TL252", name: "Carport"},
+    // {code: "30000_TL253", name: "Rooftop"}
   ]);
-  const [aggregationSettings, setAggregationSettings] = useState({time: "H", type: "sum"})
+  const [aggregationSettings, setAggregationSettings] = useState({time: "H", type: "mean"})
   
   
   // Temp state (user edits these before clicking Apply)

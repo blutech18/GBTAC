@@ -50,6 +50,13 @@ export default function WaterLevelDashboard() {
 
   return (
     <DashboardLayout title="Cistern Level Dashboard">
+      <DatePicker
+        fromDate={fromDate}
+        toDate={toDate}
+        setFromDate={(v) => handleStateChange({ ...state, fromDate: v })}
+        setToDate={(v) => handleStateChange({ ...state, toDate: v })}
+      />
+
       <InfoCard
         items={[
           { label: "Current Level", value: "82%" },
@@ -57,13 +64,6 @@ export default function WaterLevelDashboard() {
           { label: "Past 7 Days Max", value: "95%" },
           { label: "Difference vs Yesterday", value: "+2%" },
         ]}
-      />
-
-      <DatePicker
-        fromDate={fromDate}
-        toDate={toDate}
-        setFromDate={(v) => handleStateChange({ ...state, fromDate: v })}
-        setToDate={(v) => handleStateChange({ ...state, toDate: v })}
       />
 
       <GraphPlaceholder />
