@@ -81,6 +81,7 @@ async def get_data(sensor_code, start="2018-10-13", end="2025-12-31"):
     conn.close()
     return res
 
+
 # url format: "http://127.0.0.1:8000/graphs/name/{sensor code}"
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
@@ -89,13 +90,19 @@ async def get_name(sensor_code: str):
     curs = conn.cursor()
 
     query = """
-        SELECT display_name
+        SELECT sensor_description
         FROM dbo.sensor_names
         WHERE sensor_name_source = ?
     """
 
+    full_sensor_code = f"{sensor_pre}{sensor_code}"
+
     curs.execute(query, (sensor_code,))
     row = curs.fetchone()
+
+    if not row:
+        curs.execute(query, (full_sensor_code,))
+        row = curs.fetchone()
 
     conn.close()
 
