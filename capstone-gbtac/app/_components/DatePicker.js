@@ -17,7 +17,7 @@ export default function DateRangePicker({
   }
 
   return (
-    <div className="flex flex-nowrap gap-4 items-end shrink-0">
+    <div className="flex flex-wrap gap-4 items-end mb-6">
       <div>
         <label className="block text-sm text-gray-600 mb-1">From</label>
         <input

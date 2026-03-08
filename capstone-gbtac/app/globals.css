@@ -12,13 +12,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
-
-/* ── Print styles for Export PDF ── */
-@media print {
-  body > *                { display: none !important; }
-  #chart-print-area       { display: block !important; }
-  #chart-print-area *     { display: revert !important; }
-  @page                   { margin: 1cm; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 body {

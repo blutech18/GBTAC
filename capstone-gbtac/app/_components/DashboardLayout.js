@@ -6,7 +6,7 @@ import Footer from "./Footer";
 
 export default function DashboardLayout({ title, children }) {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 font-sans">
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-black font-sans">
       <SecondaryNav
         displayLogout={true}
         displayProfile={true}
@@ -25,7 +25,7 @@ export default function DashboardLayout({ title, children }) {
         {children}
       </main>
 
-      <div className="text-center text-sm text-gray-500 mt-8 px-4">
+      <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8 px-4">
         This information is displayed for educational purposes only.
       </div>
 
