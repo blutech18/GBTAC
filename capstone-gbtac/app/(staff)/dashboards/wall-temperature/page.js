@@ -11,68 +11,74 @@ import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
 const STORAGE_KEY = "dashboard-wall-temp";
 
-// 21 wall temperature sensors (all present in merged_timeseries_student.csv / GBTAC_data).
-// Per README: Basement 20003–20006_TL2; 1st 20007–20011_TL2; 2nd 20012–20016_TL2, 20016_TL5 (15).
-// +6 from 30000_* in CSV to reach 21 (client: 24 total, 3 not in Excel → 21).
+// We did not find explicit "Wall" temperature sensors in the database.
+// Using placeholder sensor mapping for demonstration.
 const FLOOR_SENSOR_MAP = {
-  Basement: [
-    "20003_TL2",
-    "20004_TL2",
-    "20005_TL2",
-    "20006_TL2",
-    "30000_TL2",
-    "30000_TL3",
-  ],
+  Basement: [],
   "1st Floor": [
-    "20007_TL2",
-    "20008_TL2",
-    "20009_TL2",
-    "20010_TL2",
-    "20011_TL2",
-    "30000_TL4",
-    "30000_TL8",
+    "30000_TL58", "30000_TL59", "30000_TL60", "30000_TL61",
+    "30000_TL62", "30000_TL63", "30000_TL64", "30000_TL65"
   ],
   "2nd Floor": [
-    "20012_TL2",
-    "20013_TL2",
-    "20014_TL2",
-    "20015_TL2",
-    "20016_TL2",
-    "20016_TL5",
-    "30000_TL9",
-    "30000_TL10",
+    "30000_TL40", "30000_TL41", "30000_TL42", "30000_TL43",
+    "30000_TL44", "30000_TL45", "30000_TL46", "30000_TL47",
+    "30000_TL48", "30000_TL49", "30000_TL50", "30000_TL51",
+    "30000_TL52"
   ],
 };
 
-// Orientation per wall sensor
 const SENSOR_ORIENTATION = {
-  "20003_TL2": "East",
-  "20004_TL2": "East",
-  "20005_TL2": "West",
-  "20006_TL2": "East",
-  "30000_TL2": "North",
-  "30000_TL3": "South",
-  "20007_TL2": "North",
-  "20008_TL2": "South",
-  "20009_TL2": "South",
-  "20010_TL2": "East",
-  "20011_TL2": "Middle",
-  "30000_TL4": "West",
-  "30000_TL8": "Middle",
-  "20012_TL2": "West",
-  "20013_TL2": "Middle",
-  "20014_TL2": "East",
-  "20015_TL2": "South",
-  "20016_TL2": "South",
-  "20016_TL5": "South",
-  "30000_TL9": "North",
-  "30000_TL10": "East",
+  "30000_TL58": "West",
+  "30000_TL59": "West",
+  "30000_TL60": "West",
+  "30000_TL61": "West",
+  "30000_TL62": "West",
+  "30000_TL63": "West",
+  "30000_TL64": "West",
+  "30000_TL65": "West",
+  "30000_TL40": "West",
+  "30000_TL41": "West",
+  "30000_TL42": "West",
+  "30000_TL43": "West",
+  "30000_TL44": "West",
+  "30000_TL45": "West",
+  "30000_TL46": "West",
+  "30000_TL47": "West",
+  "30000_TL48": "West",
+  "30000_TL49": "West",
+  "30000_TL50": "West",
+  "30000_TL51": "West",
+  "30000_TL52": "West",
+};
+
+const SENSOR_LABELS = {
+  "30000_TL58": "1st Floor West Wall 1",
+  "30000_TL59": "1st Floor West Wall 2",
+  "30000_TL60": "1st Floor West Wall 3",
+  "30000_TL61": "1st Floor West Wall 4",
+  "30000_TL62": "1st Floor West Wall 5",
+  "30000_TL63": "1st Floor West Wall 6",
+  "30000_TL64": "1st Floor West Wall 7",
+  "30000_TL65": "1st Floor West Wall 8",
+  "30000_TL40": "2nd Floor West Wall 1",
+  "30000_TL41": "2nd Floor West Wall 2",
+  "30000_TL42": "2nd Floor West Wall 3",
+  "30000_TL43": "2nd Floor West Wall 4",
+  "30000_TL44": "2nd Floor West Wall 5",
+  "30000_TL45": "2nd Floor West Wall 6",
+  "30000_TL46": "2nd Floor West Wall 7",
+  "30000_TL47": "2nd Floor West Wall 8",
+  "30000_TL48": "2nd Floor West Wall 9",
+  "30000_TL49": "2nd Floor West Wall 10",
+  "30000_TL50": "2nd Floor West Wall 11",
+  "30000_TL51": "2nd Floor West Wall 12",
+  "30000_TL52": "2nd Floor West Wall 13",
 };
 
 const FLOOR_OPTIONS = ["Basement", "1st Floor", "2nd Floor"];
-const ORIENTATION_OPTIONS = ["North", "South", "East", "West", "Middle"];
+const ORIENTATION_OPTIONS = ["North", "South", "East", "West"];
 const FLOOR_IMAGES = {
-  Basement: "/floors/GBTAC-basement-level.png",
+  "Basement": "/floors/GBTAC-basement-level.png",
   "1st Floor": "/floors/GBTAC-level1.png",
   "2nd Floor": "/floors/GBTAC-level2.png",
 };
@@ -97,7 +103,6 @@ export default function WallTempDashboard() {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
 
-  // Step 1: filter by floor (empty = all floors after Apply)
   const floorFiltered =
     !appliedState
       ? []
@@ -105,7 +110,6 @@ export default function WallTempDashboard() {
         ? Object.values(FLOOR_SENSOR_MAP).flat()
         : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
 
-  // Step 2: filter by orientation (empty = all orientations)
   const activeSensors =
     !appliedState
       ? []
@@ -171,10 +175,8 @@ export default function WallTempDashboard() {
   };
 
   const handleSaveScreen = () => {
-    // Save state to localStorage
     saveDashboardState(STORAGE_KEY, state);
 
-    // Save this dashboard to recent dashboards
     saveRecentDashboard({
       id: "wall-temperature",
       title: "Wall Temperature Dashboard",
@@ -200,24 +202,19 @@ export default function WallTempDashboard() {
           fromDate={fromDate}
           toDate={toDate}
           setDate={({ fromDate, toDate }) => {
-            setState((prev) => {
-              const nextState = {
-                ...prev,
+            const nextState = { ...state, fromDate, toDate };
+            setState(nextState);
+
+            if (fromDate && toDate) {
+              setAppliedState({
                 fromDate,
                 toDate,
-              };
-              if (fromDate && toDate) {
-                setAppliedState({
-                  fromDate,
-                  toDate,
-                  floors: nextState.floors,
-                  orientations: nextState.orientations,
-                });
-              } else {
-                setAppliedState(null);
-              }
-              return nextState;
-            });
+                floors: nextState.floors,
+                orientations: nextState.orientations,
+              });
+            } else {
+              setAppliedState(null);
+            }
           }}
         />
 
@@ -271,7 +268,7 @@ export default function WallTempDashboard() {
           </div>
         </div>
       </div>
-
+      
       <InfoCard
         items={[
           {
@@ -295,6 +292,7 @@ export default function WallTempDashboard() {
           <LineHandler
             key={`${appliedState.fromDate}-${appliedState.toDate}-${activeSensors.join(",")}`}
             sensorList={activeSensors}
+            sensorLabels={SENSOR_LABELS}
             startDate={appliedState.fromDate}
             endDate={appliedState.toDate}
             graphTitle="Wall Temperature"

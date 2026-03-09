@@ -11,7 +11,7 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function LineHandler({sensorList, startDate, endDate, graphTitle, yTitle, xTitle}){
+export default function LineHandler({sensorList, sensorLabels, startDate, endDate, graphTitle, yTitle, xTitle}){
 
     // Auto-compute the chart x-axis time unit — must match backend aggregation tiers
     const getTimeUnit = () => {
@@ -142,7 +142,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
 
             // for each sensor in sensors array it sets the line label, data, and colour
             const dataset = sensors.map(sensor => ({
-                label: sensor.name || sensor.code,
+                label: sensorLabels?.[sensor.code] || sensor.code,
                 data: (sensorData[sensor.id] || []).map((d) => d.data),
                 borderColor: colours[sensor.id % colours.length],
                 backgroundColor: colours[sensor.id % colours.length],
