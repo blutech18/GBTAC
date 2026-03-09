@@ -77,6 +77,7 @@ export default function EnergyDashboard() {
           graphTitle={`Consumption vs Generation, ${state.fromDate} to ${state.toDate}`}
           yTitle={"Wh"}
           xTitle={"hours"}
+          xUnit={"hour"}
           aggTime={"none"}
           aggType={"sum"}
         />

@@ -12,7 +12,7 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function LineHandler({chartType, sensorList, startDate, endDate, graphTitle, yTitle, xTitle, aggTime, aggType}){
+export default function LineHandler({chartType, sensorList, startDate, endDate, graphTitle, yTitle, xTitle, xUnit, aggTime="none", aggType="mean"}){
     
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
@@ -25,7 +25,7 @@ export default function LineHandler({chartType, sensorList, startDate, endDate, 
     
     const [fetched, setFetched] = useState(false); // if data has been fetched or not
     const [sensorData, setSensorData] = useState([]); // holds all the sensor data
-    const [unit, setUnit] = useState()
+    const [unit, setUnit] = useState(xUnit)
     const [minZoom, setMinZoom] = useState()
 
     // mins and maxes for zoom
@@ -58,9 +58,13 @@ export default function LineHandler({chartType, sensorList, startDate, endDate, 
             for(let i = 0; i < sensors.length; i++){
                 const res = await fetch(`${API_ENDPOINT}/graphs/data/${sensors[i].code}?start=${startDate}&end=${endDate}&agg=${aggTime}&type=${aggType}`);
                 const data = await res.json();
+                
+                if (typeof data === "string") {
+                    throw new Error(`API returned error: ${data}`);
+                }
+
                 arr.push(data);
-            }
-            
+            }   
             setSensorData(arr);
             setFetched(true);
             
@@ -105,7 +109,7 @@ export default function LineHandler({chartType, sensorList, startDate, endDate, 
 
     // runs when sensorData is changed (so just on fetch at the moment)
     useEffect(() => {
-        if(fetched){
+        if(fetched && sensorData != []){
             // ** might change so it reflects more than just the one dataset?
             const labels = sensorData[0].map(d => new Date(d.ts));
 
@@ -137,15 +141,21 @@ export default function LineHandler({chartType, sensorList, startDate, endDate, 
  
             if(aggTime == "H"){
                 setUnit("hour")
-                setMinZoom(2 * 60 * 60 * 1000)
             }else if(aggTime == "D"){
                 setUnit("day")
-                setMinZoom(2 * 24 * 60 * 60 * 1000)
             }else if(aggTime == "M"){
                 setUnit("month")
-                setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month
-            }else{
+            }else if(aggTime == "Y"){
                 setUnit("year")
+            }
+            
+            if(unit == "hour"){
+                setMinZoom(2 * 60 * 60 * 1000)
+            }else if(unit == "day"){
+                setMinZoom(2 * 24 * 60 * 60 * 1000)
+            }else if(unit == "month"){
+                setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month                
+            }else if(unit == "year"){
                 setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month
             }
         }
