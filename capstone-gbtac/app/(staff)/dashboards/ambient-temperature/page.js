@@ -36,10 +36,10 @@ const SENSOR_ORIENTATION = {
 };
 
 const SENSOR_LABELS = {
-  "20004_TL2": ["E0FTHC034", "East 1 Basement"],
+  "20004_TL2": "East 1 Basement",
   "20005_TL2": "West Basement",
-  "20006_TL2": ["E0FTHC035", "East 2 Basement"],
-  "20007_TL2": ["N1FTHC42", "North (West) 1st Floor"],
+  "20006_TL2": "East 2 Basement",
+  "20007_TL2": "North (West) 1st Floor",
   "20008_TL2": "South 1 1st Floor",
   "20009_TL2": "South 2 1st Floor",
   "20010_TL2": "East 1st Floor",
