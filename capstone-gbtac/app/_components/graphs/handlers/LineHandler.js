@@ -141,16 +141,25 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
             const labels = sensorData[0].map(d => new Date(d.ts));
 
             // for each sensor in sensors array it sets the line label, data, and colour
-            const dataset = sensors.map(sensor => ({
-                label: sensorLabels?.[sensor.code] || sensor.code,
-                data: (sensorData[sensor.id] || []).map((d) => d.data),
-                borderColor: colours[sensor.id % colours.length],
-                backgroundColor: colours[sensor.id % colours.length],
-                borderWidth: 2,
-                pointRadius: 3,
-                pointHoverRadius: 6,
-                tension: 0.1
-            }));
+            const dataset = sensors.map(sensor => {
+                const locationName = sensorLabels?.[sensor.code];
+                // Use the fetched API name (which contains the E0FTHC034 format) or fallback to code
+                const codeName = sensor.name && sensor.name !== "null" ? sensor.name : sensor.code;
+                
+                // If a location name exists, use it instead of the code name as requested by client
+                const finalLabel = locationName || codeName;
+
+                return {
+                    label: finalLabel,
+                    data: (sensorData[sensor.id] || []).map((d) => d.data),
+                    borderColor: colours[sensor.id % colours.length],
+                    backgroundColor: colours[sensor.id % colours.length],
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    tension: 0.1
+                };
+            });
             
             setGraphData({
                 labels,
