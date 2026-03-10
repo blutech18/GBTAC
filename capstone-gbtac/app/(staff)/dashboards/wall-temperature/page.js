@@ -15,23 +15,22 @@ const STORAGE_KEY = "dashboard-wall-temp";
 const FLOOR_SENSOR_MAP = {
   Basement: [
     "30000_TL57", "30000_TL56", "30000_TL55", // East Basement
-    "30000_TL39", "30000_TL38", "30000_TL79", // North Basement
-    "30000_TL69", "30000_TL68", "30000_TL67", "30000_TL66", "30000_TL95", "30000_TL11", "30000_TL10", // South Basement
-    "30000_TL62", "30000_TL61", "30000_TL60", "30000_TL59", "30000_TL58" // West Basement
+    "30000_TL39", "30000_TL38", // North Basement
+    "30000_TL69", "30000_TL68", "30000_TL67", "30000_TL66", "30000_TL95", // South Basement
   ],
   "1st Floor": [
     "30000_TL90", // North 1st floor
     "30000_TL71", "30000_TL70", // South 1st floor
-    "30000_TL65", "30000_TL64", "30000_TL63" // West 1st floor
+    "30000_TL65", "30000_TL64", "30000_TL63", "30000_TL62", "30000_TL61", "30000_TL60", "30000_TL59", "30000_TL58" // West 1st floor
   ],
   "2nd Floor": [],
 };
 
 const SENSOR_ORIENTATION = {
   "30000_TL57": "East", "30000_TL56": "East", "30000_TL55": "East",
-  "30000_TL39": "North", "30000_TL38": "North", "30000_TL79": "North", "30000_TL90": "North",
+  "30000_TL39": "North", "30000_TL38": "North", "30000_TL90": "North",
   "30000_TL69": "South", "30000_TL68": "South", "30000_TL67": "South", "30000_TL66": "South",
-  "30000_TL95": "South", "30000_TL11": "South", "30000_TL10": "South", "30000_TL71": "South", "30000_TL70": "South",
+  "30000_TL95": "South", "30000_TL71": "South", "30000_TL70": "South",
   "30000_TL62": "West", "30000_TL61": "West", "30000_TL60": "West", "30000_TL59": "West", "30000_TL58": "West",
   "30000_TL65": "West", "30000_TL64": "West", "30000_TL63": "West"
 };
@@ -45,7 +44,6 @@ const SENSOR_LABELS = {
   // Basement North
   "30000_TL39": "North 1 Basement",
   "30000_TL38": "North 2 Basement",
-  "30000_TL79": "North 3 Basement",
   
   // Basement South
   "30000_TL69": "South 1 Basement",
@@ -53,15 +51,6 @@ const SENSOR_LABELS = {
   "30000_TL67": "South 3 Basement",
   "30000_TL66": "South 4 Basement",
   "30000_TL95": "South 5 Basement",
-  "30000_TL11": "South 6 Basement",
-  "30000_TL10": "South 7 Basement",
-  
-  // Basement West
-  "30000_TL62": "West 1 Basement",
-  "30000_TL61": "West 2 Basement",
-  "30000_TL60": "West 3 Basement",
-  "30000_TL59": "West 4 Basement",
-  "30000_TL58": "West 5 Basement",
   
   // 1st Floor
   "30000_TL90": "North 1st Floor",
@@ -69,7 +58,12 @@ const SENSOR_LABELS = {
   "30000_TL70": "South 2 1st Floor",
   "30000_TL65": "West 1 1st Floor",
   "30000_TL64": "West 2 1st Floor",
-  "30000_TL63": "West 3 1st Floor"
+  "30000_TL63": "West 3 1st Floor",
+  "30000_TL62": "West 4 1st Floor",
+  "30000_TL61": "West 5 1st Floor",
+  "30000_TL60": "West 6 1st Floor",
+  "30000_TL59": "West 7 1st Floor",
+  "30000_TL58": "West 8 1st Floor",
 };
 
 const FLOOR_OPTIONS = ["Basement", "1st Floor", "2nd Floor"];

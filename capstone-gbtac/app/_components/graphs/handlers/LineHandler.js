@@ -16,7 +16,19 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
     // Auto-compute the chart x-axis time unit — must match backend aggregation tiers
     const getTimeUnit = () => {
         try {
-            const days = (new Date(endDate) - new Date(startDate)) / 86400000 + 1;
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const days = (end - start) / 86400000 + 1;
+
+            // Exact same calendar day → minute-level data
+            if (
+                start.getFullYear() === end.getFullYear() &&
+                start.getMonth() === end.getMonth() &&
+                start.getDate() === end.getDate()
+            ) {
+                return "minute";             // minute averages (0..59)
+            }
+
             if (days <= 1) return "hour";    // hourly averages (0..23)
             if (days <= 60) return "day";    // daily averages (1..31)
             if (days <= 730) return "month"; // monthly averages (January..)
