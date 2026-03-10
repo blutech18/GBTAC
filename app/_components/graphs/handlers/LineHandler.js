@@ -4,6 +4,7 @@ import Chart from "chart.js/auto";
 import { CategoryScale, TimeScale } from "chart.js";
 import { useState, useEffect } from "react";
 import LineChart from "../LineChart"
+import BarChart from "../BarChart";
 import "chartjs-adapter-date-fns";
 import zoomPlugin from 'chartjs-plugin-zoom'
 
@@ -11,7 +12,7 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function LineHandler({sensorList, startDate, endDate, graphTitle, yTitle, xTitle, xUnit}){
+export default function LineHandler({chartType, sensorList, startDate, endDate, graphTitle, yTitle, xTitle, xUnit, aggTime="none", aggType="mean"}){
     
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
@@ -24,7 +25,9 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
     
     const [fetched, setFetched] = useState(false); // if data has been fetched or not
     const [sensorData, setSensorData] = useState([]); // holds all the sensor data
-    
+    const [unit, setUnit] = useState(xUnit)
+    const [minZoom, setMinZoom] = useState()
+
     // mins and maxes for zoom
     const [xMin, setXMin] = useState();
     const [xMax, setXMax] = useState();
@@ -44,7 +47,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
 
     useEffect(() => {
         setFetched(false)
-    }, [startDate, endDate])
+    }, [startDate, endDate, aggTime, aggType])
 
     // takes sensors array and fetches data based off of codes, puts it in the sensorData array
     // ** NOTE: add warning if no data is available (no sensor data during time period) 
@@ -53,11 +56,15 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
             let arr = [];
             
             for(let i = 0; i < sensors.length; i++){
-                const res = await fetch(`${API_ENDPOINT}/graphs/data/${sensors[i].code}?start=${startDate}&end=${endDate}`);
+                const res = await fetch(`${API_ENDPOINT}/graphs/data/${sensors[i].code}?start=${startDate}&end=${endDate}&agg=${aggTime}&type=${aggType}`);
                 const data = await res.json();
+                
+                if (typeof data === "string") {
+                    throw new Error(`API returned error: ${data}`);
+                }
+
                 arr.push(data);
-            }
-            
+            }   
             setSensorData(arr);
             setFetched(true);
             
@@ -102,7 +109,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
 
     // runs when sensorData is changed (so just on fetch at the moment)
     useEffect(() => {
-        if(fetched){
+        if(fetched && sensorData != []){
             // ** might change so it reflects more than just the one dataset?
             const labels = sensorData[0].map(d => new Date(d.ts));
 
@@ -131,8 +138,29 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                 labels,
                 datasets: dataset
             });
+ 
+            if(aggTime == "H"){
+                setUnit("hour")
+            }else if(aggTime == "D"){
+                setUnit("day")
+            }else if(aggTime == "M"){
+                setUnit("month")
+            }else if(aggTime == "Y"){
+                setUnit("year")
+            }
+            
+            if(unit == "hour"){
+                setMinZoom(2 * 60 * 60 * 1000)
+            }else if(unit == "day"){
+                setMinZoom(2 * 24 * 60 * 60 * 1000)
+            }else if(unit == "month"){
+                setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month                
+            }else if(unit == "year"){
+                setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month
+            }
         }
     }, [sensorData]);
+    
 
     // options for graph display to be passed on to LineChart component
     const graphOptions = {
@@ -144,7 +172,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                 },
                 type: "time",
                 time: {
-                unit: xUnit, // ** might change to scale automatically
+                unit: unit, // ** might change to scale automatically
                 }
             },
             y: {
@@ -174,7 +202,7 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
                     x: {
                         min: xMin,
                         max: xMax,
-                        minRange: 1  * 60 * 60 * 1000, // hours * minutes * seconds * milliseconds
+                        minRange: minZoom
                     },
                     y: {
                         min: yMin,
@@ -189,9 +217,17 @@ export default function LineHandler({sensorList, startDate, endDate, graphTitle,
     };
 
     // passes graph info onto LineChart component and displays it
-    return (
-        <div>
-            <LineChart options={graphOptions} data={graphData}/>
-        </div>
-    )
+    if(chartType == "line"){
+        return (
+            <div>
+                <LineChart options={graphOptions} data={graphData}/>
+            </div>
+        )
+    }else if(chartType == "bar"){
+        return (
+            <div className="bg-black">
+                <BarChart options={graphOptions} data={graphData}/>       
+            </div>
+        )        
+    }
 }

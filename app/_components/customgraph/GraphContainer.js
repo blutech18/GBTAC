@@ -4,7 +4,7 @@
 
 import CustomHandler from "../graphs/handlers/CustomHandler";
 
-export default function GraphContainer({selectedSensors, dateRange, settings}) {
+export default function GraphContainer({selectedSensors, dateRange, settings, aggSettings}) {
   return (
     <div className="bg-white rounded-sm shadow-sm p-4 mb-8">
 
@@ -18,6 +18,7 @@ export default function GraphContainer({selectedSensors, dateRange, settings}) {
           selectedSensors={selectedSensors} 
           dateRange={dateRange}
           settings={settings}
+          aggSettings={aggSettings}
         />
       </div>
       <div className="flex justify-end gap-4">

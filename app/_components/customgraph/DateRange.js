@@ -4,10 +4,7 @@
 "use client";
 import { useState } from "react";
 
-export default function DateRange({ dateRange, setDateRange }) {
-
-    const [aggregation, setAggregation] = useState("sum");
-    const [timeInterval, setTimeInterval] = useState("hourly"); 
+export default function DateRange({ dateRange, setDateRange, aggSettings, setAggSettings }) {
 
 return (
   <div
@@ -44,25 +41,25 @@ return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
       <div className="flex flex-col">
         <select
-          value={timeInterval}
-          onChange={(e) => setTimeInterval(e.target.value)}
+          value={aggSettings.time}
+          onChange={(e) => setAggSettings(prev => ({...prev, time: e.target.value}))}
           className="border p-2 rounded text-gray-500"
         >
-          <option value="hourly">Hourly</option>
-          <option value="daily">Daily</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
+          <option value="H">Hourly</option>
+          <option value="D">Daily</option>
+          <option value="M">Monthly</option>
+          <option value="Y">Yearly</option>
         </select>
       </div>
 
       <div className="flex flex-col">
         <select
-          value={aggregation}
-          onChange={(e) => setAggregation(e.target.value)}
+          value={aggSettings.type}
+          onChange={(e) => setAggSettings(prev => ({...prev, type: e.target.value}))}
           className="border p-2 rounded text-gray-500"
         >
+          <option value="mean">Average</option>
           <option value="sum">Sum</option>
-          <option value="average">Average</option>
         </select>
       </div>
     </div>
