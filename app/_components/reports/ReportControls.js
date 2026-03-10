@@ -28,6 +28,23 @@ export default function ReportControls({
       setErrorMessage("From date cannot be after To date.");
       return;
     }
+    //From date can't be past 8 years of data
+    const today = new Date();
+    const fromDate = new Date(from);
+    const diffYears = (today - fromDate) / (1000 * 60 * 60 * 24 * 365); //difference in years from today + from date
+    if (diffYears > 8) {
+      setErrorMessage("From date cannot be more than 8 years ago.");
+      return;
+    }
+
+    //To date can't be past 2025-12-31
+    const maxToDate = new Date("2025-12-31");
+    const toDate = new Date(to);
+    if (toDate > maxToDate) {
+      setErrorMessage("To date cannot be past December 31, 2025.");
+      return;
+    }
+
 
     setErrorMessage("");
     onGenerate(); // ⬆️ Lift the actual report generation up

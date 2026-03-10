@@ -21,9 +21,9 @@ export default function SelectedSensors({ selectedSensors = [], setSelectedSenso
         {selectedSensors.length === 0 ? (
           <p className="text-gray-500 p-2">No sensors selected</p>
         ) : (
-          selectedSensors.map(sensor => (
+          selectedSensors.map((sensor, index) => (
             <div
-              key={sensor.code}
+              key={index}
               className="flex justify-between items-center p-2 border-b"
             >
               <span>{sensor.name}</span>
