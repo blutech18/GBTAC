@@ -9,6 +9,7 @@ import DateRange from "../../../_components/customgraph/DateRange";
 import DashboardLayout from "@/app/_components/DashboardLayout";
 import ExportPDFButton from "@/app/_components/ExportPDFButton";
 import ChartSelect from "@/app/_components/customgraph/ChartSelect";
+import ConfirmModal from "@/app/_components/ConfirmModal";
 import { saveCustomDashboard } from "@/app/utils/saveCustomizedCharts";
 import { auth } from "@/app/_utils/firebase";
 import { useRef, useState, useEffect } from "react";
@@ -45,6 +46,7 @@ export default function Page() {
   const [sensorList, setSensorList] = useState([]);
   const [error, setError] = useState(null);
   const [refreshChart, setRefreshChart] = useState(0);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
 
   //Load available sensors on component
@@ -129,6 +131,7 @@ export default function Page() {
         selectedSensors: tempSelectedSensors
       });
       setCurrentChartId(savedId);
+      setShowSaveModal(false);
       alert("Chart saved successfully!")
       setRefreshChart(prev => prev + 1);
     } catch (err) {
@@ -199,16 +202,21 @@ export default function Page() {
           </button>
         </div>
 
-        <div className="w-full" ref={chartRef}>
-          <GraphContainer
-            selectedSensors={selectedSensors} 
-            dateRange={dateRange}
-            settings={chartSettings}
-          />
+        <div className="w-full overflow-hidden" ref={chartRef}>
+          <div style={{ height: "600px" }} className="w-full">
+            <GraphContainer
+              selectedSensors={selectedSensors}
+              dateRange={dateRange}
+              settings={chartSettings}
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
-          <button onClick={handleSave} className="px-6 py-2 md:px-4 md:py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition w-full sm:w-auto order-2 sm:order-1">
+        <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6 mb-6">
+          <button
+            onClick={() => setShowSaveModal(true)}
+            className="px-6 py-2 md:px-4 md:py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition w-full sm:w-auto order-2 sm:order-1"
+          >
             Save Chart
           </button>
           <div className="w-full sm:w-auto order-1 sm:order-2">
@@ -219,6 +227,16 @@ export default function Page() {
           </div>
         </div>
       </div>
+      {showSaveModal && (
+        <ConfirmModal
+          title="Save Chart"
+          message="Are you sure you want to save this chart? It can be deleted later."
+          confirmText="Save"
+          variant="primary"
+          onConfirm={handleSave}
+          onCancel={() => setShowSaveModal(false)}
+        />
+      )}
     </DashboardLayout>
   );
 }

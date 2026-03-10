@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { auth } from "@/app/_utils/firebase";
 import { fetchUserCharts, fetchChartById, deleteChart } from "@/app/utils/storage";
+import ConfirmModal from "../ConfirmModal";
 
 export default function ChartSelect({
   currentChartId,
@@ -13,7 +14,9 @@ export default function ChartSelect({
   onResetChart,
   refreshChart
 }) {
+
   const [charts, setCharts] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Fetch previously saved charts from Firestore
   useEffect(() => {
@@ -73,15 +76,15 @@ export default function ChartSelect({
         Load An Existing Chart
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-500">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col">
           <label className="text-sm text-black mb-1">Chart Title</label>
           <select
             value={currentChartId || "new"}
             onChange={handleSelect}
-            className="border p-2 rounded text-gray-500 flex-1"
+            className="border p-2 rounded text-gray-500 w-full"
           >
-            <option value="new">Chart Title</option>
+            <option value="new">-- Select a chart --</option>
             {charts.map(chart => (
               <option key={chart.id} value={chart.id}>
                 {chart.title}
@@ -89,12 +92,12 @@ export default function ChartSelect({
             ))}
           </select>
         </div>
-        
-        <div className="flex flex-col justify-end">
+
+        <div className="flex justify-end">
           <button
-            onClick={handleDelete}
+            onClick={() => setShowDeleteModal(true)}
             disabled={!currentChartId}
-            className={`px-10 py-2 rounded text-white font-semibold ${
+            className={`px-6 py-2 rounded text-white w-full font-semibold ${
               currentChartId
                 ? "bg-[#912932] hover:bg-red-700"
                 : "bg-gray-300 cursor-not-allowed"
@@ -111,6 +114,18 @@ export default function ChartSelect({
           ? "Loaded chart is editable below."
           : "Select an existing chart to view or edit."}
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <ConfirmModal
+          title="Delete Chart"
+          message="Are you sure you want to delete this chart? This cannot be undone."
+          confirmText="Delete"
+          variant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteModal(false)}
+        />
+      )}
     </div>
   );
 }
