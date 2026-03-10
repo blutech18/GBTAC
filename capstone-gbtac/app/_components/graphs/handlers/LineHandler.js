@@ -19,16 +19,6 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
             const start = new Date(startDate);
             const end = new Date(endDate);
             const days = (end - start) / 86400000 + 1;
-
-            // Exact same calendar day → minute-level data
-            if (
-                start.getFullYear() === end.getFullYear() &&
-                start.getMonth() === end.getMonth() &&
-                start.getDate() === end.getDate()
-            ) {
-                return "minute";             // minute averages (0..59)
-            }
-
             if (days <= 1) return "hour";    // hourly averages (0..23)
             if (days <= 60) return "day";    // daily averages (1..31)
             if (days <= 730) return "month"; // monthly averages (January..)
@@ -37,9 +27,8 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
     };
 
     // X-axis display format per tier — client spec:
-    // yearly=2020,2021 | monthly=January,February | daily=1,2..31 | hourly=0..23 | minute=0..59
+    // yearly=2020,2021 | monthly=January,February | daily=1,2..31 | hourly=0..23
     const getDisplayFormats = () => ({
-        minute: "m",    // 0, 1, 2 ... 59
         hour:   "H",    // 0, 1, 2 ... 23
         day:    "d",    // 1, 2, 3 ... 31
         month:  "MMMM", // January, February ...
@@ -126,7 +115,7 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
     
     // sets defaults
     const labels = 0; // x axis labels
-    // 16 visually distinct colours — enough for all sensor combinations
+    // 21+ visually distinct colours — enough for all wall/ambient sensors
     const colours = [
         "#E63946", // red
         "#2196F3", // blue
@@ -144,6 +133,11 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         "#FF5722", // deep orange
         "#3F51B5", // indigo
         "#009688", // dark teal
+        "#1D3557", // navy
+        "#FFD54F", // yellow
+        "#C62828", // dark red
+        "#8BC34A", // light green
+        "#FF1493", // hot pink
     ];
     const [graphData, setGraphData] = useState({labels, datasets: [{}]}); // data to be passed on to LineChart component
 
