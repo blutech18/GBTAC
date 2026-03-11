@@ -6,7 +6,7 @@ import CustomHandler from "../graphs/handlers/CustomHandler";
 
 export default function GraphContainer({ selectedSensors, dateRange, settings, aggSettings }) {
   return (
-    <div className="w-full h-full bg-white rounded-lg shadow p-4">
+    <div className="w-full h-full bg-white rounded p-4">
       <CustomHandler
         selectedSensors={selectedSensors}
         dateRange={dateRange}

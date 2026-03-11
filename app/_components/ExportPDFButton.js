@@ -58,7 +58,7 @@ export default function ExportPDFButton({ chartRef, fileName }) {
           title="Export PDF"
           message="Are you sure you want to export as PDF?"
           confirmText="Export"
-          variant="primary"
+          variant="danger"
           onConfirm={async () => {
             setShowConfirmModal(false);
             await handleExport();

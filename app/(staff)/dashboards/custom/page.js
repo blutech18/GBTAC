@@ -181,8 +181,11 @@ export default function Page() {
   };
 
   return (
-    <DashboardLayout title="Create Custom Chart">
-      <div className="container mx-auto px-4 py-4 md:py-8">
+    <DashboardLayout title="">
+      <div className="mx-auto w-full max-w-7xl -mt-2 md:-mt-4">
+        <h1 className="text-2xl font-semibold text-gray-800 mb-6">
+          Create Custom Chart
+        </h1>
         <div className="mb-4 md:mb-5 w-full max-w-md md:max-w-none md:w-1/2">
           <ChartSelect
             currentChartId={currentChartId}
@@ -231,9 +234,9 @@ export default function Page() {
           </div>
         )}
 
-        <div className="mb-4 md:mb-6 flex justify-right md:justify-start">
+        <div className="mb-5 md:mb-4 flex justify-end">
           <button
-            className="px-6 py-2 md:px-4 md:py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition w-full md:w-auto"
+            className="px-10 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition w-full xl:w-auto"
             onClick={handleApply}
           >
             Apply
@@ -241,7 +244,7 @@ export default function Page() {
         </div>
 
         {/* Graph below */}
-        <div className="w-full overflow-hidden" ref={chartRef}>
+        <div className="w-full overflow-hidden shadow-sm rounded-lg" ref={chartRef}>
           <div style={{ height: "600px" }} className="w-full">
           <GraphContainer 
             key={currentChartId ?? "new"}

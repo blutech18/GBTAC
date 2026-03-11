@@ -24,7 +24,7 @@ export default function ChartSettings({ settings, setSettings }) {
   };
 
   return (
-    <div style={{ fontFamily: "var(--font-titillium)" }} className="bg-white rounded-sm shadow-sm p-4 w-full h-full">
+    <div style={{ fontFamily: "var(--font-titillium)" }} className="bg-white rounded shadow-sm p-4 w-full h-full">
       <h2 className="font-semibold text-black mb-4">Chart Settings</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-500">

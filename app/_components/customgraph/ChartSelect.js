@@ -53,13 +53,15 @@ export default function ChartSelect({
 
   // Handle chart deletion
   const handleDelete = async () => {
+    setShowDeleteModal(false);
+
     if (!currentChartId) return;
     const user = auth.currentUser;
     if (!user) return;
     try {
       await deleteChart(user.email, currentChartId);
       onDeleteChart();
-      setCharts(charts.filter(chart => chart.id !== currentChartId));
+      setCharts(prevCharts => prevCharts.filter(chart => chart.id !== currentChartId));
       alert("Chart deleted successfully!");
     } catch (err) {
       console.error("Failed to delete chart:", err);
@@ -70,7 +72,7 @@ export default function ChartSelect({
   return (
     <div
       style={{ fontFamily: "var(--font-titillium)" }}
-      className="bg-white rounded-sm shadow-sm p-4 w-1/2"
+      className="bg-white rounded shadow-sm p-4 w-1/2"
     >
       <h2 className="font-semibold text-black mb-2">
         Load An Existing Chart
