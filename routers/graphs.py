@@ -62,8 +62,12 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
     #close connection and send data
     conn.close()
 
+    if res == []:
+        return "no data found"
+
     if agg != "none":
         df = pd.DataFrame(res)
+        df = df.dropna()
         df["ts"] = pd.to_datetime(df["ts"])
         df = df.set_index("ts")
 
@@ -72,7 +76,7 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
         else:
             df_agg = df.resample(agg).sum()
             
-        df_agg = df_agg.dropna()
+        # df_agg = df_agg.dropna()
         res = df_agg.reset_index().to_dict(orient="records")
 
     return res
