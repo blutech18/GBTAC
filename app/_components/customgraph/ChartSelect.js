@@ -40,6 +40,7 @@ export default function ChartSelect({
       onResetChart();
       return;
     }
+
     const user = auth.currentUser;
     if (!user) return;
     try {
@@ -53,7 +54,6 @@ export default function ChartSelect({
   // Handle chart deletion
   const handleDelete = async () => {
     if (!currentChartId) return;
-    if (!window.confirm("Are you sure you want to delete this chart?")) return;
     const user = auth.currentUser;
     if (!user) return;
     try {

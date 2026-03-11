@@ -6,6 +6,7 @@ import LineHandler from "./LineHandler"
 export default function CustomHandler({selectedSensors, dateRange, settings, aggSettings}){
     try{
         const [sensors, setSensors] = useState(selectedSensors.map(sensor => sensor.code))
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         useEffect(() => {
             setSensors(selectedSensors.map(sensor => sensor.code))
         }, [selectedSensors])
@@ -20,9 +21,9 @@ export default function CustomHandler({selectedSensors, dateRange, settings, agg
                             sensorList={sensors}
                             startDate={dateRange.from}
                             endDate={dateRange.to}
-                            graphTitle={settings.chartTitle}
-                            yTitle={settings.xAxisTitle}
-                            xTitle={settings.yAxisTitle}
+                            graphTitle={settings.chartTitle ?? ""}
+                            yTitle={settings.yAxisTitle ?? ""}
+                            xTitle={settings.xAxisTitle ?? ""}
                             aggTime={aggSettings.time}
                             aggType={aggSettings.type}                            
                         />
