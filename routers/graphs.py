@@ -4,10 +4,11 @@ from datetime import datetime
 router = APIRouter(prefix="/graphs")
 
 # Adaptive aggregation per client spec:
-#   > 730 days  → yearly averages   (x-axis: 2020, 2021, ...)
-#   > 60  days  → monthly averages  (x-axis: January, February, ...)
-#   > 1   day   → daily averages    (x-axis: 1, 2, ... 31)
-#   <= 1  day   → hourly averages   (x-axis: 0, 1, ... 23)
+#   Yearly  → x-axis: 2020, 2021, ...
+#   Monthly → x-axis: January, February, ...
+#   Daily   → x-axis: 1, 2, ... 31
+#   Hourly  → x-axis: 0, 1, ... 23
+#   Minute data in system is every 15 minutes (same-day range)
 @router.get("/data/{sensor_code}")
 async def get_data(sensor_code, start="2018-10-13", end="2025-12-31"):
 
@@ -17,15 +18,32 @@ async def get_data(sensor_code, start="2018-10-13", end="2025-12-31"):
     if end == "":
         end = start
 
+    # Normalise and compute span in days
     try:
-        days = (datetime.strptime(end, "%Y-%m-%d") - datetime.strptime(start, "%Y-%m-%d")).days + 1
+        start_dt = datetime.strptime(start, "%Y-%m-%d")
+        end_dt = datetime.strptime(end, "%Y-%m-%d")
+        days = (end_dt - start_dt).days + 1
     except Exception:
+        # Fallback: treat as single day
+        start_dt = end_dt = None
         days = 1
 
     col = f"{sensor_pre}{sensor_code}"
 
-    if days <= 1:
-        # Hourly averages for a single day (x-axis: 0..23)
+    if end == start:
+        # 15-minute buckets for a single day (minute data is every 15 minutes)
+        # Keep timestamps at exact 15-minute boundaries so the frontend can still show hourly ticks (0..23).
+        query = f"""
+            SELECT DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0) AS ts,
+                   AVG({col}) AS data
+            FROM GBTAC_data
+            WHERE {col} IS NOT NULL
+              AND CAST(ts AS DATE) = '{start}'
+            GROUP BY DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0)
+            ORDER BY ts
+        """
+    elif days <= 1:
+        # Hourly averages for up to one day (x-axis: 0..23)
         query = f"""
             SELECT DATEADD(hour, DATEDIFF(hour, 0, ts), 0) AS ts,
                    AVG({col}) AS data
