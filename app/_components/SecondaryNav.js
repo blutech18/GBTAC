@@ -16,7 +16,7 @@ export default function SecondaryNav({
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.push("/login"); 
+      router.push("/login");
       router.refresh();
     } catch (err) {
       alert("Logout failed: " + err.message);
@@ -31,8 +31,8 @@ export default function SecondaryNav({
           <Image
             src="/sait_extended_horizontal_full_colour_rgb.png"
             alt="Logo"
-            height={50}
-            width={131}
+            height={46}
+            width={253}
           />
         </Link>
       </div>
