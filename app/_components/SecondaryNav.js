@@ -1,5 +1,5 @@
 "use client";
-
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ export default function SecondaryNav({
   displayProfile = false,
 }) {
   const router = useRouter();
+  const [employeeName, setEmployeeName] = useState("John Doe");
 
   const handleLogout = async () => {
     try {
@@ -23,9 +24,8 @@ export default function SecondaryNav({
     }
   };
 
-  const employeeName = "John Doe"; // Placeholder for actual employee name
   return (
-    <nav className="flex flex-row items-center justify-between w-full bg-white py-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
+    <nav className="flex flex-row items-center justify-between w-full bg-[#fdfdfd] py-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
       <div>
         <Link href="https://www.sait.ca">
           <Image
@@ -50,16 +50,25 @@ export default function SecondaryNav({
         )}
         {displayLogout && (
           <li>
-            <button
+            <Link
+              href="/home"
               onClick={handleLogout}
-              className="px-6 py-2 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition"
+              className="px-6 py-2 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition inline-block text-center"
             >
               Logout
-            </button>
+            </Link>
           </li>
         )}
         {displayProfile && (
-          <li className="py-2 text-2xl font-semibold text-gray-800 hover:text-gray-600 transition">
+          <li className="text-xl font-semibold text-gray-800 hover:text-gray-600 transition flex flex-row items-center gap-2">
+            <Link href="/profile" className="hover:opacity-80 transition">
+              <Image
+                src="/icons/profile.png"
+                alt="Profile"
+                width={24}
+                height={24}
+              />
+            </Link>
             <Link href="/profile" className="hover:opacity-80 transition">
               {employeeName}
             </Link>
