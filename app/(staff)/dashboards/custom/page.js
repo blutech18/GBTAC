@@ -10,6 +10,7 @@ import DashboardLayout from "@/app/_components/DashboardLayout";
 import ExportPDFButton from "@/app/_components/ExportPDFButton";
 import ChartSelect from "@/app/_components/customgraph/ChartSelect";
 import ConfirmModal from "@/app/_components/ConfirmModal";
+import NotificationModal from "@/app/_components/NotificationModal";
 import { saveCustomDashboard } from "@/app/utils/saveCustomizedCharts";
 import { auth } from "@/app/_utils/firebase";
 import { useRef, useState, useEffect } from "react";
@@ -39,6 +40,8 @@ export default function Page() {
   const [refreshChart, setRefreshChart] = useState(0); // Used to trigger re-render of graph when loading/saving charts
   const [error, setError] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [tempAggregationSettings, setTempAggregationSettings] = useState(aggregationSettings)
   const [chartSettings, setChartSettings] = useState({
     chartTitle: "",
@@ -172,11 +175,13 @@ export default function Page() {
       });
       setCurrentChartId(savedId);
       setShowSaveModal(false);
-      alert("Chart saved successfully!")
+      setShowSuccessNotification(true);
+      setTimeout(() => setShowSuccessNotification(false), 3000);
       setRefreshChart(prev => prev + 1);
     } catch (err) {
       console.error("Failed to save chart:", err);
-      alert("Failed to save chart");
+      setShowErrorNotification(true);
+      setTimeout(() => setShowErrorNotification(false), 3000); //3 second timeout for error notification
     }
   };
 
@@ -280,6 +285,21 @@ export default function Page() {
           variant="primary"
           onConfirm={handleSave}
           onCancel={() => setShowSaveModal(false)}
+        />
+      )}
+      {showSuccessNotification && (
+        <NotificationModal
+          title="Success"
+          message="Chart saved successfully!"
+          onClose={() => setShowSuccessNotification(false)}
+        />
+      )}
+      {showErrorNotification && (
+        <NotificationModal
+          title="Error"
+          message="Failed to save chart. Please try again."
+          variant="error"
+          onClose={() => setShowErrorNotification(false)}
         />
       )}
     </DashboardLayout>
