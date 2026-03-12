@@ -104,7 +104,7 @@ export default function Navbar({
 
           {displayReports && (
             <li>
-              <Link href="/about" className="hover:opacity-70 transition">
+              <Link href="/report" className="hover:opacity-70 transition">
                 Reports
               </Link>
             </li>
