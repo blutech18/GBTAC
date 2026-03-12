@@ -53,18 +53,24 @@ export default function Page() {
   };
 
   return (
-    <DashboardLayout title="Natural Gas Dashboard">
-      <div className="container mx-auto px-4 py-8"
-      style={{ fontFamily: "var(--font-titillium)" }}>
-      
-        {/* Information Icon pinned to viewport top-right */}
-        <div className="fixed top-24 right-6 z-50 group">
-          <FiInfo className="w-6 h-6 text-black-600 cursor-pointer hover:text-gray-800 transition-colors" />
-          <div className="absolute right-0 top-8 w-80 p-3 bg-white text-black text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+    <DashboardLayout
+      title="Natural Gas Dashboard"
+      titleRight={
+        <button
+          type="button"
+          className="group relative block h-6 w-6 text-gray-700 hover:text-gray-900 transition-colors"
+          aria-label="Natural gas conversion info"
+        >
+          <FiInfo className="h-6 w-6" />
+          <div className="pointer-events-none absolute right-0 top-8 w-80 p-3 bg-white text-black text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             Values are converted to kWh using a standard conversion factor of X
             kWh per unit of gas.
           </div>
-        </div>
+        </button>
+      }
+    >
+      <div className="container mx-auto px-4 py-8"
+      style={{ fontFamily: "var(--font-titillium)" }}>
         <DateRangePicker />
         <InfoCard
           items={[
