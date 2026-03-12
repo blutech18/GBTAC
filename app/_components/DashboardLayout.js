@@ -6,7 +6,7 @@ import Footer from "./Footer";
 
 export default function DashboardLayout({ title, children }) {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-black font-sans">
+    <div className="flex flex-col min-h-screen bg-[#FdFdFd] font-sans">
       <SecondaryNav
         displayLogout={true}
         displayProfile={true}
