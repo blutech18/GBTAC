@@ -179,7 +179,7 @@ export default function LineHandler({chartType, sensorList, startDate, endDate, 
                 title: {
                 display: true,
                 text: yTitle
-                }
+                },
             }
         },
         plugins: {
@@ -225,7 +225,7 @@ export default function LineHandler({chartType, sensorList, startDate, endDate, 
         )
     }else if(chartType == "bar"){
         return (
-            <div className="bg-black">
+            <div>
                 <BarChart options={graphOptions} data={graphData}/>       
             </div>
         )        

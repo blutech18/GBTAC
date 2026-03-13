@@ -4,7 +4,11 @@ import SecondaryNav from "./SecondaryNav";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
-export default function DashboardLayout({ title, children }) {
+export default function DashboardLayout({
+  title,
+  titleRight = null,
+  children,
+}) {
   return (
     <div className="flex flex-col min-h-screen bg-[#FdFdFd] font-sans">
       <SecondaryNav
@@ -20,7 +24,10 @@ export default function DashboardLayout({ title, children }) {
         py-8
       "
       >
-        <h1 className="text-2xl font-semibold text-gray-800 mb-6">{title}</h1>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <h1 className="text-3xl font-semibold text-gray-800">{title}</h1>
+          {titleRight}
+        </div>
 
         {children}
       </main>

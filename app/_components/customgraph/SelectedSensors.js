@@ -12,18 +12,18 @@ export default function SelectedSensors({ selectedSensors = [], setSelectedSenso
 
   return (
     <div
-      className="bg-white rounded-sm shadow-sm p-4 mb-5 mt-1 w-1/2"
+      className="bg-white rounded-sm shadow-sm p-4 w-full h-80 flex flex-col"
       style={{ fontFamily: "var(--font-titillium)" }}
     >
-      <p className="font-semibold text-black mb-4">Selected Sensors</p>
+      <p className="font-semibold text-black mb-2">Selected Sensors</p>
 
-      <div className="max-h-64 overflow-y-auto border rounded-sm bg-gray-100 text-gray-500">
+      <div className="flex-1 overflow-y-auto border rounded-sm bg-gray-100 text-gray-500 min-h-0 max-h-80 xl:max-h-104">
         {selectedSensors.length === 0 ? (
           <p className="text-gray-500 p-2">No sensors selected</p>
         ) : (
-          selectedSensors.map(sensor => (
+          selectedSensors.map((sensor, index) => (
             <div
-              key={sensor.code}
+              key={index}
               className="flex justify-between items-center p-2 border-b"
             >
               <span>{sensor.name}</span>
