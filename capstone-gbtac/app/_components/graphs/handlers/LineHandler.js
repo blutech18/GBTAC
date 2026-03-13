@@ -96,6 +96,9 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         }
     };
 
+    // Use a stable string key to avoid re-firing on new array references
+    const sensorKey = sensorList.join(",");
+
     // Re-initialize + re-fetch immediately when the sensor list changes (filter click)
     useEffect(() => {
         if (!canFetch) {
@@ -111,7 +114,7 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         setFetched(false);
         fetchData(sensorList, startDate, endDate);
         fetchNames(sensorList);
-    }, [sensorList, startDate, endDate, canFetch]);
+    }, [sensorKey, startDate, endDate, canFetch]);
     
     // sets defaults
     const labels = 0; // x axis labels
@@ -190,7 +193,7 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                 datasets: dataset
             });
         }
-    }, [sensorData, sensors, fetched]);
+    }, [sensorData, sensors, fetched, onStatsReady]);
 
     // options for graph display to be passed on to LineChart component
     const graphOptions = {

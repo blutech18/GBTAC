@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
@@ -73,6 +73,8 @@ export default function AmbientTempDashboard() {
 
   const [appliedState, setAppliedState] = useState(null);
   const [kpiStats, setKpiStats] = useState(null);
+
+  const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
@@ -285,7 +287,7 @@ export default function AmbientTempDashboard() {
             graphTitle="Ambient Temperature"
             yTitle="Temperature (°C)"
             xTitle="Time"
-            onStatsReady={setKpiStats}
+            onStatsReady={handleStatsReady}
           />
         ) : (
           <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
