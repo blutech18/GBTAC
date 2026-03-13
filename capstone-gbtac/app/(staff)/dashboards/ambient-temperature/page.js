@@ -72,6 +72,7 @@ export default function AmbientTempDashboard() {
   });
 
   const [appliedState, setAppliedState] = useState(null);
+  const [kpiStats, setKpiStats] = useState(null);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
@@ -98,59 +99,61 @@ export default function AmbientTempDashboard() {
           );
 
   const handleMultiSelect = (key, value) => {
-  setState((prev) => {
-    const currentValues = prev[key] || [];
+    setKpiStats(null);
+    setState((prev) => {
+      const currentValues = prev[key] || [];
 
-    const updatedValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
-      : [...currentValues, value];
+      const updatedValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
 
-    const optionOrder =
-      key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
+      const optionOrder =
+        key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
 
-    const sortedValues = optionOrder.filter((option) =>
-      updatedValues.includes(option)
-    );
+      const sortedValues = optionOrder.filter((option) =>
+        updatedValues.includes(option)
+      );
 
-    const nextState = { ...prev, [key]: sortedValues };
+      const nextState = { ...prev, [key]: sortedValues };
 
-    if (nextState.fromDate && nextState.toDate) {
-      setAppliedState({
-        fromDate: nextState.fromDate,
-        toDate: nextState.toDate,
-        floors: nextState.floors,
-        orientations: nextState.orientations,
-      });
-    }
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
 
-    return nextState;
-  });
-};
+      return nextState;
+    });
+  };
 
-const handleSelectAll = (key, options) => {
-  setState((prev) => {
-    const currentValues = prev[key] || [];
+  const handleSelectAll = (key, options) => {
+    setKpiStats(null);
+    setState((prev) => {
+      const currentValues = prev[key] || [];
 
-    const updatedValues =
-      currentValues.length === options.length ? [] : [...options];
+      const updatedValues =
+        currentValues.length === options.length ? [] : [...options];
 
-    const nextState = {
-      ...prev,
-      [key]: updatedValues,
-    };
+      const nextState = {
+        ...prev,
+        [key]: updatedValues,
+      };
 
-    if (nextState.fromDate && nextState.toDate) {
-      setAppliedState({
-        fromDate: nextState.fromDate,
-        toDate: nextState.toDate,
-        floors: nextState.floors,
-        orientations: nextState.orientations,
-      });
-    }
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
 
-    return nextState;
-  });
-};
+      return nextState;
+    });
+  };
 
   const handleSaveScreen = () => {
     // Save state to localStorage
@@ -184,6 +187,7 @@ const handleSelectAll = (key, options) => {
           setDate={({ fromDate, toDate }) => {
             const nextState = { ...state, fromDate, toDate };
             setState(nextState);
+            setKpiStats(null);
 
             if (fromDate && toDate) {
               setAppliedState({
@@ -251,10 +255,22 @@ const handleSelectAll = (key, options) => {
 
       <InfoCard
         items={[
-          { label: "Current Temp", value: (21.256).toFixed(2) + "°C" },
-          { label: "Daily Avg", value: (20.254).toFixed(2) + "°C" },
-          { label: "High", value: (24.789).toFixed(2) + "°C" },
-          { label: "Low", value: (17.7789).toFixed(2) + "°C" },
+          {
+            label: "Average Temp",
+            value: kpiStats ? kpiStats.avg.toFixed(2) + "°C" : "—",
+          },
+          {
+            label: "Latest Reading",
+            value: kpiStats ? kpiStats.latest.toFixed(2) + "°C" : "—",
+          },
+          {
+            label: "High",
+            value: kpiStats ? kpiStats.max.toFixed(2) + "°C" : "—",
+          },
+          {
+            label: "Low",
+            value: kpiStats ? kpiStats.min.toFixed(2) + "°C" : "—",
+          },
         ]}
       />
 
@@ -269,6 +285,7 @@ const handleSelectAll = (key, options) => {
             graphTitle="Ambient Temperature"
             yTitle="Temperature (°C)"
             xTitle="Time"
+            onStatsReady={setKpiStats}
           />
         ) : (
           <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">

@@ -11,7 +11,7 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function LineHandler({sensorList, sensorLabels, startDate, endDate, graphTitle, yTitle, xTitle}){
+export default function LineHandler({sensorList, sensorLabels, startDate, endDate, graphTitle, yTitle, xTitle, onStatsReady}){
 
     // Auto-compute the chart x-axis time unit — must match backend aggregation tiers
     const getTimeUnit = () => {
@@ -145,6 +145,24 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
     useEffect(() => {
         if(fetched && sensorData.length > 0){
             const labels = sensorData[0].map(d => new Date(d.ts));
+
+            // Compute KPI stats across all active sensors and pass to parent if requested
+            if (onStatsReady) {
+                const allValues = sensorData.flatMap(sd => sd.map(d => d.data).filter(v => v != null));
+                if (allValues.length > 0) {
+                    const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
+                    const min = Math.min(...allValues);
+                    const max = Math.max(...allValues);
+                    // Latest value = last data point averaged across all sensors
+                    const lastValues = sensorData.map(sd => sd[sd.length - 1]?.data).filter(v => v != null);
+                    const latest = lastValues.length > 0
+                        ? lastValues.reduce((a, b) => a + b, 0) / lastValues.length
+                        : null;
+                    onStatsReady({ avg, min, max, latest });
+                } else {
+                    onStatsReady(null);
+                }
+            }
 
             // for each sensor in sensors array it sets the line label, data, and colour
             const dataset = sensors.map(sensor => {
