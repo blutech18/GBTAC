@@ -12,7 +12,7 @@ import Link from "next/link";
 
 export default function StaffHome() {
   const [recent, setRecent] = useState([]);
-  const [user, setUser] = useState("John Doe");
+  const [user, setUser] = useState("Temiloluwa Bankole");
 
   useEffect(() => {
     const savedDashboards = loadRecentDashboards().filter((d) => d.saved);

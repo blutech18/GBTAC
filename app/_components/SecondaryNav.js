@@ -12,7 +12,7 @@ export default function SecondaryNav({
   displayProfile = false,
 }) {
   const router = useRouter();
-  const [employeeName, setEmployeeName] = useState("John Doe");
+  const [employeeName, setEmployeeName] = useState("Temiloluwa Bankole");
 
   const handleLogout = async () => {
     try {
