@@ -1,5 +1,3 @@
-"use client";
-
 import SecondaryNav from "./SecondaryNav";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -21,7 +19,7 @@ export default function DashboardLayout({
         className="
         flex-1
         sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32
-        py-8
+        p-8
       "
       >
         <div className="mb-6 flex items-start justify-between gap-4">

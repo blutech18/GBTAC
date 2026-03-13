@@ -12,8 +12,9 @@ export default function SecondaryNav({
   displayProfile = false,
 }) {
   const router = useRouter();
-  const [employeeName, setEmployeeName] = useState("John Doe");
-
+  const [employeeFirstName, setEmployeeFirstName] = useState("Temiloluwa");
+  const [employeeLastName, setEmployeeLastName] = useState("Bankole");
+  const [user, setUser] = useState(`${employeeFirstName} ${employeeLastName}`);
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -25,14 +26,14 @@ export default function SecondaryNav({
   };
 
   return (
-    <nav className="flex flex-row items-center justify-between w-full bg-[#fdfdfd] py-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
-      <div>
+    <nav className="flex flex-row items-center justify-between w-full bg-[#fdfdfd] p-4 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
+      <div className="relative w-[180px] sm:w-[220px] md:w-[253px] h-[46px] me-5 lg:me-1">
         <Link href="https://www.sait.ca">
           <Image
             src="/sait_extended_horizontal_full_colour_rgb.png"
             alt="Logo"
-            height={46}
-            width={253}
+            fill
+            className="object-contain"
           />
         </Link>
       </div>
@@ -49,7 +50,7 @@ export default function SecondaryNav({
           </li>
         )}
         {displayLogout && (
-          <li>
+          <li className="items-center gap-5 lg:gap-2">
             <Link
               href="/home"
               onClick={handleLogout}
@@ -60,17 +61,19 @@ export default function SecondaryNav({
           </li>
         )}
         {displayProfile && (
-          <li className="text-xl font-semibold text-gray-800 hover:text-gray-600 transition flex flex-row items-center gap-2">
-            <Link href="/profile" className="hover:opacity-80 transition">
-              <Image
-                src="/icons/profile.png"
-                alt="Profile"
-                width={24}
-                height={24}
-              />
+          <li className=" text-gray-800 hover:text-gray-600 transition flex flex-row items-center gap-2">
+            <Link
+              href="/profile"
+              className="shrink-0 hover:opacity-80 transition border border-red-800 bg-white rounded-full text-red-800 px-2 py-2"
+            >
+              {employeeFirstName.charAt(0).toUpperCase()}{" "}
+              {employeeLastName.charAt(0).toUpperCase()}
             </Link>
-            <Link href="/profile" className="hover:opacity-80 transition">
-              {employeeName}
+            <Link
+              href="/profile"
+              className="hover:opacity-80 transition text-xs sm:text-sm lg:text-base font-semibold"
+            >
+              {user}
             </Link>
           </li>
         )}

@@ -8,6 +8,7 @@ import DatePicker from "../../../_components/DatePicker";
 import InfoCard from "../../../_components/InfoCard";
 import GraphPlaceholder from "../../../_components/GraphPlaceholder";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
+import Carousel from "@/app/_components/Carousel";
 
 const STORAGE_KEY = "dashboard-ambient-temp";
 
@@ -139,19 +140,46 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
       </div>
-      <InfoCard
-        items={[
-          { label: "Current Temp", value: (21.256).toFixed(2) + "°C" },
-          { label: "Daily Avg", value: (20.254).toFixed(2) + "°C" },
-          { label: "High", value: (24.789).toFixed(2) + "°C" },
-          { label: "Low", value: (17.7789).toFixed(2) + "°C" },
-        ]}
-      />
+      <div className="lg:hidden mb-6">
+        <Carousel
+          items={[
+            { label: "Average Temp", value: (21.256).toFixed(2), unit: "°C" },
+            {
+              label: "Minimum Temperature",
+              value: (20.254).toFixed(2),
+              unit: "°C",
+            },
+            {
+              label: "Maximum Temperature",
+              value: (24.789).toFixed(2),
+              unit: "°C",
+            },
+          ]}
+          horizontal
+        />
+      </div>
+      <div className="hidden lg:block">
+        <InfoCard
+          items={[
+            { label: "Average Temp", value: (21.256).toFixed(2), unit: "°C" },
+            {
+              label: "Minimum Temperature",
+              value: (20.254).toFixed(2),
+              unit: "°C",
+            },
+            {
+              label: "Maximum Temperature",
+              value: (24.789).toFixed(2),
+              unit: "°C",
+            },
+          ]}
+        />
+      </div>
 
       <GraphPlaceholder />
 
       {/* PDF Labelled Screenshot */}
-      <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
+      <div className="mt-6 p-4 border rounded bg-white">
         <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
 
         {floors.length === 0 ? (

@@ -5,7 +5,6 @@ import Image from "next/image";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
-import InfoCard from "../../../_components/InfoCard";
 import GraphPlaceholder from "../../../_components/GraphPlaceholder";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
@@ -139,24 +138,6 @@ export default function WallTempDashboard() {
           </div>
         </div>
       </div>
-      <InfoCard
-        items={[
-          {
-            label: "Average Wall Temperature",
-            value: (24.356).toFixed(2) + "°C",
-          },
-          {
-            label: "Minimum Wall Temperature",
-            value: (20.254).toFixed(2) + "°C",
-          },
-          {
-            label: "Maximum Wall Temperature",
-            value: (24.789).toFixed(2) + "°C",
-          },
-          { label: "Temperature Range", value: (7.7789).toFixed(2) + "°C" },
-        ]}
-      />
-
       <GraphPlaceholder />
 
       {/* PDF Labelled Screenshot */}

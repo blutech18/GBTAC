@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
-import CardCarousel from "../../../_components/CardCarousel";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
+import Carousel from "../../../_components/Carousel";
 
 import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
 import PieHandler from "@/app/_components/graphs/handlers/PieHandler";
+import InfoCard from "@/app/_components/InfoCard";
 
 const STORAGE_KEY = "dashboard-energy";
 
@@ -19,6 +20,9 @@ export default function EnergyDashboard() {
       toDate: "",
     }),
   );
+
+  // Unit state: kWh or W
+  const [unit, setUnit] = useState("kWh");
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
@@ -44,6 +48,20 @@ export default function EnergyDashboard() {
       "Dashboard state saved! Your graph settings are restored for next login.",
     );
   };
+  // Base stats
+  const stats = [
+    { label: "Average", value: 98 },
+    { label: "Minimum", value: 180 },
+    { label: "Maximum", value: 950 },
+    { label: "Utility Bill Calgary kWh", value: 1234 },
+  ];
+
+  // Compute displayed values based on unit
+  const displayStats = stats.map((item) => ({
+    ...item,
+    value: unit === "W" ? item.value * 1000 : item.value,
+    unit: unit,
+  }));
 
   return (
     <DashboardLayout title="Energy Dashboard">
@@ -52,20 +70,27 @@ export default function EnergyDashboard() {
         toDate={state.toDate}
         setDate={setState}
       />
-      <CardCarousel
-        items={[
-          { label: "Current Usage", value: "120 kWh" },
-          { label: "Daily Avg", value: "98 kWh" },
-          { label: "Peak Usage", value: "180 kWh" },
-          { label: "Approximate Cost", value: "$14.20" },
-          { label: "Total Energy", value: "950 kWh" },
-          { label: "Utility Bill Calgary kWh", value: "1234 kWh" },
-        ]}
-        horizontal
-      />
+      <div className="lg:hidden mb-6">
+        <Carousel items={displayStats} horizontal />
+      </div>
+      <div className="hidden lg:block">
+        <InfoCard
+          colsClass="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+          items={displayStats}
+        />
+      </div>
+      <div className="flex justify-center mb-6 lg:justify-start">
+        <button
+          onClick={() => setUnit(unit === "kWh" ? "W" : "kWh")}
+          className="px-4 py-2 bg-[#005EB8] text-white rounded hover:bg-[#004080] transition"
+        >
+          Toggle Units: {unit}
+        </button>
+      </div>
+      {/* Graphs */}
 
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-6">
-        <LineHandler 
+        <LineHandler
           chartType={"line"}
           sensorList={[
             "30000_TL340", // GBT Generation Hourly Wh

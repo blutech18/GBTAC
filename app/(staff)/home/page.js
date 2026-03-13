@@ -12,7 +12,7 @@ import Link from "next/link";
 
 export default function StaffHome() {
   const [recent, setRecent] = useState([]);
-  const [user, setUser] = useState("John Doe");
+  const [user, setUser] = useState("Temiloluwa Bankole");
 
   useEffect(() => {
     const savedDashboards = loadRecentDashboards().filter((d) => d.saved);
@@ -44,8 +44,8 @@ export default function StaffHome() {
           priority
         />
         <div className="absolute inset-0 bg-black/40"></div>
-        <div className="absolute inset-0 flex items-center sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 z-0">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-white">
+        <div className="absolute inset-0 flex flex-row items-center sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 z-0">
+          <h1 className="text-3xl md:text-4xl lg:text-6xl font-extrabold tracking-tight text-white px-4 lg:px-0">
             Welcome, {user}!
           </h1>
         </div>
