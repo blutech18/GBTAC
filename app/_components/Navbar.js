@@ -55,7 +55,7 @@ export default function Navbar({
                     href="/dashboards/water-level"
                     className="block px-4 py-2 hover:bg-gray-100"
                   >
-                    Water Level
+                    Cistern Level
                   </Link>
                 </li>
                 <li>
@@ -95,7 +95,7 @@ export default function Navbar({
                     href="/dashboards/custom"
                     className="block px-4 py-2 hover:bg-gray-100"
                   >
-                    Customizable Graphs
+                    Custom Charts
                   </Link>
                 </li>
               </ul>
@@ -104,7 +104,7 @@ export default function Navbar({
 
           {displayReports && (
             <li>
-              <Link href="/about" className="hover:opacity-70 transition">
+              <Link href="/report" className="hover:opacity-70 transition">
                 Reports
               </Link>
             </li>

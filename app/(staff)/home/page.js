@@ -63,7 +63,7 @@ export default function StaffHome({ employeeName = "John Doe" }) {
               </p>
 
               <div className="mb-16 flex flex-wrap gap-6">
-                <Link href="/reports">
+                <Link href="/report">
                   <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
                     Reports
                   </button>

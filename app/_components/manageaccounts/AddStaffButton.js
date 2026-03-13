@@ -1,10 +1,17 @@
+//This component is a button that allows users to add staff members. It is leads to the create staff form page when clicked.
+"use client";
+
+import Link from "next/link";
+
 export default function AddStaffButton() {
   return (
-    <button
-      className="bg-[#005EB8]  hover:bg-[#004080] text-white px-4 py-2 rounded-md transition-colors"
-      style={{ fontFamily: "var(--font-titillium)" }}
-    >
-      Add Staff
-    </button>
+    <Link href="/create-staff">
+      <button
+        className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
+        style={{ fontFamily: "var(--font-titillium)" }}
+      >
+        Add Staff
+      </button>
+    </Link>
   );
 }
