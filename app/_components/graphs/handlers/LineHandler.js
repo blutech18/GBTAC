@@ -11,7 +11,7 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function LineHandler({sensorList, sensorLabels, startDate, endDate, graphTitle, yTitle, xTitle}){
+export default function LineHandler({sensorList, sensorLabels, startDate, endDate, graphTitle, yTitle, xTitle, onStatsReady}){
 
     // Auto-compute the chart x-axis time unit — must match backend aggregation tiers
     const getTimeUnit = () => {
@@ -96,6 +96,9 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         }
     };
 
+    // Use a stable string key to avoid re-firing on new array references
+    const sensorKey = sensorList.join(",");
+
     // Re-initialize + re-fetch immediately when the sensor list changes (filter click)
     useEffect(() => {
         if (!canFetch) {
@@ -111,7 +114,7 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         setFetched(false);
         fetchData(sensorList, startDate, endDate);
         fetchNames(sensorList);
-    }, [sensorList, startDate, endDate, canFetch]);
+    }, [sensorKey, startDate, endDate, canFetch]);
     
     // sets defaults
     const labels = 0; // x axis labels
@@ -146,6 +149,43 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         if(fetched && sensorData.length > 0){
             const labels = sensorData[0].map(d => new Date(d.ts));
 
+            // Compute KPI stats across all active sensors and pass to parent if requested
+            if (onStatsReady) {
+                let maxVal = -Infinity, maxTs = null, maxSensorCode = null;
+                let minVal = Infinity, minTs = null, minSensorCode = null;
+                let allSum = 0, allCount = 0;
+
+                sensorData.forEach((sd, sensorIdx) => {
+                    sd.forEach(d => {
+                        if (d.data != null) {
+                            allSum += d.data;
+                            allCount++;
+                            if (d.data > maxVal) {
+                                maxVal = d.data;
+                                maxTs = d.ts;
+                                maxSensorCode = sensorList[sensorIdx];
+                            }
+                            if (d.data < minVal) {
+                                minVal = d.data;
+                                minTs = d.ts;
+                                minSensorCode = sensorList[sensorIdx];
+                            }
+                        }
+                    });
+                });
+
+                if (allCount > 0) {
+                    const avg = allSum / allCount;
+                    const lastValues = sensorData.map(sd => sd[sd.length - 1]?.data).filter(v => v != null);
+                    const latest = lastValues.length > 0
+                        ? lastValues.reduce((a, b) => a + b, 0) / lastValues.length
+                        : null;
+                    onStatsReady({ avg, min: minVal, max: maxVal, latest, maxTs, maxSensorCode, minTs, minSensorCode });
+                } else {
+                    onStatsReady(null);
+                }
+            }
+
             // for each sensor in sensors array it sets the line label, data, and colour
             const dataset = sensors.map(sensor => {
                 const locationName = sensorLabels?.[sensor.code];
@@ -172,7 +212,7 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                 datasets: dataset
             });
         }
-    }, [sensorData, sensors, fetched]);
+    }, [sensorData, sensors, fetched, onStatsReady]);
 
     // options for graph display to be passed on to LineChart component
     const graphOptions = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
@@ -51,6 +51,18 @@ const SENSOR_LABELS = {
   "20016_TL2": "South 2 2nd Floor"
 };
 
+const formatAsOf = (ts, sensorCode) => {
+  if (!ts) return null;
+  const formatted = new Date(ts).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const sensorName = SENSOR_LABELS[sensorCode] || sensorCode;
+  return `As of ${formatted} ${sensorName}`;
+};
+
 const FLOOR_OPTIONS = ["Basement", "1st Floor", "2nd Floor"];
 const ORIENTATION_OPTIONS = ["North", "South", "East", "West", "Middle"];
 const FLOOR_IMAGES = {
@@ -72,6 +84,9 @@ export default function AmbientTempDashboard() {
   });
 
   const [appliedState, setAppliedState] = useState(null);
+  const [kpiStats, setKpiStats] = useState(null);
+
+  const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
@@ -98,59 +113,61 @@ export default function AmbientTempDashboard() {
           );
 
   const handleMultiSelect = (key, value) => {
-  setState((prev) => {
-    const currentValues = prev[key] || [];
+    setKpiStats(null);
+    setState((prev) => {
+      const currentValues = prev[key] || [];
 
-    const updatedValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
-      : [...currentValues, value];
+      const updatedValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
 
-    const optionOrder =
-      key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
+      const optionOrder =
+        key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
 
-    const sortedValues = optionOrder.filter((option) =>
-      updatedValues.includes(option)
-    );
+      const sortedValues = optionOrder.filter((option) =>
+        updatedValues.includes(option)
+      );
 
-    const nextState = { ...prev, [key]: sortedValues };
+      const nextState = { ...prev, [key]: sortedValues };
 
-    if (nextState.fromDate && nextState.toDate) {
-      setAppliedState({
-        fromDate: nextState.fromDate,
-        toDate: nextState.toDate,
-        floors: nextState.floors,
-        orientations: nextState.orientations,
-      });
-    }
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
 
-    return nextState;
-  });
-};
+      return nextState;
+    });
+  };
 
-const handleSelectAll = (key, options) => {
-  setState((prev) => {
-    const currentValues = prev[key] || [];
+  const handleSelectAll = (key, options) => {
+    setKpiStats(null);
+    setState((prev) => {
+      const currentValues = prev[key] || [];
 
-    const updatedValues =
-      currentValues.length === options.length ? [] : [...options];
+      const updatedValues =
+        currentValues.length === options.length ? [] : [...options];
 
-    const nextState = {
-      ...prev,
-      [key]: updatedValues,
-    };
+      const nextState = {
+        ...prev,
+        [key]: updatedValues,
+      };
 
-    if (nextState.fromDate && nextState.toDate) {
-      setAppliedState({
-        fromDate: nextState.fromDate,
-        toDate: nextState.toDate,
-        floors: nextState.floors,
-        orientations: nextState.orientations,
-      });
-    }
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
 
-    return nextState;
-  });
-};
+      return nextState;
+    });
+  };
 
   const handleSaveScreen = () => {
     // Save state to localStorage
@@ -184,6 +201,7 @@ const handleSelectAll = (key, options) => {
           setDate={({ fromDate, toDate }) => {
             const nextState = { ...state, fromDate, toDate };
             setState(nextState);
+            setKpiStats(null);
 
             if (fromDate && toDate) {
               setAppliedState({
@@ -251,10 +269,21 @@ const handleSelectAll = (key, options) => {
 
       <InfoCard
         items={[
-          { label: "Current Temp", value: (21.256).toFixed(2) + "°C" },
-          { label: "Daily Avg", value: (20.254).toFixed(2) + "°C" },
-          { label: "High", value: (24.789).toFixed(2) + "°C" },
-          { label: "Low", value: (17.7789).toFixed(2) + "°C" },
+          {
+            label: "Average Building Temperature",
+            value: kpiStats ? kpiStats.avg.toFixed(2) + "°C" : "—",
+            subtitle: null,
+          },
+          {
+            label: "High",
+            value: kpiStats ? kpiStats.max.toFixed(2) + "°C" : "—",
+            subtitle: kpiStats ? formatAsOf(kpiStats.maxTs, kpiStats.maxSensorCode) : null,
+          },
+          {
+            label: "Low",
+            value: kpiStats ? kpiStats.min.toFixed(2) + "°C" : "—",
+            subtitle: kpiStats ? formatAsOf(kpiStats.minTs, kpiStats.minSensorCode) : null,
+          },
         ]}
       />
 
@@ -269,6 +298,7 @@ const handleSelectAll = (key, options) => {
             graphTitle="Ambient Temperature"
             yTitle="Temperature (°C)"
             xTitle="Time"
+            onStatsReady={handleStatsReady}
           />
         ) : (
           <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
