@@ -51,6 +51,18 @@ const SENSOR_LABELS = {
   "20016_TL2": "South 2 2nd Floor"
 };
 
+const formatAsOf = (ts, sensorCode) => {
+  if (!ts) return null;
+  const formatted = new Date(ts).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const sensorName = SENSOR_LABELS[sensorCode] || sensorCode;
+  return `As of ${formatted} ${sensorName}`;
+};
+
 const FLOOR_OPTIONS = ["Basement", "1st Floor", "2nd Floor"];
 const ORIENTATION_OPTIONS = ["North", "South", "East", "West", "Middle"];
 const FLOOR_IMAGES = {
@@ -258,20 +270,19 @@ export default function AmbientTempDashboard() {
       <InfoCard
         items={[
           {
-            label: "Average Temp",
+            label: "Average Building Temperature",
             value: kpiStats ? kpiStats.avg.toFixed(2) + "°C" : "—",
-          },
-          {
-            label: "Latest Reading",
-            value: kpiStats ? kpiStats.latest.toFixed(2) + "°C" : "—",
+            subtitle: null,
           },
           {
             label: "High",
             value: kpiStats ? kpiStats.max.toFixed(2) + "°C" : "—",
+            subtitle: kpiStats ? formatAsOf(kpiStats.maxTs, kpiStats.maxSensorCode) : null,
           },
           {
             label: "Low",
             value: kpiStats ? kpiStats.min.toFixed(2) + "°C" : "—",
+            subtitle: kpiStats ? formatAsOf(kpiStats.minTs, kpiStats.minSensorCode) : null,
           },
         ]}
       />

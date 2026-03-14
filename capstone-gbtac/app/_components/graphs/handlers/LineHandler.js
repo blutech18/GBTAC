@@ -151,17 +151,36 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
 
             // Compute KPI stats across all active sensors and pass to parent if requested
             if (onStatsReady) {
-                const allValues = sensorData.flatMap(sd => sd.map(d => d.data).filter(v => v != null));
-                if (allValues.length > 0) {
-                    const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
-                    const min = Math.min(...allValues);
-                    const max = Math.max(...allValues);
-                    // Latest value = last data point averaged across all sensors
+                let maxVal = -Infinity, maxTs = null, maxSensorCode = null;
+                let minVal = Infinity, minTs = null, minSensorCode = null;
+                let allSum = 0, allCount = 0;
+
+                sensorData.forEach((sd, sensorIdx) => {
+                    sd.forEach(d => {
+                        if (d.data != null) {
+                            allSum += d.data;
+                            allCount++;
+                            if (d.data > maxVal) {
+                                maxVal = d.data;
+                                maxTs = d.ts;
+                                maxSensorCode = sensorList[sensorIdx];
+                            }
+                            if (d.data < minVal) {
+                                minVal = d.data;
+                                minTs = d.ts;
+                                minSensorCode = sensorList[sensorIdx];
+                            }
+                        }
+                    });
+                });
+
+                if (allCount > 0) {
+                    const avg = allSum / allCount;
                     const lastValues = sensorData.map(sd => sd[sd.length - 1]?.data).filter(v => v != null);
                     const latest = lastValues.length > 0
                         ? lastValues.reduce((a, b) => a + b, 0) / lastValues.length
                         : null;
-                    onStatsReady({ avg, min, max, latest });
+                    onStatsReady({ avg, min: minVal, max: maxVal, latest, maxTs, maxSensorCode, minTs, minSensorCode });
                 } else {
                     onStatsReady(null);
                 }
