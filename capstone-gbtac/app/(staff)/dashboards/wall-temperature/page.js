@@ -259,21 +259,12 @@ export default function WallTempDashboard() {
           </div>
         </div>
       </div>
-      
+
       <InfoCard
         items={[
-          {
-            label: "Average Wall Temperature",
-            value: (24.356).toFixed(2) + "°C",
-          },
-          {
-            label: "Minimum Wall Temperature",
-            value: (20.254).toFixed(2) + "°C",
-          },
-          {
-            label: "Maximum Wall Temperature",
-            value: (24.789).toFixed(2) + "°C",
-          },
+          { label: "Average Wall Temperature", value: (24.356).toFixed(2) + "°C" },
+          { label: "Minimum Wall Temperature", value: (20.254).toFixed(2) + "°C" },
+          { label: "Maximum Wall Temperature", value: (24.789).toFixed(2) + "°C" },
           { label: "Temperature Range", value: (7.7789).toFixed(2) + "°C" },
         ]}
       />
@@ -299,7 +290,6 @@ export default function WallTempDashboard() {
 
       <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
         <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
-
         {floors.length === 0 ? (
           <div className="border border-dashed p-6 text-center text-sm text-gray-500">
             Select a floor to preview layout.
@@ -310,7 +300,6 @@ export default function WallTempDashboard() {
               FLOOR_IMAGES[floor] ? (
                 <div key={floor} className="text-center mt-8">
                   <p className="text-xl mb-2 font-medium">{floor}</p>
-
                   <Image
                     src={FLOOR_IMAGES[floor]}
                     alt={floor}

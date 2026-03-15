@@ -3,86 +3,111 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { auth } from "@/app/_utils/firebase";
+import { fetchUserCharts, fetchChartById, deleteChart } from "@/app/utils/storage";
+import ConfirmModal from "../ConfirmModal";
 
 export default function ChartSelect({
   currentChartId,
   onLoadChart,
   onDeleteChart,
-  onResetChart
+  onResetChart,
+  refreshChart
 }) {
+
   const [charts, setCharts] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  //Fetch previously SAVED charts from the backend 
+  // Fetch previously saved charts from Firestore
   useEffect(() => {
-    fetch("/api/charts")
-      .then(res => res.json())
-      .then(data => setCharts(data))
-      .catch(err => console.error("Failed to fetch charts:", err));
-  }, []);
+    const loadCharts = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      try {
+        const data = await fetchUserCharts(user.email);
+        setCharts(data);
+      } catch (err) {
+        console.error("Failed to fetch charts:", err);
+      }
+    };
+    loadCharts();
+  }, [refreshChart]);
 
-  //Handle chart selection from dropdown
+  // Handle chart selection from dropdown
   const handleSelect = async (e) => {
     const id = e.target.value;
-
     if (id === "new") {
       onResetChart();
       return;
     }
 
-    const res = await fetch(`/api/charts/${id}`);
-    const chart = await res.json();
-
-    onLoadChart(chart);
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const chart = await fetchChartById(user.email, id);
+      if (chart) onLoadChart(chart);
+    } catch (err) {
+      console.error("Failed to fetch chart:", err);
+    }
   };
 
-  //Handle chart deletion
+  // Handle chart deletion
   const handleDelete = async () => {
+    setShowDeleteModal(false);
+
     if (!currentChartId) return;
-
-    if (!window.confirm("Are you sure you want to delete this chart?")) return;
-
-    await fetch(`/api/charts/${currentChartId}`, { method: "DELETE" });
-
-    onDeleteChart();
-    setCharts(charts.filter(chart => chart.id !== currentChartId));
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await deleteChart(user.email, currentChartId);
+      onDeleteChart();
+      setCharts(prevCharts => prevCharts.filter(chart => chart.id !== currentChartId));
+      alert("Chart deleted successfully!");
+    } catch (err) {
+      console.error("Failed to delete chart:", err);
+      alert("Failed to delete chart");
+    }
   };
 
   return (
     <div
       style={{ fontFamily: "var(--font-titillium)" }}
-      className="bg-white rounded-sm shadow-sm p-4 mt-2 w-1/2"
+      className="bg-white rounded shadow-sm p-4 w-1/2"
     >
       <h2 className="font-semibold text-black mb-2">
         Load An Existing Chart
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-500">
-        {/* Dropdown */}
-        <select
-          value={currentChartId || "new"}
-          onChange={handleSelect}
-          className="border p-2 rounded text-gray-500 flex-1"
-        >
-          <option value="new">-- Chart Title --</option>
-          {charts.map(chart => (
-            <option key={chart.id} value={chart.id}>
-              {chart.title}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col">
+          <label className="text-sm text-black mb-1">Chart Title</label>
+          <select
+            value={currentChartId || "new"}
+            onChange={handleSelect}
+            className="border p-2 rounded text-gray-500 w-full"
+          >
+            <option value="new">-- Select a chart --</option>
+            {charts.map(chart => (
+              <option key={chart.id} value={chart.id}>
+                {chart.title}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        {/* Delete button */}
-        <button
-          onClick={handleDelete}
-          disabled={!currentChartId}
-          className={`px-10 py-2 rounded text-white ${
-            currentChartId
-              ? "bg-[#912932] hover:bg-red-700"
-              : "bg-gray-300 cursor-not-allowed"
-          }`}
-        >
-          Delete
-        </button>
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            disabled={!currentChartId}
+            className={`px-6 py-2 rounded text-white w-full font-semibold ${
+              currentChartId
+                ? "bg-[#912932] hover:bg-red-700"
+                : "bg-gray-300 cursor-not-allowed"
+            }`}
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       {/* Info text */}
@@ -91,6 +116,18 @@ export default function ChartSelect({
           ? "Loaded chart is editable below."
           : "Select an existing chart to view or edit."}
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <ConfirmModal
+          title="Delete Chart"
+          message="Are you sure you want to delete this chart? This cannot be undone."
+          confirmText="Delete"
+          variant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,27 +12,28 @@ export default function SecondaryNav({
   displayProfile = false,
 }) {
   const router = useRouter();
-
+  const [employeeFirstName, setEmployeeFirstName] = useState("Temiloluwa");
+  const [employeeLastName, setEmployeeLastName] = useState("Bankole");
+  const [user, setUser] = useState(`${employeeFirstName} ${employeeLastName}`);
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.push("/login"); 
+      router.push("/login");
       router.refresh();
     } catch (err) {
       alert("Logout failed: " + err.message);
     }
   };
 
-  const employeeName = "John Doe"; // Placeholder for actual employee name
   return (
-    <nav className="flex flex-row items-center justify-between w-full bg-white py-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
-      <div>
+    <nav className="flex flex-row items-center justify-between w-full bg-[#fdfdfd] p-4 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
+      <div className="relative w-[180px] sm:w-[220px] md:w-[253px] h-[46px] me-5 lg:me-1">
         <Link href="https://www.sait.ca">
           <Image
             src="/sait_extended_horizontal_full_colour_rgb.png"
             alt="Logo"
-            height={50}
-            width={131}
+            fill
+            className="object-contain"
           />
         </Link>
       </div>
@@ -49,19 +50,30 @@ export default function SecondaryNav({
           </li>
         )}
         {displayLogout && (
-          <li>
-            <button
+          <li className="items-center gap-5 lg:gap-2">
+            <Link
+              href="/home"
               onClick={handleLogout}
-              className="px-6 py-2 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition"
+              className="px-6 py-2 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition inline-block text-center"
             >
               Logout
-            </button>
+            </Link>
           </li>
         )}
         {displayProfile && (
-          <li className="py-2 text-2xl font-semibold text-gray-800 hover:text-gray-600 transition">
-            <Link href="/profile" className="hover:opacity-80 transition">
-              {employeeName}
+          <li className=" text-gray-800 hover:text-gray-600 transition flex flex-row items-center gap-2">
+            <Link
+              href="/profile"
+              className="shrink-0 hover:opacity-80 transition border border-red-800 bg-white rounded-full text-red-800 px-2 py-2"
+            >
+              {employeeFirstName.charAt(0).toUpperCase()}{" "}
+              {employeeLastName.charAt(0).toUpperCase()}
+            </Link>
+            <Link
+              href="/profile"
+              className="hover:opacity-80 transition text-xs sm:text-sm lg:text-base font-semibold"
+            >
+              {user}
             </Link>
           </li>
         )}
