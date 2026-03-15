@@ -1,40 +1,122 @@
 "use client";
 
 //add whatever X factor is used to convert natural gas units to kWh in the info tooltip
-import SecondaryNav from "@/app/_components/SecondaryNav";
-import Navbar from "@/app/_components/Navbar";
+import { useState, useEffect } from "react";
+import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
+import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
+import DashboardLayout from "@/app/_components/DashboardLayout";
 import DateRangePicker from "@/app/_components/DatePicker";
+import GraphPlaceholder from "@/app/_components/GraphPlaceholder";
 import InfoCard from "@/app/_components/InfoCard";
-import Footer from "@/app/_components/Footer";
+import ExportPDFButton from "@/app/_components/ExportPDFButton";
 import { FiInfo } from "react-icons/fi";
+import { useRef } from "react";
 
 export default function Page() {
+  const chartRef = useRef(null);
+  const chartRef2 = useRef(null);
+
+  const STORAGE_KEY = "dashboard-natural-gas";
+  const UNIT_OPTIONS = ["Watts", "kWh",];
+
+  const [state, setState] = useState(() =>
+    loadDashboardState(STORAGE_KEY, {
+      fromDate: "",
+      toDate: "",
+      floors: [],
+      orientations: [],
+    }),
+  );
+
+  useEffect(() => {
+    saveDashboardState(STORAGE_KEY, state);
+  }, [state]);
+
+  const handleMultiSelect = (key, value) => {
+    const currentValues = state[key] || [];
+
+    const updatedValues = currentValues.includes(value)
+      ? currentValues.filter((v) => v !== value)
+      : [...currentValues, value];
+
+    setState({ ...state, [key]: updatedValues });
+  };
+
+  const handleSelectAll = (key, options) => {
+    const currentValues = state[key] || [];
+
+    setState({
+      ...state,
+      [key]: currentValues.length === options.length ? [] : options,
+    });
+  };
+
+  const handleSaveScreen = () => {
+    saveDashboardState(STORAGE_KEY, state);
+
+    saveRecentDashboard({
+      id: "natural-gas",
+      title: "Natural Gas Dashboard",
+      path: "/dashboards/natural-gas",
+      summary: {
+        fromDate: state.fromDate,
+        toDate: state.toDate,
+        floors: state.floors,
+        orientations: state.orientations,
+      },
+      saved: true,
+    });
+
+    alert(
+      "Dashboard state saved! Your graph settings are restored for next login.",
+    );
+  };
+
   return (
-    <main className="bg-gray-50 min-h-screen">
-      <SecondaryNav />
-      <Navbar />
+    <DashboardLayout
+      title="Natural Gas Dashboard"
+      titleRight={
+        <button
+          type="button"
+          className="group relative block h-6 w-6 text-gray-700 hover:text-gray-900 transition-colors"
+          aria-label="Natural gas conversion info"
+        >
+          <FiInfo className="h-6 w-6" />
+          <div className="pointer-events-none absolute right-0 top-8 w-80 p-3 bg-white text-black text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            Values are converted to kWh using a standard conversion factor of X
+            kWh per unit of gas.
+          </div>
+        </button>
+      }
+    >
+      <div className="container mx-auto px-4 py-8" style={{ fontFamily: "var(--font-titillium)" }}>
+        <div className="flex flex-wrap gap-6 items-end mb-6">
+          <DateRangePicker />
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">Units</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleSelectAll("unit", UNIT_OPTIONS)}
+                className="px-2 py-1 text-lg border rounded"
+              >
+                All
+              </button>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with tooltip on the right */}
-        <div className="flex justify-between items-center mb-10">
-          <h1
-            className="text-4xl font-bold dark:text-black"
-            style={{ fontFamily: "var(--font-titillium)" }}
-          >
-            Natural Gas Dashboard
-          </h1>
-
-          {/*Information Icon with information*/}
-          <div className="relative group">
-            <FiInfo className="w-10 h-8 text-black cursor-pointer hover:text-gray-700 transition-colors" />
-
-            <div className="absolute right-0 top-8 w-80 p-3 bg-white text-black text-sm rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
-              Values are converted to kWh using a standard conversion factor of
-              X kWh per unit of gas.
+              {UNIT_OPTIONS.map((unit) => (
+                <button
+                  key={unit}
+                  onClick={() => handleMultiSelect("unit", unit)}
+                  className={`px-2 py-1 text-lg border rounded ${
+                    state.unit?.includes(unit) ? "bg-[#6D2077] text-white" : ""
+                  }`}
+                >
+                  {unit}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-        <DateRangePicker />
+
         <InfoCard
           items={[
             { label: "Total Energy Consumption", value: "134,350 kWh" },
@@ -44,23 +126,34 @@ export default function Page() {
           ]}
         />
 
-        {/* Chart Section */}
+
         <div className="mt-10 flex flex-col gap-4 relative">
-          {/* Line Chart Placeholder */}
-          <div className="bg-white rounded-lg shadow-md h-96 flex items-center justify-center text-gray-400 relative">
-            Natural Gas and Electricity Consumption LINE Chart Placeholder
-          </div>
-          {/* Bar Chart Placeholder */}
-          <div className="bg-white rounded-lg shadow-md h-96 flex items-center justify-center text-gray-400 relative">
-            Natural Gas and Electricity Consumption BAR Chart Placeholder
-          </div>
-          {/*Disclaimer at the bottom of the charts*/}
-          <div className="text-sm text-center text-gray-500 mt-2">
-            All information is displayed for educational purposes only.
+            <div ref={chartRef}>
+              <GraphPlaceholder />
+            </div>
+            <div className="flex justify-end gap-4 mt-3">
+                <button
+                  onClick={handleSaveScreen}
+                  className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
+                >
+                  Save Screen
+                </button>
+              <ExportPDFButton chartRef={chartRef} fileName="natural-gas-chart" />
+            </div>
+            <div ref={chartRef2}>
+              <GraphPlaceholder />
+            </div>
+            <div className="flex justify-end gap-4 mt-3">
+                <button
+                  onClick={handleSaveScreen}
+                  className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
+                >
+                  Save Screen
+                </button>
+            <ExportPDFButton chartRef={chartRef2} fileName="natural-gas-chart-2" />
           </div>
         </div>
       </div>
-      <Footer />
-    </main>
+    </DashboardLayout>
   );
 }

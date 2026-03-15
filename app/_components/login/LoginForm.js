@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Modal from "./Modal";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   signInWithEmailAndPassword,
@@ -16,12 +17,17 @@ export default function LoginForm() {
   const [employeeEmail, setEmployeeEmail] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const isSaitEmail = (email) => {
     const lower = email.toLowerCase();
-    return lower.endsWith("@sait.ca") || lower.endsWith("@edu.sait.ca") || lower.endsWith("@gmail.com");
+    return (
+      lower.endsWith("@sait.ca") ||
+      lower.endsWith("@edu.sait.ca") ||
+      lower.endsWith("@gmail.com")
+    );
   };
 
   const checkAllowedUser = async (email) => {
@@ -34,7 +40,7 @@ export default function LoginForm() {
     const data = snap.data();
     if (data.active !== true) return { allowed: false, reason: "inactive" };
 
-    return { allowed: true, role: data.role || "user" }; 
+    return { allowed: true, role: data.role || "user" };
   };
 
   const validate = () => {
@@ -89,7 +95,7 @@ export default function LoginForm() {
       .toLowerCase()}\n\nThanks.`;
 
     window.location.href = `mailto:${adminEmail}?subject=${encodeURIComponent(
-      subject
+      subject,
     )}&body=${encodeURIComponent(body)}`;
 
     setShowRequestModal(false);
@@ -103,7 +109,7 @@ export default function LoginForm() {
       const cred = await signInWithEmailAndPassword(
         auth,
         employeeEmail.trim().toLowerCase(),
-        password
+        password,
       );
 
       const allowed = await checkAllowedUser(cred.user.email);
@@ -122,65 +128,83 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-xl shadow-md p-8 relative">
+    <div className="w-full max-w-md bg-white/85 rounded-sm shadow-md p-8 relative">
       {/* Heading */}
-      <h2
-        className="text-3xl font-bold text-start mb-6 text-gray-900"
-        style={{ fontFamily: "var(--font-titillium)" }}
-      >
+      <h2 className="text-3xl font-bold mb-6 text-gray-900 text-center">
         Login
       </h2>
-      <p
-        className="mb-6 text-gray-600"
-        style={{ fontFamily: "var(--font-dm-sans)" }}
-      >
+      <p className="mb-6 text-gray-600">
         Enter your Credentials to access your account
       </p>
 
-      <label
-        className="font-semibold text-gray-800"
-        style={{ fontFamily: "var(--font-titillium)" }}
-      >
-        SAIT Email
-      </label>
+      <label className="font-semibold text-gray-800">SAIT Email</label>
       <input
         type="email"
         placeholder="Enter your SAIT email"
         value={employeeEmail}
         onChange={(e) => setEmployeeEmail(e.target.value)}
-        className="w-full border px-3 py-2 border-gray-300 rounded-lg my-4 focus:outline-none focus:border-blue-500 text-gray-900 placeholder-gray-500"
+        className="w-full border px-3 py-2 border-gray-300 rounded-lg my-4 bg-white focus:outline-none focus:border-blue-500 text-gray-900 placeholder-gray-500"
       />
 
       {errors.employeeEmail && (
         <p className="text-red-500 text-sm mb-2">{errors.employeeEmail}</p>
       )}
+      <label className="font-semibold text-gray-800">Password</label>
+      <div className="relative my-4">
+        <input
+          type={showPassword ? "text" : "password"}
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border px-3 py-2 pr-10 border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 text-gray-900 placeholder-gray-500"
+        />
 
-      <label
-        className="font-semibold text-gray-800"
-        style={{ fontFamily: "var(--font-titillium)" }}
+        <button
+          type="button"
+          className="absolute right-3 top-1/2 -translate-y-1/2"
+          onMouseDown={() => setShowPassword(true)}
+          onMouseUp={() => setShowPassword(false)}
+          onMouseLeave={() => setShowPassword(false)}
+          onTouchStart={() => setShowPassword(true)}
+          onTouchEnd={() => setShowPassword(false)}
+        >
+          <Image
+            src={showPassword ? "/icons/eye-close.png" : "/icons/eye-open.png"}
+            alt="toggle password"
+            width={20}
+            height={20}
+          />
+        </button>
+      </div>
+      <button
+        type="button"
+        className="text-blue-600/75 hover:underline text-sm mb-4"
+        onClick={() => setShowForgotModal(true)}
       >
-        Password
-      </label>
-      <input
-        type="password"
-        placeholder="Enter your password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full border px-3 py-2 border-gray-300 rounded-lg my-4 focus:outline-none focus:border-blue-500 text-gray-900 placeholder-gray-500"
-      />
+        Forgot my password
+      </button>
 
       {errors.password && (
         <p className="text-red-500 text-sm mb-2">{errors.password}</p>
       )}
-
-      <div className="flex justify-between mb-6 text-sm">
+      <div className="flex justify-center">
         <button
-          type="button"
-          className="text-blue-600 hover:underline"
-          onClick={() => setShowForgotModal(true)}
+          className="group w-1/2 bg-[#005EB8] text-white py-3 mb-6 rounded-full text-lg font-bold justify-center hover:bg-blue-700 transition flex gap-4 items-center"
+          onClick={handleLogin}
         >
-          Forgot my password
+          Login
+          <Image
+            src="/icons/arrow-right.png"
+            alt="chevron"
+            width={15}
+            height={15}
+            className="transition-transform duration-200 group-hover:translate-x-1"
+          />
         </button>
+      </div>
+
+      <div className="flex flex-row text-sm justify-center gap-2">
+        <label className="text-gray-600">Do not have an account?</label>
         <button
           type="button"
           className="text-blue-600 hover:underline"
@@ -189,31 +213,30 @@ export default function LoginForm() {
           Request access
         </button>
       </div>
-      <div className="flex justify-center">
-        <button
-          className="w-1/2 bg-[#005EB8] text-white py-3 rounded-full text-lg font-bold hover:bg-blue-700 transition flex justify-between items-center ps-15 pe-6"
-          style={{ fontFamily: "var(--font-titillium)" }}
-          onClick={handleLogin}
-        >
-          Login
-          <span className="ml-2">{">"}</span>
-        </button>
-      </div>
 
       {showForgotModal && (
         <Modal
           title="Forgot Password"
           onClose={() => setShowForgotModal(false)}
-          email={forgotEmail}
-          emailHandlerFunc={(e) => setForgotEmail(e.target.value)}
-          handleForgotSubmit={handleForgotSubmit}
-        />
+          onSubmit={handleForgotSubmit}
+          submitText="Send"
+        >
+          <input
+            type="email"
+            placeholder="Enter your SAIT email"
+            value={forgotEmail}
+            onChange={(e) => setForgotEmail(e.target.value)}
+            className="w-full border px-3 py-2 rounded text-gray-900 placeholder-gray-500"
+          />
+        </Modal>
       )}
 
       {showRequestModal && (
         <Modal
           title="Request Access"
           onClose={() => setShowRequestModal(false)}
+          onSubmit={handleRequestSubmit}
+          submitText="Send Request"
         >
           <input
             type="email"
@@ -222,12 +245,6 @@ export default function LoginForm() {
             onChange={(e) => setEmployeeEmail(e.target.value)}
             className="w-full border px-3 py-2 rounded text-gray-900 placeholder-gray-500"
           />
-          <button
-            className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 mt-2 w-full"
-            onClick={handleRequestSubmit}
-          >
-            Send
-          </button>
         </Modal>
       )}
     </div>

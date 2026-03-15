@@ -1,22 +1,37 @@
-// utils/saveCustomDashboard.js
-import { db } from "@/app/_utils/firebase";
-import { collection, addDoc, setDoc, doc } from "firebase/firestore";
+//This utils component saves a chart to Firestore
 
-// Save a new chart
-export const saveNewChart = async (userId, chartData) => {
-  try {
-    const docRef = await addDoc(collection(db, "users", userId, "charts"), chartData);
-    return docRef.id;
-  } catch (error) {
-    console.error("Error saving chart:", error);
-  }
-};
+import { db } from "../_utils/firebase";
+import { collection, addDoc, setDoc, doc, serverTimestamp } from "firebase/firestore";
 
-// Update an existing chart
-export const updateChart = async (userId, chartId, chartData) => {
-  try {
-    await setDoc(doc(db, "users", userId, "charts", chartId), chartData);
-  } catch (error) {
-    console.error("Error updating chart:", error);
+//Save or update a chart for a user
+export async function saveCustomDashboard({ userEmail, chartId, settings, dateRange, selectedSensors, aggSettings }) {
+  const chartsRef = collection(db, "allowedUsers", userEmail, "charts");
+  const normalizedAggSettings = {
+    time: aggSettings?.time ?? "H",
+    type: aggSettings?.type ?? "mean"
+  };
+
+  //If chartId exists, update the existing chart
+  if (chartId) {
+    await setDoc(doc(chartsRef, chartId), {
+      title: settings.chartTitle,
+      settings,
+      dateRange,
+      selectedSensors,
+      aggSettings: normalizedAggSettings,
+      updatedAt: serverTimestamp()
+    });
+    return chartId;
   }
-};
+
+  //Else create a new chart
+  const docRef = await addDoc(chartsRef, {
+    title: settings.chartTitle,
+    settings,
+    dateRange,
+    selectedSensors,
+    aggSettings: normalizedAggSettings,
+    createdAt: serverTimestamp()
+  });
+  return docRef.id;
+}

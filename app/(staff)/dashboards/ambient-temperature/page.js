@@ -8,6 +8,7 @@ import DatePicker from "../../../_components/DatePicker";
 import InfoCard from "../../../_components/InfoCard";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
+import Carousel from "@/app/_components/Carousel";
 
 const STORAGE_KEY = "dashboard-ambient-temp";
 

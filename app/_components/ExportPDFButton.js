@@ -5,10 +5,14 @@
 
 "use client";
 
+import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import ConfirmModal from "./ConfirmModal";
 
 export default function ExportPDFButton({ chartRef, fileName }) {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
   const handleExport = async () => {
     if (!chartRef.current) {
       console.error("Chart reference is not available.");
@@ -41,12 +45,28 @@ export default function ExportPDFButton({ chartRef, fileName }) {
   };
 
   return (
-    <button
-      onClick={handleExport}
-      className="bg-[#912932] text-white font-semibold px-4 py-2 rounded-sm hover:bg-red-700 transition"
-    >
-      Export PDF
-    </button>
+    <>
+      <button
+        onClick={() => setShowConfirmModal(true)}
+        className="bg-[#912932] text-white font-semibold px-6 py-2 md:px-4 md:py-2 rounded-sm hover:bg-red-700 transition w-full sm:w-auto"
+      >
+        Export PDF
+      </button>
+
+      {showConfirmModal && (
+        <ConfirmModal
+          title="Export PDF"
+          message="Are you sure you want to export as PDF?"
+          confirmText="Export"
+          variant="danger"
+          onConfirm={async () => {
+            setShowConfirmModal(false);
+            await handleExport();
+          }}
+          onCancel={() => setShowConfirmModal(false)}
+        />
+      )}
+    </>
   );
 }
 

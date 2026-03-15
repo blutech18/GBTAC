@@ -27,27 +27,19 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
     };
 
     // X-axis display format per tier — client spec:
-    // yearly=2020,2021 | monthly=January,February | daily=1,2..31 | hourly=0..23
     const getDisplayFormats = () => ({
-        hour:   "H",    // 0, 1, 2 ... 23
-        day:    "d",    // 1, 2, 3 ... 31
-        month:  "MMMM", // January, February ...
-        year:   "yyyy", // 2020, 2021 ...
+        hour:   "H",
+        day:    "d",
+        month:  "MMMM",
+        year:   "yyyy",
     });
-
-    // const [errorFlag, setErrorFlag] = useState(false)
-
-    // if(endDate < startDate){
-    //     console.log("date error")
-    //     setErrorFlag(true)
-    // }
 
     const canFetch =
         Array.isArray(sensorList) &&
         sensorList.length > 0 &&
         startDate &&
         endDate;
-    
+
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
         sensorList.map((code, i) => ({ id: i, code, name: null }))
@@ -57,7 +49,6 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
     const [loading, setLoading] = useState(true);   // loading state for UI
     const [sensorData, setSensorData] = useState([]); // holds all the sensor data
 
-    // Always read from sensorList prop directly — avoids stale-closure on sensor state
     const fetchData = async (list = sensorList, from = startDate, to = endDate) => {
         try {
             setLoading(true);
@@ -186,13 +177,9 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                 }
             }
 
-            // for each sensor in sensors array it sets the line label, data, and colour
             const dataset = sensors.map(sensor => {
                 const locationName = sensorLabels?.[sensor.code];
-                // Use the fetched API name (which contains the E0FTHC034 format) or fallback to code
                 const codeName = sensor.name && sensor.name !== "null" ? sensor.name : sensor.code;
-                
-                // If a location name exists, use it instead of the code name as requested by client
                 const finalLabel = locationName || codeName;
 
                 return {
@@ -206,7 +193,7 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                     tension: 0.1
                 };
             });
-            
+
             setGraphData({
                 labels,
                 datasets: dataset
@@ -226,14 +213,14 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                 time: {
                     unit: getTimeUnit(),
                     displayFormats: getDisplayFormats(),
-                    tooltipFormat: "PPpp", // full date+time in tooltip
+                    tooltipFormat: "PPpp",
                 }
             },
             y: {
                 title: {
                 display: true,
                 text: yTitle
-                }
+                },
             }
         },
         plugins: {
@@ -250,19 +237,11 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                         enabled: true,
                     },
                     mode: 'xy',
-                    // limits: {
-                    //     x: {
-                    //         min: labels[0],
-                    //         max: labels[labels.length - 1],
-                    //     }
-                    // }
                 },
-                
             }
         },
     };
 
-    // passes graph info onto LineChart component and displays it
     if (!canFetch) {
         return (
             <div className="relative min-h-75 flex items-center justify-center text-gray-400 text-sm">

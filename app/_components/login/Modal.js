@@ -1,40 +1,29 @@
-"use client";
-
-// Reusable Modal Component
 export default function Modal({
   title,
   onClose,
-  email,
-  emailHandlerFunc,
-  handleForgotSubmit,
+  onSubmit,
+  submitText = "Send",
   children,
 }) {
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-        <h3 className="text-lg font-bold mb-4 text-gray-800">{title}</h3>
-        {children ? (
-          children
-        ) : (
-          <>
-            <input
-              type="email"
-              placeholder="Enter your SAIT email"
-              value={email}
-              onChange={emailHandlerFunc}
-              className="w-full border px-3 py-2 rounded text-gray-900 placeholder-gray-500"
-            />
-            <button
-              className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 mt-2 w-full"
-              onClick={handleForgotSubmit}
-            >
-              Send
-            </button>
-          </>
-        )}
-        <div className="flex justify-end gap-2 mt-4">
+        <h3 className="text-lg font-bold mb-4 text-gray-800 text-center">
+          {title}
+        </h3>
+
+        {children}
+
+        <div className="flex flex-row-reverse justify-between gap-2 mt-4">
           <button
-            className="px-3 py-1 rounded bg-gray-500 hover:bg-gray-600"
+            className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 flex-1"
+            onClick={onSubmit}
+          >
+            {submitText}
+          </button>
+
+          <button
+            className="px-3 py-1 rounded border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 flex-1"
             onClick={onClose}
           >
             Cancel
