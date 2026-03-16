@@ -18,31 +18,27 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
         end = sanStart
     
     sanEnd = validateDate(end)
-    if sanStart == False:
+    if sanEnd == False:
         return "invalid end date"
     
     if sanEnd < sanStart:
-        return "end cannot be bigger than start"
-
+        return "end date cannot be earlier than start date"
+    
+    column_name = f"{sensor_pre}{sanCode}"
 
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # date format = YYYY-MM-DD
-    # sets end date range to the same day as start if it wasn't included
-    if end == "":
-        end = start
-
     query = f"""
-        SELECT SUM({sensor_pre}{sensor_code})
-        FROM GBTAC_data 
-        WHERE CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
-        """
+        SELECT SUM({column_name})
+        FROM GBTAC_data
+        WHERE CAST(ts AS DATE) >= ?
+        AND CAST(ts AS DATE) <= ?
+    """
 
     #query database
-    curs.execute(query)
+    curs.execute(query, (sanStart, sanEnd))
     rows = curs.fetchall()
 
     res = rows[0][0]
@@ -54,19 +50,21 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
 
 # daily average over the last 7 days
 @router.get("/dailyAvg/{sensor_code}")
-async def get_data(sensor_code):
+async def get_daily_avg(sensor_code):
     
     # validation
     sanCode = validateCode(sensor_code)
     if sanCode == False:
         return "enter valid sensor code"
     
+    column_name = f"{sensor_pre}{sanCode}"
+    
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
     query = f"""
         SELECT 
-        AVG({sensor_pre}{sensor_code})
+        AVG({column_name})
         FROM gbtac_data
         WHERE ts >= (
             SELECT DATEADD(day, -7, MAX(ts))
