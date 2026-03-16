@@ -2,26 +2,26 @@ from routers import *
 router = APIRouter(prefix="/energy")
 
 @router.get("/sum/{sensor_code}")
-async def get_data(sensor_code, start="2025-12-31", end=""):
+async def get_data(sensor_code, start=NEWEST, end=""):
 
     #validation:
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
 
-    sanStart = validateDate(start)
-    if sanStart == False:
+    san_start = validateDate(start)
+    if san_start == False:
         return "invalid start date"
     
     # sets end date range to the same day as start if it wasn't included
     if end == "":
-        end = sanStart
+        end = san_start
     
-    sanEnd = validateDate(end)
-    if sanStart == False:
+    san_end = validateDate(end)
+    if san_end == False:
         return "invalid end date"
     
-    if sanEnd < sanStart:
+    if san_end < san_start:
         return "end cannot be bigger than start"
 
 
@@ -35,7 +35,7 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
         end = start
 
     query = f"""
-        SELECT SUM({sensor_pre}{sensor_code})
+        SELECT SUM({SENSOR_PRE}{sensor_code})
         FROM GBTAC_data 
         WHERE CAST(ts AS DATE) >= '{start}'
         AND CAST(ts AS DATE) <= '{end}'
@@ -57,8 +57,8 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
 async def get_data(sensor_code):
     
     # validation
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
     
     conn = pyodbc.connect(connection_str)
@@ -66,7 +66,7 @@ async def get_data(sensor_code):
 
     query = f"""
         SELECT 
-        AVG({sensor_pre}{sensor_code})
+        AVG({SENSOR_PRE}{sensor_code})
         FROM gbtac_data
         WHERE ts >= (
             SELECT DATEADD(day, -7, MAX(ts))

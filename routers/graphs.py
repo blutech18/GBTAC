@@ -1,6 +1,6 @@
 from routers import *
 import pandas as pd
-import re
+from helpers.forecasting import get_forecast
 
 router = APIRouter(prefix="/graphs")
 
@@ -11,26 +11,26 @@ router = APIRouter(prefix="/graphs")
 # - start and end date, YYYY-MM-DD
 # - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
 # - type is for kind of aggregation, mean or sum
-async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="mean"):
+async def get_data(sensor_code, start=NEWEST, end="", agg="none", type="mean"):
     
     #validation:
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
 
-    sanStart = validateDate(start)
-    if sanStart == False:
+    san_start = validateDate(start)
+    if san_start == False:
         return "invalid start date"
     
     # sets end date range to the same day as start if it wasn't included
     if end == "":
-        end = sanStart
+        end = san_start
     
-    sanEnd = validateDate(end)
-    if sanStart == False:
+    san_end = validateDate(end)
+    if san_end == False:
         return "invalid end date"
     
-    if sanEnd < sanStart:
+    if san_end < san_start:
         return "end cannot be bigger than start"
 
 
@@ -39,11 +39,11 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
     curs = conn.cursor()
 
     query = f"""
-        SELECT ts, {sensor_pre}{sanCode}
+        SELECT ts, {SENSOR_PRE}{san_code}
         FROM GBTAC_data 
-        WHERE {sensor_pre}{sanCode} IS NOT NULL 
-        AND CAST(ts AS DATE) >= '{sanStart}'
-        AND CAST(ts AS DATE) <= '{sanEnd}'
+        WHERE {SENSOR_PRE}{san_code} IS NOT NULL 
+        AND CAST(ts AS DATE) >= '{san_start}'
+        AND CAST(ts AS DATE) <= '{san_end}'
         ORDER BY ts
         """
 
@@ -59,12 +59,18 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
             "data": row[1]
         })
 
-    #close connection and send data
+
     conn.close()
 
     if res == []:
         return "no data found"
+    
+    # forecast data if end date is in the future
+    if end > NEWEST:
+        forecasted_data = await get_forecast(san_code, start=NEWEST, end=end)
+        res = res + forecasted_data
 
+    # aggregates data
     if agg != "none":
         df = pd.DataFrame(res)
         df = df.dropna()
@@ -88,8 +94,8 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
 async def get_name(sensor_code):
 
     # validation
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
 
     # open connection
@@ -108,6 +114,7 @@ async def get_name(sensor_code):
     res = rows[0][2]
     conn.close()
     return res
+
 
 @router.get("/codesnames")
 async def get_codesnames():
@@ -134,3 +141,45 @@ async def get_codesnames():
 
     conn.close()
     return res
+
+@router.get("/newest")
+async def get_newest():
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts DESC;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()
+
+@router.get("/oldest")
+async def get_oldest():
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts asc;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()
