@@ -1,34 +1,34 @@
 from routers import *
-from rate_limit import limiter
+from helpers.rate_limit import limiter
 from fastapi import APIRouter, Request
 
 router = APIRouter(prefix="/energy")
 
 @router.get("/sum/{sensor_code}")
 @limiter.limit("10/minute")
-async def get_data(request: Request, sensor_code, start="2025-12-31", end=""):
+async def get_data(request: Request, sensor_code, start=NEWEST, end=""):
 
     #validation:
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
 
-    sanStart = validateDate(start)
-    if sanStart == False:
+    san_start = validateDate(start)
+    if san_start == False:
         return "invalid start date"
     
     # sets end date range to the same day as start if it wasn't included
     if end == "":
-        end = sanStart
+        end = san_start
     
-    sanEnd = validateDate(end)
-    if sanEnd == False:
+    san_end = validateDate(end)
+    if san_end == False:
         return "invalid end date"
     
-    if sanEnd < sanStart:
+    if san_end < san_start:
         return "end date cannot be earlier than start date"
     
-    column_name = f"{sensor_pre}{sanCode}"
+    column_name = f"{SENSOR_PRE}{san_code}"
 
     # open connection
     conn = pyodbc.connect(connection_str)
@@ -42,7 +42,7 @@ async def get_data(request: Request, sensor_code, start="2025-12-31", end=""):
     """
 
     #query database
-    curs.execute(query, (sanStart, sanEnd))
+    curs.execute(query, (san_start, san_end))
     rows = curs.fetchall()
 
     res = rows[0][0]
@@ -58,11 +58,11 @@ async def get_data(request: Request, sensor_code, start="2025-12-31", end=""):
 async def get_daily_avg(request: Request, sensor_code):
     
     # validation
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
     
-    column_name = f"{sensor_pre}{sanCode}"
+    column_name = f"{SENSOR_PRE}{san_code}"
     
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()

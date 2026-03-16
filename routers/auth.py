@@ -1,8 +1,8 @@
-from email_service import send_reset_email
+from helpers.email_service import send_reset_email
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, EmailStr
 from urllib.parse import quote
-from rate_limit import limiter
+from helpers.rate_limit import limiter
 
 router = APIRouter()
 

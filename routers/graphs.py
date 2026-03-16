@@ -1,8 +1,8 @@
 from routers import *
 import pandas as pd
-import re
+from helpers.forecasting import get_forecast
 from pathlib import Path 
-from rate_limit import limiter
+from helpers.rate_limit import limiter
 from fastapi import APIRouter, Request
 
 router = APIRouter(prefix="/graphs")
@@ -43,26 +43,26 @@ def load_natural_gas():
 # - type is for kind of aggregation, mean or sum
 @router.get("/data/{sensor_code}")
 @limiter.limit("10/minute")
-async def get_data(request: Request, sensor_code, start="2023-01-01", end="", agg="none", type="mean"):
+async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="none", type="mean"):
     
     #validation:
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
 
-    sanStart = validateDate(start)
-    if sanStart == False:
+    san_start = validateDate(start)
+    if san_start == False:
         return "invalid start date"
     
     # sets end date range to the same day as start if it wasn't included
     if end == "":
-        end = sanStart
+        end = san_start
     
-    sanEnd = validateDate(end)
-    if sanEnd == False:
+    san_end = validateDate(end)
+    if san_end == False:
         return "invalid end date"
     
-    if sanEnd < sanStart:
+    if san_end < san_start:
         return "end date cannot be earlier than start date"
     
     allowedAgg = ["none", "H", "D", "M", "Y"]
@@ -73,7 +73,7 @@ async def get_data(request: Request, sensor_code, start="2023-01-01", end="", ag
     if type not in allowedType:
         return "invalid aggregation type"
     
-    column_name = f"{sensor_pre}{sanCode}"
+    column_name = f"{SENSOR_PRE}{san_code}"
 
     # open connection
     conn = pyodbc.connect(connection_str)
@@ -89,7 +89,7 @@ async def get_data(request: Request, sensor_code, start="2023-01-01", end="", ag
     """
 
     #query database
-    curs.execute(query, (sanStart, sanEnd))
+    curs.execute(query, (san_start, san_end))
     rows = curs.fetchall()
 
     #format data 
@@ -100,12 +100,18 @@ async def get_data(request: Request, sensor_code, start="2023-01-01", end="", ag
             "data": row[1]
         })
 
-    #close connection and send data
+
     conn.close()
 
     if res == []:
         return "no data found"
+    
+    # forecast data if end date is in the future
+    if san_end > NEWEST:
+        forecasted_data = await get_forecast(san_code, NEWEST, san_end)
+        res = res + forecasted_data
 
+    # aggregates data
     if agg != "none":
         df = pd.DataFrame(res)
         df = df.dropna()
@@ -126,27 +132,27 @@ async def get_data(request: Request, sensor_code, start="2023-01-01", end="", ag
 @limiter.limit("10/minute")
 async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""):
     # validation
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
 
-    sanStart = validateDate(start)
-    if sanStart == False:
+    san_start = validateDate(start)
+    if san_start == False:
         return "invalid start date"
 
     # if no end date, use start
     if end == "":
-        end = sanStart
+        end = san_start
 
-    sanEnd = validateDate(end)
-    if sanEnd == False:
+    san_end = validateDate(end)
+    if san_end == False:
         return "invalid end date"
 
-    if sanEnd < sanStart:
+    if san_end < san_start:
         return "end date cannot be earlier than start date"
 
     # safe column name after validation
-    column_name = f"{sensor_pre}{sanCode}"
+    column_name = f"{SENSOR_PRE}{san_code}"
 
     # open connection
     conn = pyodbc.connect(connection_str)
@@ -155,8 +161,8 @@ async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""
     # Load and filter natural gas CSV
     gas_df = load_natural_gas()
 
-    start_month = pd.to_datetime(sanStart).strftime("%Y-%m")
-    end_month = pd.to_datetime(sanEnd).strftime("%Y-%m")
+    start_month = pd.to_datetime(san_start).strftime("%Y-%m")
+    end_month = pd.to_datetime(san_end).strftime("%Y-%m")
 
     gas_df = gas_df[(gas_df["month"] >= start_month) & (gas_df["month"] <= end_month)]
 
@@ -178,7 +184,7 @@ async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""
         ORDER BY month
     """
 
-    curs.execute(query, (sanStart, sanEnd))
+    curs.execute(query, (san_start, san_end))
     rows = curs.fetchall()
 
     sensor_lookup = {
@@ -211,8 +217,8 @@ async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""
 async def get_name(request: Request, sensor_code):
 
     # validation
-    sanCode = validateCode(sensor_code)
-    if sanCode == False:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
         return "enter valid sensor code"
 
     # open connection
@@ -225,12 +231,13 @@ async def get_name(request: Request, sensor_code):
     """    
 
     #query database
-    curs.execute(query, (sanCode,))
+    curs.execute(query, (san_code,))
     rows = curs.fetchall()
 
     res = rows[0][2]
     conn.close()
     return res
+
 
 @router.get("/codesnames")
 @limiter.limit("30/minute")
@@ -258,3 +265,45 @@ async def get_codesnames(request: Request):
 
     conn.close()
     return res
+
+@router.get("/newest")
+async def get_newest():
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts DESC;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()
+
+@router.get("/oldest")
+async def get_oldest():
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts asc;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()

@@ -5,7 +5,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 # import routers here
-from rate_limit import limiter
+from helpers.rate_limit import limiter
 from routers.graphs import router as graph_router
 from routers.energy import router as energy_router
 from routers.auth import router as auth_router

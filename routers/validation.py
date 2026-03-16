@@ -2,17 +2,17 @@ import re
 
 def validateDate(date):
     x = re.fullmatch(r"20[0-9]{2}-[0-1][0-9]-[0-3][0-9]", date)
-    sanDate = x.group() if x != None else ""
+    san_date = x.group() if x != None else ""
     
-    if sanDate == "":
+    if san_date == "":
         return False
     
-    if sanDate > "2025-12-31" or sanDate < "2018-04-08":
+    if san_date > "2025-12-31" or san_date < "2018-04-08":
         return False
 
-    return sanDate
+    return san_date
 
 def validateCode(code):
     x = re.fullmatch(r"[0-9]{5}_TL[0-9]+", code)
-    sanCode = x.group() if x != None else False
-    return sanCode
+    san_code = x.group() if x != None else False
+    return san_code
