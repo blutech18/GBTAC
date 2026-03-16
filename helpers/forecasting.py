@@ -25,27 +25,6 @@ def useable_forecast(file_path):
 
 async def get_forecast(sensor_code, start=NEWEST, end=""):
 
-    #validation:
-    san_code = validateCode(sensor_code)
-    if san_code == False:
-        return "enter valid sensor code"
-
-    san_start = validateDate(start)
-    if san_start == False:
-        return "invalid start date"
-    
-    # sets end date range to the same day as start if it wasn't included
-    if end == "":
-        end = san_start
-    
-    san_end = validateDate(end)
-    if san_end == False:
-        return "invalid end date"
-    
-    if san_end < san_start:
-        return "end cannot be bigger than start"
-
-
     #forecasting
     forecasts_dir = Path(__file__).resolve().parent.parent / "forecasts"
     file_path = forecasts_dir / f"{san_code}.json"
