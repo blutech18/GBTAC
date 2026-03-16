@@ -209,6 +209,18 @@ export default function LoginForm() {
 
     router.push("/home");
   } catch (err) {
+
+    if (err.code === "auth/too-many-requests") {
+      alert("Too many login attempts were detected for this account. Please wait a few minutes before trying again.");
+      return;
+    }
+
+    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+      alert("Invalid email or password.");
+    } else {
+      alert("Login failed. Please try again.");
+    }
+
     const nextAttempts = failedLoginAttempts + 1;
     setFailedLoginAttempts(nextAttempts);
     localStorage.setItem("failedLoginAttempts", String(nextAttempts));
@@ -226,11 +238,7 @@ export default function LoginForm() {
       localStorage.setItem("loginLockUntil", String(lockUntil));
       localStorage.setItem("failedLoginAttempts", "0");
 
-      alert(
-        `Too many failed login attempts. Account locked for ${durationSeconds} seconds.`
-      );
-    } else {
-      alert(`Login failed: ${err.message}`);
+      alert(`Too many failed login attempts. Account locked for ${durationSeconds} seconds.`);
     }
   }
 };
