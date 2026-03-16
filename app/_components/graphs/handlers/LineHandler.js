@@ -128,14 +128,22 @@ export default function LineHandler({chartType, sensorList, startDate, endDate, 
             // for each sensor in sensors array it sets the line label, data, and colour
             const dataset = sensors.map(sensor => ({
                 label: sensor.name,
-                data: sensorData[sensor.id].map(d => d.data),
+                data: sensorData[sensor.id].map(d => ({ x: new Date(d.ts), y: d.data })),
                 borderColor: colours[sensor.id],
                 backgroundColor: colours[sensor.id],
-                borderWidth: 2
+                borderWidth: 2,
+                segment: {
+                    borderDash: (ctx) =>
+                        ctx.p1.parsed.x > new Date("2025-12-31T23:59:59").getTime() ? [6, 4] : undefined,
+                    borderColor: (ctx) =>
+                        ctx.p1.parsed.x > new Date("2025-12-31T23:59:59").getTime()
+                            ? colours[sensor.id] + "80"  // 80 = 50% opacity in hex
+                            : colours[sensor.id],
+                }     
             }));
             
             setGraphData({
-                labels,
+                labels: [],
                 datasets: dataset
             });
  
