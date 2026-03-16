@@ -1,4 +1,6 @@
-fastapi
+﻿fastapi
 uvicorn
 pyodbc
 python-dotenv
+pandas
+resend
