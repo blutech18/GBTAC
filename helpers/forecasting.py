@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta
 from helpers.trainProphet import forecast
-from helpers.validation import validateDate, validateCode
-from helpers.dates import get_oldest, get_newest, str_to_date, date_to_str
+from helpers.dates import get_oldest, get_newest, str_to_date
 
 NEWEST = str_to_date(get_newest())
 OLDEST = str_to_date(get_oldest())
@@ -27,19 +26,19 @@ async def get_forecast(sensor_code, start=NEWEST, end=""):
 
     #forecasting
     forecasts_dir = Path(__file__).resolve().parent.parent / "forecasts"
-    file_path = forecasts_dir / f"{san_code}.json"
+    file_path = forecasts_dir / f"{sensor_code}.json"
 
     # forecast if forecast wasn't available
     forecast_bool = useable_forecast(file_path)
     if not forecast_bool:
-        forecast(san_code)
+        forecast(sensor_code)
 
     with open(file_path, 'r') as f:
         data = json.load(f)
 
     filtered = [
         row for row in data
-        if str_to_date(san_start) <= str_to_date(row["ts"]) <= str_to_date(san_end)
+        if str_to_date(start) <= str_to_date(row["ts"]) <= str_to_date(end)
     ]
 
     return filtered

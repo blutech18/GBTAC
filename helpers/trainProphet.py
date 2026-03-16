@@ -35,9 +35,6 @@ def forecast(sensor_code):
     })
 
     df["ds"] = pd.to_datetime(df["ds"])
-    # df = df.sort_values("ds").reset_index(drop=True)
-
-    # ----------------------------------------------
 
     # Infer the sensor's native frequency from the median gap between readings.
     # This handles any interval (1min, 5min, hourly, daily, etc.) automatically.
@@ -61,7 +58,6 @@ def forecast(sensor_code):
     # Always forecast exactly 10 days ahead regardless of sensor resolution
     periods = int((10 * 86400) / freq_seconds)
 
-    # -----------------------------------------------------
 
     model = Prophet()
     model.fit(df)

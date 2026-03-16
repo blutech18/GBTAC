@@ -66,8 +66,8 @@ async def get_data(sensor_code, start=NEWEST, end="", agg="none", type="mean"):
         return "no data found"
     
     # forecast data if end date is in the future
-    if end > NEWEST:
-        forecasted_data = await get_forecast(san_code, start=NEWEST, end=end)
+    if san_end > NEWEST:
+        forecasted_data = await get_forecast(san_code, NEWEST, san_end)
         res = res + forecasted_data
 
     # aggregates data
