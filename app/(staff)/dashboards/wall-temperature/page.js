@@ -1,22 +1,71 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
-import GraphPlaceholder from "../../../_components/GraphPlaceholder";
+import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 
 const STORAGE_KEY = "dashboard-wall-temp";
 
-const FLOOR_OPTIONS = ["Basement ", "1st Floor", "2nd Floor"];
-const ORIENTATION_OPTIONS = ["North", "South", "East", "West"];
-const FLOOR_IMAGES = {
-  "Basement ": "/floors/GBTAC-basement-level.png",
-  "1st Floor": "/floors/GBTAC-level1.png",
-  "2nd Floor": "/floors/GBTAC-level2.png",
+// Mapping for the 24 Wall sensors derived from database naming
+const FLOOR_SENSOR_MAP = {
+  Basement: [
+    "30000_TL57", "30000_TL56", "30000_TL55", // East Basement
+    "30000_TL39", "30000_TL38", // North Basement
+    "30000_TL69", "30000_TL68", "30000_TL67", "30000_TL66", "30000_TL95", // South Basement
+  ],
+  "1st Floor": [
+    "30000_TL90", // North 1st floor
+    "30000_TL71", "30000_TL70", // South 1st floor
+    "30000_TL65", "30000_TL64", "30000_TL63", "30000_TL62", "30000_TL61", "30000_TL60", "30000_TL59", "30000_TL58" // West 1st floor
+  ],
+  "2nd Floor": [],
 };
+
+const SENSOR_ORIENTATION = {
+  "30000_TL57": "East", "30000_TL56": "East", "30000_TL55": "East",
+  "30000_TL39": "North", "30000_TL38": "North", "30000_TL90": "North",
+  "30000_TL69": "South", "30000_TL68": "South", "30000_TL67": "South", "30000_TL66": "South",
+  "30000_TL95": "South", "30000_TL71": "South", "30000_TL70": "South",
+  "30000_TL62": "West", "30000_TL61": "West", "30000_TL60": "West", "30000_TL59": "West", "30000_TL58": "West",
+  "30000_TL65": "West", "30000_TL64": "West", "30000_TL63": "West"
+};
+
+const SENSOR_LABELS = {
+  // Basement East
+  "30000_TL57": "East 1 Basement",
+  "30000_TL56": "East 2 Basement",
+  "30000_TL55": "East 3 Basement",
+  
+  // Basement North
+  "30000_TL39": "North 1 Basement",
+  "30000_TL38": "North 2 Basement",
+  
+  // Basement South
+  "30000_TL69": "South 1 Basement",
+  "30000_TL68": "South 2 Basement",
+  "30000_TL67": "South 3 Basement",
+  "30000_TL66": "South 4 Basement",
+  "30000_TL95": "South 5 Basement",
+  
+  // 1st Floor
+  "30000_TL90": "North 1st Floor",
+  "30000_TL71": "South 1 1st Floor",
+  "30000_TL70": "South 2 1st Floor",
+  "30000_TL65": "West 1 1st Floor",
+  "30000_TL64": "West 2 1st Floor",
+  "30000_TL63": "West 3 1st Floor",
+  "30000_TL62": "West 4 1st Floor",
+  "30000_TL61": "West 5 1st Floor",
+  "30000_TL60": "West 6 1st Floor",
+  "30000_TL59": "West 7 1st Floor",
+  "30000_TL58": "West 8 1st Floor",
+};
+
+const FLOOR_OPTIONS = ["Basement", "1st Floor", "2nd Floor"];
+const ORIENTATION_OPTIONS = ["North", "South", "East", "West"];
 
 export default function WallTempDashboard() {
   const [state, setState] = useState(() => {
@@ -30,36 +79,88 @@ export default function WallTempDashboard() {
     };
   });
 
+  const [appliedState, setAppliedState] = useState(null);
+
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
 
+  const floorFiltered =
+    !appliedState
+      ? []
+      : appliedState.floors.length === 0
+        ? Object.values(FLOOR_SENSOR_MAP).flat()
+        : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
+
+  const activeSensors =
+    !appliedState
+      ? []
+      : appliedState.orientations.length === 0
+        ? floorFiltered
+        : floorFiltered.filter((code) =>
+            appliedState.orientations.includes(SENSOR_ORIENTATION[code]),
+          );
+
   const handleMultiSelect = (key, value) => {
-    const currentValues = state[key] || [];
+    setState((prev) => {
+      const currentValues = prev[key] || [];
 
-    const updatedValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
-      : [...currentValues, value];
+      const updatedValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
 
-    setState({ ...state, [key]: updatedValues });
+      const optionOrder =
+        key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
+
+      const sortedValues = optionOrder.filter((option) =>
+        updatedValues.includes(option)
+      );
+
+      const nextState = { ...prev, [key]: sortedValues };
+
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
+
+      return nextState;
+    });
   };
 
   const handleSelectAll = (key, options) => {
-    const currentValues = state[key] || [];
+    setState((prev) => {
+      const currentValues = prev[key] || [];
 
-    setState({
-      ...state,
-      [key]: currentValues.length === options.length ? [] : options,
+      const updatedValues =
+        currentValues.length === options.length ? [] : [...options];
+
+      const nextState = {
+        ...prev,
+        [key]: updatedValues,
+      };
+
+      if (nextState.fromDate && nextState.toDate) {
+        setAppliedState({
+          fromDate: nextState.fromDate,
+          toDate: nextState.toDate,
+          floors: nextState.floors,
+          orientations: nextState.orientations,
+        });
+      }
+
+      return nextState;
     });
   };
 
   const handleSaveScreen = () => {
-    // Save state to localStorage
     saveDashboardState(STORAGE_KEY, state);
 
-    // Save this dashboard to recent dashboards
     saveRecentDashboard({
       id: "wall-temperature",
       title: "Wall Temperature Dashboard",
@@ -84,8 +185,21 @@ export default function WallTempDashboard() {
         <DatePicker
           fromDate={fromDate}
           toDate={toDate}
-          setFromDate={(v) => setState({ ...state, fromDate: v })}
-          setToDate={(v) => setState({ ...state, toDate: v })}
+          setDate={({ fromDate, toDate }) => {
+            const nextState = { ...state, fromDate, toDate };
+            setState(nextState);
+
+            if (fromDate && toDate) {
+              setAppliedState({
+                fromDate,
+                toDate,
+                floors: nextState.floors,
+                orientations: nextState.orientations,
+              });
+            } else {
+              setAppliedState(null);
+            }
+          }}
         />
 
         <div className="mb-6">
@@ -138,33 +252,22 @@ export default function WallTempDashboard() {
           </div>
         </div>
       </div>
-      <GraphPlaceholder />
 
-      {/* PDF Labelled Screenshot */}
-      <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
-        <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
-
-        {floors.length === 0 ? (
-          <div className="border border-dashed p-6 text-center text-sm text-gray-500">
-            Select a floor to preview layout.
-          </div>
+      <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4 mt-6">
+        {appliedState && activeSensors.length > 0 ? (
+          <LineHandler
+            key={`${appliedState.fromDate}-${appliedState.toDate}-${activeSensors.join(",")}`}
+            sensorList={activeSensors}
+            sensorLabels={SENSOR_LABELS}
+            startDate={appliedState.fromDate}
+            endDate={appliedState.toDate}
+            graphTitle="Wall Temperature"
+            yTitle="Temperature (°C)"
+            xTitle="Time"
+          />
         ) : (
-          <div className="flex flex-col gap-4 justify-center">
-            {floors.map((floor) =>
-              FLOOR_IMAGES[floor] ? ( // only render if the image exists
-                <div key={floor} className="text-center">
-                  <p className="text-sm mb-2 font-medium">{floor}</p>
-
-                  <Image
-                    src={FLOOR_IMAGES[floor]}
-                    alt={floor}
-                    width={1300}
-                    height={500}
-                    className="border rounded-lg shadow-md hover:shadow-lg transition"
-                  />
-                </div>
-              ) : null,
-            )}
+          <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+            Graph Placeholder
           </div>
         )}
       </div>
