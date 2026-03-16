@@ -3,6 +3,7 @@ export default function Modal({
   onClose,
   onSubmit,
   submitText = "Send",
+  submitDisabled = false,
   children,
 }) {
   return (
@@ -16,8 +17,9 @@ export default function Modal({
 
         <div className="flex flex-row-reverse justify-between gap-2 mt-4">
           <button
-            className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 flex-1"
+            className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 flex-1 disabled:bg-gray-400 disabled:cursor-not-allowed"
             onClick={onSubmit}
+            disabled={submitDisabled}
           >
             {submitText}
           </button>
