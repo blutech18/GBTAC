@@ -1,7 +1,11 @@
-fastapi
+﻿fastapi
 uvicorn
 pyodbc
 python-dotenv
 pandas
 pathlib
 prophet
+resend
+slowapi
+pydantic[email]
+firebase_email
