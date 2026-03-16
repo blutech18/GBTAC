@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const { role } = useAuth(); //change to "staff" to see staff edit profile page for now
   const isAdmin = role === "admin";
 
+
   return (
     <main
       className="min-h-screen bg-gray-50 flex flex-col"
