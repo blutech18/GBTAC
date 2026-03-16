@@ -55,28 +55,29 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
         end = sanStart
     
     sanEnd = validateDate(end)
-    if sanStart == False:
+    if sanEnd == False:
         return "invalid end date"
     
     if sanEnd < sanStart:
-        return "end cannot be bigger than start"
-
+        return "end date cannot be earlier than start date"
+    
+    column_name = f"{sensor_pre}{sanCode}"
 
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
     query = f"""
-        SELECT ts, {sensor_pre}{sanCode}
-        FROM GBTAC_data 
-        WHERE {sensor_pre}{sanCode} IS NOT NULL 
-        AND CAST(ts AS DATE) >= '{sanStart}'
-        AND CAST(ts AS DATE) <= '{sanEnd}'
+        SELECT ts, {column_name}
+        FROM GBTAC_data
+        WHERE {column_name} IS NOT NULL
+        AND CAST(ts AS DATE) >= ?
+        AND CAST(ts AS DATE) <= ?
         ORDER BY ts
-        """
+    """
 
     #query database
-    curs.execute(query)
+    curs.execute(query, (sanStart, sanEnd))
     rows = curs.fetchall()
 
     #format data 
@@ -109,22 +110,40 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
 
     return res
 
-@router.get("/natural-gas-vs/{sensor_code}")
-async def natural_gas_vs(sensor_code, start="2023-01-01", end=""):
+@router.get("/total-energy/{sensor_code}")
+async def total_energy(sensor_code, start="2023-01-01", end=""):
+    # validation
+    sanCode = validateCode(sensor_code)
+    if sanCode == False:
+        return "enter valid sensor code"
+
+    sanStart = validateDate(start)
+    if sanStart == False:
+        return "invalid start date"
+
+    # if no end date, use start
+    if end == "":
+        end = sanStart
+
+    sanEnd = validateDate(end)
+    if sanEnd == False:
+        return "invalid end date"
+
+    if sanEnd < sanStart:
+        return "end date cannot be earlier than start date"
+
+    # safe column name after validation
+    column_name = f"{sensor_pre}{sanCode}"
 
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # if no end date, use start
-    if end == "":
-        end = start
-
     # Load and filter natural gas CSV
     gas_df = load_natural_gas()
 
-    start_month = pd.to_datetime(start).strftime("%Y-%m")
-    end_month = pd.to_datetime(end).strftime("%Y-%m")
+    start_month = pd.to_datetime(sanStart).strftime("%Y-%m")
+    end_month = pd.to_datetime(sanEnd).strftime("%Y-%m")
 
     gas_df = gas_df[(gas_df["month"] >= start_month) & (gas_df["month"] <= end_month)]
 
@@ -133,20 +152,20 @@ async def natural_gas_vs(sensor_code, start="2023-01-01", end=""):
         for _, row in gas_df.iterrows()
     }
 
-    # Query SQL sensor monthly average
+    # Query SQL sensor monthly total
     query = f"""
         SELECT 
             FORMAT(ts, 'yyyy-MM') AS month,
-            SUM(ABS(CAST({sensor_pre}{sensor_code} AS FLOAT)) / 12000.0) AS monthly_value
+            SUM(ABS(CAST({column_name} AS FLOAT)) / 12000.0) AS monthly_value
         FROM GBTAC_data
-        WHERE {sensor_pre}{sensor_code} IS NOT NULL
-        AND CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
+        WHERE {column_name} IS NOT NULL
+        AND CAST(ts AS DATE) >= ?
+        AND CAST(ts AS DATE) <= ?
         GROUP BY FORMAT(ts, 'yyyy-MM')
         ORDER BY month
     """
 
-    curs.execute(query)
+    curs.execute(query, (sanStart, sanEnd))
     rows = curs.fetchall()
 
     sensor_lookup = {
@@ -186,13 +205,13 @@ async def get_name(sensor_code):
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    query = f"""
+    query = """
         SELECT * FROM sensor_names
-        WHERE sensor_name_source = '{sensor_code}'
-        """    
+        WHERE sensor_name_source = ?
+    """    
 
     #query database
-    curs.execute(query)
+    curs.execute(query, (sanCode,))
     rows = curs.fetchall()
 
     res = rows[0][2]
