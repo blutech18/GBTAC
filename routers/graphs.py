@@ -39,6 +39,7 @@ def load_natural_gas():
 # - start and end date, YYYY-MM-DD
 # - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
 # - type is for kind of aggregation, mean or sum
+@router.get("/data/{sensor_code}")
 async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="mean"):
     
     #validation:
@@ -60,6 +61,14 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
     
     if sanEnd < sanStart:
         return "end date cannot be earlier than start date"
+    
+    allowedAgg = ["none", "H", "D", "M", "Y"]
+    if agg not in allowedAgg:
+        return "invalid aggregation interval"
+
+    allowedType = ["mean", "sum"]
+    if type not in allowedType:
+        return "invalid aggregation type"
     
     column_name = f"{sensor_pre}{sanCode}"
 
