@@ -3,7 +3,8 @@
 import Chart from "chart.js/auto";
 import { CategoryScale, TimeScale } from "chart.js";
 import { useState, useEffect } from "react";
-import LineChart from "../LineChart"
+import LineChart from "../LineChart";
+import BarChart from "../BarChart";
 import "chartjs-adapter-date-fns";
 import zoomPlugin from 'chartjs-plugin-zoom'
 
@@ -11,7 +12,20 @@ Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
 const API_ENDPOINT = "http://127.0.0.1:8000";
 
-export default function LineHandler({sensorList, sensorLabels, startDate, endDate, graphTitle, yTitle, xTitle, onStatsReady}){
+export default function LineHandler({
+    chartType,
+    sensorList,
+    sensorLabels,
+    startDate,
+    endDate,
+    graphTitle,
+    yTitle,
+    xTitle,
+    xUnit,
+    aggTime = "none",
+    aggType = "mean",
+    onStatsReady,
+}){
 
     // Auto-compute the chart x-axis time unit — must match backend aggregation tiers
     const getTimeUnit = () => {
@@ -48,13 +62,22 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
     const [fetched, setFetched] = useState(false); // if data has been fetched or not
     const [loading, setLoading] = useState(true);   // loading state for UI
     const [sensorData, setSensorData] = useState([]); // holds all the sensor data
+    const [unit, setUnit] = useState(xUnit);
+    const [minZoom, setMinZoom] = useState();
+    const [xMin, setXMin] = useState();
+    const [xMax, setXMax] = useState();
+    const [yMin, setYMin] = useState();
+    const [yMax, setYMax] = useState();
 
     const fetchData = async (list = sensorList, from = startDate, to = endDate) => {
         try {
             setLoading(true);
+            const query = new URLSearchParams({ start: from, end: to });
+            if (aggTime && aggTime !== "none") query.set("agg", aggTime);
+            if (aggType) query.set("type", aggType);
             const results = await Promise.all(
                 list.map((code) =>
-                    fetch(`${API_ENDPOINT}/graphs/data/${code}?start=${from}&end=${to}`)
+                    fetch(`${API_ENDPOINT}/graphs/data/${code}?${query}`)
                         .then((r) => r.json())
                         .catch(() => [])
                 )
@@ -140,6 +163,21 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         if(fetched && sensorData.length > 0){
             const labels = sensorData[0].map(d => new Date(d.ts));
 
+            setXMin(labels[0]);
+            setXMax(labels[labels.length - 1]);
+
+            const mins = [];
+            const maxes = [];
+            sensorData.forEach((sensor) => {
+                const values = (sensor || []).map((d) => d.data).filter((v) => v != null);
+                if (values.length > 0) {
+                    mins.push(Math.min(...values));
+                    maxes.push(Math.max(...values));
+                }
+            });
+            if (mins.length > 0) setYMin(Math.min(...mins));
+            if (maxes.length > 0) setYMax(Math.max(...maxes));
+
             // Compute KPI stats across all active sensors and pass to parent if requested
             if (onStatsReady) {
                 let maxVal = -Infinity, maxTs = null, maxSensorCode = null;
@@ -198,28 +236,41 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                 labels,
                 datasets: dataset
             });
+
+            let resolvedUnit = getTimeUnit();
+            if (aggTime === "H") resolvedUnit = "hour";
+            else if (aggTime === "D") resolvedUnit = "day";
+            else if (aggTime === "M") resolvedUnit = "month";
+            else if (aggTime === "Y") resolvedUnit = "year";
+            setUnit(resolvedUnit);
+            if (resolvedUnit === "hour") setMinZoom(2 * 60 * 60 * 1000);
+            else if (resolvedUnit === "day") setMinZoom(2 * 24 * 60 * 60 * 1000);
+            else if (resolvedUnit === "month") setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000);
+            else if (resolvedUnit === "year") setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000);
         }
     }, [sensorData, sensors, fetched, onStatsReady]);
+
+    const displayUnit = unit || getTimeUnit();
 
     // options for graph display to be passed on to LineChart component
     const graphOptions = {
         scales: {
             x: {
                 title: {
-                display: true,
-                text: xTitle
+                    display: true,
+                    text: xTitle
                 },
                 type: "time",
                 time: {
-                    unit: getTimeUnit(),
+                    unit: displayUnit,
                     displayFormats: getDisplayFormats(),
                     tooltipFormat: "PPpp",
                 }
             },
             y: {
                 title: {
-                display: true,
-                text: yTitle
+                    display: true,
+                    text: yTitle
                 },
             }
         },
@@ -235,9 +286,24 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                 zoom: {
                     wheel: {
                         enabled: true,
+                        speed: 0.3,
                     },
-                    mode: 'xy',
+                    mode: 'x',
                 },
+                limits: {
+                    x: {
+                        min: xMin,
+                        max: xMax,
+                        minRange: minZoom,
+                    },
+                    y: {
+                        min: yMin,
+                        max: yMax,
+                    }
+                },
+                pan: {
+                    enabled: true,
+                }
             }
         },
     };
@@ -246,6 +312,33 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
         return (
             <div className="relative min-h-75 flex items-center justify-center text-gray-400 text-sm">
                 Graph Placeholder
+            </div>
+        );
+    }
+
+    const hasData = sensorData.length > 0 && sensorData[0].length > 0;
+    const chartContent = hasData ? (
+        chartType === "bar" ? (
+            <BarChart options={graphOptions} data={graphData} />
+        ) : (
+            <LineChart options={graphOptions} data={graphData} />
+        )
+    ) : null;
+
+    if (chartType === "bar" || chartType === "line") {
+        return (
+            <div>
+                {loading && (
+                    <div className="flex items-center justify-center p-8 text-gray-500 text-sm">
+                        Loading data...
+                    </div>
+                )}
+                {!loading && fetched && !hasData && (
+                    <div className="flex items-center justify-center p-8 text-gray-400 text-sm">
+                        No data available for the selected date range.
+                    </div>
+                )}
+                {!loading && hasData && chartContent}
             </div>
         );
     }
@@ -268,9 +361,9 @@ export default function LineHandler({sensorList, sensorLabels, startDate, endDat
                     No data available for the selected date range.
                 </div>
             )}
-            {(!loading || fetched) && sensorData.length > 0 && sensorData[0].length > 0 && (
+            {(!loading || fetched) && hasData && (
                 <LineChart options={graphOptions} data={graphData}/>
             )}
         </div>
-    )
+    );
 }
