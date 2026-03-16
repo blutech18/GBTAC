@@ -1,8 +1,12 @@
 from routers import *
+from rate_limit import limiter
+from fastapi import APIRouter, Request
+
 router = APIRouter(prefix="/energy")
 
 @router.get("/sum/{sensor_code}")
-async def get_data(sensor_code, start="2025-12-31", end=""):
+@limiter.limit("10/minute")
+async def get_data(request: Request, sensor_code, start="2025-12-31", end=""):
 
     #validation:
     sanCode = validateCode(sensor_code)
@@ -50,7 +54,8 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
 
 # daily average over the last 7 days
 @router.get("/dailyAvg/{sensor_code}")
-async def get_daily_avg(sensor_code):
+@limiter.limit("20/minute")
+async def get_daily_avg(request: Request, sensor_code):
     
     # validation
     sanCode = validateCode(sensor_code)

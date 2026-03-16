@@ -2,6 +2,8 @@ from routers import *
 import pandas as pd
 import re
 from pathlib import Path 
+from rate_limit import limiter
+from fastapi import APIRouter, Request
 
 router = APIRouter(prefix="/graphs")
 
@@ -40,7 +42,8 @@ def load_natural_gas():
 # - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
 # - type is for kind of aggregation, mean or sum
 @router.get("/data/{sensor_code}")
-async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="mean"):
+@limiter.limit("10/minute")
+async def get_data(request: Request, sensor_code, start="2023-01-01", end="", agg="none", type="mean"):
     
     #validation:
     sanCode = validateCode(sensor_code)
@@ -120,7 +123,8 @@ async def get_data(sensor_code, start="2025-12-31", end="", agg="none", type="me
     return res
 
 @router.get("/total-energy/{sensor_code}")
-async def total_energy(sensor_code, start="2023-01-01", end=""):
+@limiter.limit("10/minute")
+async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""):
     # validation
     sanCode = validateCode(sensor_code)
     if sanCode == False:
@@ -203,7 +207,8 @@ async def total_energy(sensor_code, start="2023-01-01", end=""):
 # url format: "http://127.0.0.1:8000/graphs/name/{sensor code}"
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
-async def get_name(sensor_code):
+@limiter.limit("30/minute")
+async def get_name(request: Request, sensor_code):
 
     # validation
     sanCode = validateCode(sensor_code)
@@ -228,7 +233,8 @@ async def get_name(sensor_code):
     return res
 
 @router.get("/codesnames")
-async def get_codesnames():
+@limiter.limit("30/minute")
+async def get_codesnames(request: Request):
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()

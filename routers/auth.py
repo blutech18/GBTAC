@@ -1,7 +1,8 @@
 from email_service import send_reset_email
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, EmailStr
 from urllib.parse import quote
+from rate_limit import limiter
 
 router = APIRouter()
 
@@ -10,7 +11,8 @@ class ResetRequest(BaseModel):
 
 
 @router.post("/reset-password")
-def reset_password(data: ResetRequest):
+@limiter.limit("5/minute")
+def reset_password(request: Request, data: ResetRequest):
     email = str(data.email)
 
     reset_link = f"http://localhost:3000/reset-password?email={quote(email)}"
