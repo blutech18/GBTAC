@@ -1,6 +1,11 @@
 .vscode/
 
+venv/
+
 .env
 
 __pycache__
 routers/__pycache__
+
+secrets/
+*.json
