@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useAuth } from "../../_utils/auth-context";
 
 export default function ProfilePage() {
-  const { role } = useAuth(); //change to "staff" to see staff edit profile page for now
+  const { role } = "staff"; //change to "staff" to see staff edit profile page for now
   const isAdmin = role === "admin";
 
 
@@ -19,7 +19,12 @@ export default function ProfilePage() {
       style={{ fontFamily: "var(--font-titillium)" }}
     >
       <SecondaryNav displayLogin={false} displayLogout displayProfile={true} />
-      <Navbar />
+      <Navbar 
+        displayHome={!isAdmin} 
+        displayAbout={false} 
+        displayAccountMngmt={isAdmin} 
+        displayDashboardMngmt={isAdmin} 
+      />
 
       <div className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">

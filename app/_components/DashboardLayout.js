@@ -32,7 +32,7 @@ export default function DashboardLayout({
         {children}
       </main>
 
-      <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8 px-4">
+      <div className="text-center text-md text-gray-500 dark:text-gray-400 mt-8 mb-10 px-4">
         This information is displayed for educational purposes only.
       </div>
 

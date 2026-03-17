@@ -112,10 +112,10 @@ export default function Navbar({
         {displayAccountMngmt && (
           <li>
             <Link
-              href="/account-management"
+              href="/account-manager"
               className="hover:opacity-70 transition"
             >
-              Account Management
+              Manage Accounts
             </Link>
           </li>
         )}
@@ -123,9 +123,9 @@ export default function Navbar({
           <li>
             <Link
               href="/dashboard-management"
-              className="block px-4 py-2 hover:bg-gray-100"
+              className="hover:opacity-70 transition"
             >
-              Dashboard Management
+              Manage Dashboard
             </Link>
           </li>
         )}

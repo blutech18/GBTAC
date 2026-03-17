@@ -129,12 +129,6 @@ export default function Page() {
               <GraphPlaceholder />
             </div>
             <div className="flex justify-end gap-4 mt-3">
-                <button
-                  onClick={handleSaveScreen}
-                  className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
-                >
-                  Save Screen
-                </button>
               <ExportPDFButton chartRef={chartRef} fileName="natural-gas-chart" />
             </div>
             <div ref={chartRef2}>

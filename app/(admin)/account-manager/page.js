@@ -12,11 +12,12 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
 
   return (
-    <main className="bg-gray-50 min-h-screen">
-        <SecondaryNav displayLogin={false} displayLogout displayProfile={true} />
-        <Navbar />
+    <div className="flex flex-col min-h-screen bg-[#FdFdFd] font-sans">
+      <SecondaryNav displayLogin={false} displayProfile={true} />
+      <Navbar displayAbout={false} displayHome={false} displayDashboardMngmt={true} displayAccountMngmt={true} />
       
-      <div className="container mx-auto px-4 py-8">
+    <main className="bg-gray-50 flex-1 w-full flex flex-col">
+      <div className="w-full sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 py-8 flex-1">
         <h1 className="text-3xl font-bold mb-10 text-[#212529]" style={{ fontFamily: "var(--font-titillium)" }}>
           Manage Accounts
         </h1>
@@ -28,6 +29,6 @@ export default function Page() {
       </div>
         <Footer />
     </main>
-
+</div>
   );
 }
