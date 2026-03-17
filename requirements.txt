@@ -8,4 +8,4 @@ prophet
 resend
 slowapi
 pydantic[email]
-firebase_email
+firebase-admin
