@@ -9,7 +9,6 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-[#FdFdFd] font-sans">
       <SecondaryNav />
       <Navbar displayHome={false} />
-
       <main className="flex-1 bg-gray-100 w-full sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 px-4 py-8">
         <section className="mx-auto bg-white shadow-sm px-12 py-16">
           {/* Title */}
@@ -24,7 +23,7 @@ export default function Home() {
 
           {/* CTA */}
           <div className="mt-10">
-            <Link href="/dashboard">
+            <Link href="/guest-dashboard">
               <button className="px-8 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
                 Go to Guest Dashboard
               </button>
