@@ -5,6 +5,7 @@ import Footer from "../../_components/Footer";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import Breadcrumbs from "../../_components/Breadcrumbs";
 
 export default function GuestDashboard() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,9 @@ export default function GuestDashboard() {
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-black font-sans">
       <SecondaryNav displayDashboards={true} />
       <Navbar />
-
+      <div className="bg-gray-100">
+        <Breadcrumbs />
+      </div>
       <main className="flex-1 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 px-4 py-8">
         <section className="mx-auto bg-white dark:bg-neutral-900 rounded-md shadow-sm px-12 py-16">
           {/* Title */}
