@@ -33,13 +33,13 @@ export default function Page() {
         displayProfile={true}
         displayLogin={false}
       />
-      <Navbar displayDashboards displayHome={false} displayAbout={false} />
+      <Navbar displayDashboards displayHome={false} displayAbout={false} displayReports={true} />
       <main className="flex-1 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 py-8">
         <h1 className="text-3xl font-semibold mb-6 text-[#212529]">
           Reports
         </h1>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="col-span-1 p-6 bg-white shadow-md rounded-xl border space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="col-span-2 md:col-span-1 p-6 bg-white shadow-md rounded-xl border space-y-6">
             <div className="text-xl font-semibold mb-4 text-[#212529]">
               Report Controls
             </div>
