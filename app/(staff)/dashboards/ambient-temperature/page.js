@@ -15,25 +15,37 @@ const STORAGE_KEY = "dashboard-ambient-temp";
 // 13 sensors mapped by floor from building floor plans
 const FLOOR_SENSOR_MAP = {
   Basement: ["20004_TL2", "20005_TL2", "20006_TL2"],
-  "1st Floor": ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
-  "2nd Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2"],
+  "1st Floor": [
+    "20007_TL2",
+    "20008_TL2",
+    "20009_TL2",
+    "20010_TL2",
+    "20011_TL2",
+  ],
+  "2nd Floor": [
+    "20012_TL2",
+    "20013_TL2",
+    "20014_TL2",
+    "20015_TL2",
+    "20016_TL2",
+  ],
 };
 
 // Orientation derived from display names in sensor_names table
 const SENSOR_ORIENTATION = {
-  "20004_TL2": "East",   // East 1 Basement
-  "20005_TL2": "West",   // West Basement
-  "20006_TL2": "East",   // East 2 Basement
-  "20007_TL2": "North",  // North (West) 1st Floor
-  "20008_TL2": "South",  // South 1 1st Floor
-  "20009_TL2": "South",  // South 2 1st Floor
-  "20010_TL2": "East",   // East 1st Floor
+  "20004_TL2": "East", // East 1 Basement
+  "20005_TL2": "West", // West Basement
+  "20006_TL2": "East", // East 2 Basement
+  "20007_TL2": "North", // North (West) 1st Floor
+  "20008_TL2": "South", // South 1 1st Floor
+  "20009_TL2": "South", // South 2 1st Floor
+  "20010_TL2": "East", // East 1st Floor
   "20011_TL2": "Middle", // Middle 1st Floor
-  "20012_TL2": "West",   // West 2nd Floor
+  "20012_TL2": "West", // West 2nd Floor
   "20013_TL2": "Middle", // Middle 2nd Floor
-  "20014_TL2": "East",   // East 2nd Floor
-  "20015_TL2": "South",  // South 1 2nd Floor
-  "20016_TL2": "South",  // South 2 2nd Floor
+  "20014_TL2": "East", // East 2nd Floor
+  "20015_TL2": "South", // South 1 2nd Floor
+  "20016_TL2": "South", // South 2 2nd Floor
 };
 
 const SENSOR_LABELS = {
@@ -49,7 +61,7 @@ const SENSOR_LABELS = {
   "20013_TL2": "Middle 2nd Floor",
   "20014_TL2": "East 2nd Floor",
   "20015_TL2": "South 1 2nd Floor",
-  "20016_TL2": "South 2 2nd Floor"
+  "20016_TL2": "South 2 2nd Floor",
 };
 
 const formatAsOf = (ts, sensorCode) => {
@@ -96,22 +108,20 @@ export default function AmbientTempDashboard() {
   }, [state]);
 
   // Step 1: filter by floor (empty = all floors after Apply)
-  const floorFiltered =
-    !appliedState
-      ? []
-      : appliedState.floors.length === 0
-        ? Object.values(FLOOR_SENSOR_MAP).flat()
-        : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
+  const floorFiltered = !appliedState
+    ? []
+    : appliedState.floors.length === 0
+      ? Object.values(FLOOR_SENSOR_MAP).flat()
+      : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
 
   // Step 2: filter by orientation (empty = all orientations)
-  const activeSensors =
-    !appliedState
-      ? []
-      : appliedState.orientations.length === 0
-        ? floorFiltered
-        : floorFiltered.filter((code) =>
-            appliedState.orientations.includes(SENSOR_ORIENTATION[code]),
-          );
+  const activeSensors = !appliedState
+    ? []
+    : appliedState.orientations.length === 0
+      ? floorFiltered
+      : floorFiltered.filter((code) =>
+          appliedState.orientations.includes(SENSOR_ORIENTATION[code]),
+        );
 
   const handleMultiSelect = (key, value) => {
     setKpiStats(null);
@@ -126,7 +136,7 @@ export default function AmbientTempDashboard() {
         key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
 
       const sortedValues = optionOrder.filter((option) =>
-        updatedValues.includes(option)
+        updatedValues.includes(option),
       );
 
       const nextState = { ...prev, [key]: sortedValues };
@@ -169,6 +179,33 @@ export default function AmbientTempDashboard() {
       return nextState;
     });
   };
+
+  const stats = [
+    {
+      label: "Average Building Temperature",
+      value: kpiStats ? kpiStats.avg.toFixed(2) : "—",
+      unit: "°C",
+      subtitle: kpiStats
+        ? formatAsOf(kpiStats.avgTs, kpiStats.avgSensorCode)
+        : formatDateRange(appliedState?.fromDate, appliedState?.toDate),
+    },
+    {
+      label: "High",
+      value: kpiStats ? kpiStats.max.toFixed(2) : "—",
+      unit: "°C",
+      subtitle: kpiStats
+        ? formatAsOf(kpiStats.maxTs, kpiStats.maxSensorCode)
+        : formatDateRange(appliedState?.fromDate, appliedState?.toDate),
+    },
+    {
+      label: "Low",
+      value: kpiStats ? kpiStats.min.toFixed(2) : "—",
+      unit: "°C",
+      subtitle: kpiStats
+        ? formatAsOf(kpiStats.minTs, kpiStats.minSensorCode)
+        : formatDateRange(appliedState?.fromDate, appliedState?.toDate),
+    },
+  ];
 
   const handleSaveScreen = () => {
     // Save state to localStorage
@@ -268,27 +305,20 @@ export default function AmbientTempDashboard() {
         </div>
       </div>
 
-      <InfoCard
-        items={[
-          {
-            label: "Average Building Temperature",
-            value: kpiStats ? kpiStats.avg.toFixed(2) + "°C" : "—",
-            subtitle: null,
-          },
-          {
-            label: "High",
-            value: kpiStats ? kpiStats.max.toFixed(2) + "°C" : "—",
-            subtitle: kpiStats ? formatAsOf(kpiStats.maxTs, kpiStats.maxSensorCode) : null,
-          },
-          {
-            label: "Low",
-            value: kpiStats ? kpiStats.min.toFixed(2) + "°C" : "—",
-            subtitle: kpiStats ? formatAsOf(kpiStats.minTs, kpiStats.minSensorCode) : null,
-          },
-        ]}
-      />
+      <div className="lg:hidden mb-6">
+        <Carousel items={stats} horizontal />
+      </div>
+      <div className="hidden lg:block">
+        <InfoCard
+          colsClass="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          items={stats}
+        />
+      </div>
 
-      <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4 mt-6">
+      <div
+        id="chart-print-area"
+        className="bg-white rounded-lg shadow-md p-4 mt-6"
+      >
         {appliedState && activeSensors.length > 0 ? (
           <LineHandler
             key={`${appliedState.fromDate}-${appliedState.toDate}-${activeSensors.join(",")}`}
