@@ -14,6 +14,7 @@ import InfoCard from "@/app/_components/InfoCard";
 const STORAGE_KEY = "dashboard-energy";
 
 export default function EnergyDashboard() {
+  const [appliedState, setAppliedState] = useState(null);
   const [state, setState] = useState(() =>
     loadDashboardState(STORAGE_KEY, {
       fromDate: "",
@@ -21,12 +22,53 @@ export default function EnergyDashboard() {
     }),
   );
 
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return null;
+
+    const [year, month, day] = dateStr.split("-");
+    return new Date(year, month - 1, day); // local time ✅
+  };
+
+  const formatDateRange = (from, to) => {
+    if (!from || !to) return null;
+
+    const fromDate = parseLocalDate(from);
+    const toDate = parseLocalDate(to);
+
+    const fromFormatted = fromDate.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+
+    const toFormatted = toDate.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+
+    return `As of: ${fromFormatted} - ${toFormatted}`;
+  };
   // Unit state: kWh or W
   const [unit, setUnit] = useState("kWh");
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
+
+  // Base stats
+  const stats = [
+    { label: "Average", value: 98 },
+    { label: "Minimum", value: 180 },
+    { label: "Maximum", value: 950 },
+    { label: "Utility Bill Calgary kWh", value: 1234 },
+  ];
+
+  // Compute displayed values based on unit
+  const displayStats = stats.map((item) => ({
+    ...item,
+    value: unit === "W" ? item.value * 1000 : item.value,
+    unit: unit,
+    subtitle: formatDateRange(appliedState?.fromDate, appliedState?.toDate),
+  }));
 
   const handleSaveScreen = () => {
     saveDashboardState(STORAGE_KEY, state);
@@ -48,27 +90,22 @@ export default function EnergyDashboard() {
       "Dashboard state saved! Your graph settings are restored for next login.",
     );
   };
-  // Base stats
-  const stats = [
-    { label: "Average", value: 98 },
-    { label: "Minimum", value: 180 },
-    { label: "Maximum", value: 950 },
-    { label: "Utility Bill Calgary kWh", value: 1234 },
-  ];
-
-  // Compute displayed values based on unit
-  const displayStats = stats.map((item) => ({
-    ...item,
-    value: unit === "W" ? item.value * 1000 : item.value,
-    unit: unit,
-  }));
 
   return (
     <DashboardLayout title="Energy Dashboard">
       <DatePicker
         fromDate={state.fromDate}
         toDate={state.toDate}
-        setDate={setState}
+        setDate={({ fromDate, toDate }) => {
+          const nextState = { ...state, fromDate, toDate };
+          setState(nextState);
+
+          if (fromDate && toDate) {
+            setAppliedState({ fromDate, toDate });
+          } else {
+            setAppliedState(null);
+          }
+        }}
       />
       <div className="lg:hidden mb-6">
         <Carousel items={displayStats} horizontal />

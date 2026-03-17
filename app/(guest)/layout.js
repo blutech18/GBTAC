@@ -12,7 +12,8 @@ export default function GuestLayout({ children }) {
   useEffect(() => {
     if (loading) return;
     const allowGuestPath = pathname === "/about";
-    if (user && isAllowed && !allowGuestPath) router.replace("/home");
+    if (user && isAllowed && !allowGuestPath)
+      router.replace("/staff-welcome-page");
   }, [user, isAllowed, loading, pathname, router]);
 
   if (loading) return null;

@@ -3,10 +3,7 @@ import { useEffect, useState } from "react";
 import Modal from "./Modal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth } from "../../_utils/firebase";
 
 const API_BASE = "http://127.0.0.1:8000";
@@ -274,7 +271,10 @@ export default function LoginForm() {
         await verifyCaptcha(captchaToken);
       } catch (captchaErr) {
         resetTurnstile();
-        alert(captchaErr.message || "CAPTCHA verification failed. Please try again.");
+        alert(
+          captchaErr.message ||
+            "CAPTCHA verification failed. Please try again.",
+        );
         return;
       }
 
@@ -325,7 +325,9 @@ export default function LoginForm() {
               : `${secs} second(s)`;
 
           resetTurnstile();
-          alert(`Too many failed login attempts. Account locked for ${timeText}.`);
+          alert(
+            `Too many failed login attempts. Account locked for ${timeText}.`,
+          );
         } else if (isInvalidLogin) {
           resetTurnstile();
           alert(
@@ -448,7 +450,9 @@ export default function LoginForm() {
           title="Forgot Password"
           onClose={() => setShowForgotModal(false)}
           onSubmit={handleForgotSubmit}
-          submitText={resetCooldownSeconds > 0 ? `Wait ${resetCooldownSeconds}s` : "Send"}
+          submitText={
+            resetCooldownSeconds > 0 ? `Wait ${resetCooldownSeconds}s` : "Send"
+          }
           submitDisabled={resetCooldownSeconds > 0}
         >
           <input

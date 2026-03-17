@@ -38,7 +38,7 @@ export default function SecondaryNav({
         </Link>
       </div>
 
-      <ul className="flex space-x-8 text-white">
+      <ul className="flex space-x-4 text-white">
         {displayLogin && (
           <li>
             <Link
@@ -52,7 +52,7 @@ export default function SecondaryNav({
         {displayLogout && (
           <li className="items-center gap-5 lg:gap-2">
             <Link
-              href="/home"
+              href="/"
               onClick={handleLogout}
               className="px-6 py-2 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition inline-block text-center"
             >
@@ -71,7 +71,7 @@ export default function SecondaryNav({
             </Link>
             <Link
               href="/profile"
-              className="hover:opacity-80 transition text-xs sm:text-sm lg:text-base font-semibold"
+              className="hidden hover:opacity-80 transition text-xs md:block sm:text-sm lg:text-base font-semibold"
             >
               {user}
             </Link>

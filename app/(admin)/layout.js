@@ -11,7 +11,7 @@ export default function AdminLayout({ children }) {
   useEffect(() => {
     if (loading) return;
     if (!user || !isAllowed) router.replace("/login");
-    else if (role !== "admin") router.replace("/home");
+    else if (role !== "admin") router.replace("/staff-welcome-page");
   }, [user, isAllowed, role, loading, router]);
 
   if (loading) return null;
