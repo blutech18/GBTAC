@@ -17,7 +17,7 @@ export default function AdminLayout({ children }) {
     }
 
     if (role !== "admin") {
-      router.replace("/home");
+      router.replace("/staff-welcome-page");
     }
   }, [user, isAllowed, role, loading, router]);
 

@@ -222,31 +222,51 @@ export default function LineHandler({
 
                 return {
                     label: finalLabel,
-                    data: (sensorData[sensor.id] || []).map((d) => d.data),
+                    data: (sensorData[sensor.id] || []).map((d) => ({ x: new Date(d.ts), y: d.data })),
                     borderColor: colours[sensor.id % colours.length],
                     backgroundColor: colours[sensor.id % colours.length],
                     borderWidth: 2,
                     pointRadius: 3,
                     pointHoverRadius: 6,
-                    tension: 0.1
+                    tension: 0.1,
+                    segment: {
+                        borderDash: (ctx) =>
+                            ctx.p1.parsed.x > new Date("2025-12-31T23:59:59").getTime() ? [6, 4] : undefined,
+                        borderColor: (ctx) =>
+                            ctx.p1.parsed.x > new Date("2025-12-31T23:59:59").getTime()
+                                ? colours[sensor.id] + "80"  // 80 = 50% opacity in hex
+                                : colours[sensor.id],
+                    }
                 };
             });
 
             setGraphData({
-                labels,
+                labels: [],
                 datasets: dataset
             });
 
-            let resolvedUnit = getTimeUnit();
-            if (aggTime === "H") resolvedUnit = "hour";
-            else if (aggTime === "D") resolvedUnit = "day";
-            else if (aggTime === "M") resolvedUnit = "month";
-            else if (aggTime === "Y") resolvedUnit = "year";
-            setUnit(resolvedUnit);
-            if (resolvedUnit === "hour") setMinZoom(2 * 60 * 60 * 1000);
-            else if (resolvedUnit === "day") setMinZoom(2 * 24 * 60 * 60 * 1000);
-            else if (resolvedUnit === "month") setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000);
-            else if (resolvedUnit === "year") setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000);
+            // let resolvedUnit = getTimeUnit();
+            // if (aggTime === "H") resolvedUnit = "hour";
+            // else if (aggTime === "D") resolvedUnit = "day";
+            // else if (aggTime === "M") resolvedUnit = "month";
+            // else if (aggTime === "Y") resolvedUnit = "year";
+            // setUnit(resolvedUnit);
+            // if (resolvedUnit === "hour") setMinZoom(2 * 60 * 60 * 1000);
+            // else if (resolvedUnit === "day") setMinZoom(2 * 24 * 60 * 60 * 1000);
+            // else if (resolvedUnit === "month") setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000);
+            // else if (resolvedUnit === "year") setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000);
+            if(aggTime == "H") setUnit("hour")
+            else if(aggTime == "D") setUnit("day")
+            else if(aggTime == "M") setUnit("month")
+            else if(aggTime == "Y") setUnit("year")
+            
+            
+            if(unit == "hour") setMinZoom(2 * 60 * 60 * 1000)
+            else if(unit == "day") setMinZoom(2 * 24 * 60 * 60 * 1000)
+            else if(unit == "month") setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month                
+            else if(unit == "year") setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month
+            
+            
         }
     }, [sensorData, sensors, fetched, onStatsReady]);
 
@@ -254,6 +274,8 @@ export default function LineHandler({
 
     // options for graph display to be passed on to LineChart component
     const graphOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
         scales: {
             x: {
                 title: {
@@ -262,9 +284,10 @@ export default function LineHandler({
                 },
                 type: "time",
                 time: {
-                    unit: displayUnit,
-                    displayFormats: getDisplayFormats(),
-                    tooltipFormat: "PPpp",
+                    // unit: displayUnit,
+                    // displayFormats: getDisplayFormats(),
+                    // tooltipFormat: "PPpp",
+                    unit: unit,
                 }
             },
             y: {

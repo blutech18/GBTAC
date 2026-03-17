@@ -27,8 +27,8 @@ export default function Navbar({
 
         {displayAbout && (
           <li>
-            <Link href="/about" className="hover:opacity-70 transition">
-              About
+            <Link href="/about-us" className="hover:opacity-70 transition">
+              About Us
             </Link>
           </li>
         )}
@@ -51,7 +51,7 @@ export default function Navbar({
             >
               <li>
                 <Link
-                  href="/dashboards/water-level"
+                  href="/water-level?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Cistern Level
@@ -59,7 +59,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/energy"
+                  href="/energy?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Energy
@@ -67,7 +67,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/ambient-temperature"
+                  href="/ambient-temperature?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Ambient Temperature
@@ -75,7 +75,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/wall-temperature"
+                  href="/wall-temperature?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Wall Temperature
@@ -83,7 +83,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/natural-gas"
+                  href="/natural-gas?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Natural Gas
@@ -91,7 +91,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/custom"
+                  href="/custom?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Custom Charts

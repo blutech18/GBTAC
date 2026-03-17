@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { loadRecentDashboards } from "../../utils/saveRecentDashboard";
 import RecentDashboardCard from "../../_components/RecentDashboardCard";
-
+import Breadcrumbs from "@/app/_components/Breadcrumbs";
 import SecondaryNav from "../../_components/SecondaryNav";
 import Navbar from "../../_components/Navbar";
 import Footer from "../../_components/Footer";
@@ -50,43 +50,44 @@ export default function StaffHome() {
           </h1>
         </div>
       </div>
-      <main className="flex-1 pb-12 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
-        <section className="relative max-w-7xl mx-auto pb-10">
+      <div>
+        <Breadcrumbs />
+      </div>
+      <main className="flex-1 pb-12 px-4 pt-2 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
+        <section className="relative mx-auto pb-10">
           <div className="relative bg-[#FDFDFD] overflow-hidden">
             {/* Content area */}
-            <div className="px-8 py-12">
-              <p className="text-xl md:text-2xl font-light text-gray-600 mb-10 max-w-3xl">
-                Access your tools, reports, and dashboards to manage building
-                performance.
-              </p>
+            <p className="text-xl md:text-2xl font-light text-gray-600 mb-10 max-w-3xl">
+              Access your tools, reports, and dashboards to manage building
+              performance.
+            </p>
 
-              <div className="mb-16 flex flex-wrap gap-6">
-                <Link href="/report">
-                  <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
-                    Reports
-                  </button>
-                </Link>
-                <Link href="/profile">
-                  <button className="px-6 py-3 bg-[#6D2077] text-white rounded-sm hover:bg-[#4C145A] font-bold transition">
-                    Profile
-                  </button>
-                </Link>
-              </div>
-
-              <h2 className="text-2xl font-semibold mb-6">
-                Recently Saved Dashboards
-              </h2>
-
-              {recent.length === 0 ? (
-                <p className="text-gray-500">No dashboards saved yet.</p>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {recent.map((dash) => (
-                    <RecentDashboardCard key={dash.id} data={dash} />
-                  ))}
-                </div>
-              )}
+            <div className="mb-10 flex flex-wrap gap-6">
+              <Link href="/report">
+                <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
+                  Reports
+                </button>
+              </Link>
+              <Link href="/profile">
+                <button className="px-6 py-3 bg-[#6D2077] text-white rounded-sm hover:bg-[#4C145A] font-bold transition">
+                  Profile
+                </button>
+              </Link>
             </div>
+
+            <h2 className="text-2xl font-semibold mb-6">
+              Recently Saved Dashboards
+            </h2>
+
+            {recent.length === 0 ? (
+              <p className="text-gray-500">No dashboards saved yet.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {recent.map((dash) => (
+                  <RecentDashboardCard key={dash.id} data={dash} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>

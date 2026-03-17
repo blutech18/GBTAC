@@ -2,26 +2,29 @@ import SecondaryNav from "../../_components/SecondaryNav";
 import Navbar from "../../_components/Navbar";
 import Footer from "../../_components/Footer";
 import Image from "next/image";
+import Breadcrumbs from "@/app/_components/Breadcrumbs";
 
 export default function About() {
   return (
     <div className="flex flex-col min-h-screen bg-[#FdFdFd] font-sans">
       <SecondaryNav />
       <Navbar displayAbout={false} />
-
-      <main className="flex-1 bg-gray-100 dark:bg-black">
-        <div className="sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 px-4 py-8">
-          <section className="mx-auto bg-white dark:bg-neutral-900 rounded-md shadow-sm px-12 py-16 space-y-16">
+      <div className="bg-gray-100">
+        <Breadcrumbs />
+      </div>
+      <main className="flex-1 bg-gray-100">
+        <div className="sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 px-4 pb-8 pt-4">
+          <section className="mx-auto bg-white rounded-md shadow-sm px-12 py-16 space-y-16">
             <div>
-              <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+              <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
                 About Us
               </h1>
 
-              <p className="mt-6 text-xl md:text-2xl font-light text-gray-600 dark:text-gray-300">
+              <p className="mt-6 text-xl md:text-2xl font-light text-gray-600 ">
                 Building the future
               </p>
 
-              <div className="mt-10 space-y-6 text-lg text-gray-700 dark:text-gray-300 text-justify">
+              <div className="mt-10 space-y-6 text-lg text-gray-700 text-justify">
                 <p>
                   Founded in 2008, the Green Building Technology Access Centre
                   (GBTAC) partners with industry to identify and develop
@@ -57,11 +60,9 @@ export default function About() {
 
             {/* ===== Services ===== */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Services
-              </h2>
+              <h2 className="text-3xl font-bold text-gray-900 ">Services</h2>
 
-              <ul className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12 text-lg text-gray-700 dark:text-gray-300 list-disc list-inside">
+              <ul className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12 text-lg text-gray-700  list-disc list-inside">
                 <li>Early-stage business development for commercialization</li>
                 <li>
                   Net-Zero energy and Net Zero emissions advisory and analysis
@@ -82,7 +83,7 @@ export default function About() {
 
             {/* ===== Our Facilities ===== */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-10">
+              <h2 className="text-3xl font-bold text-gray-900 ">
                 Our Facilities
               </h2>
 
@@ -97,10 +98,10 @@ export default function About() {
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-xl font-bold text-gray-900 ">
                       Green Building Technology Lab and Demonstration Centre
                     </h3>
-                    <p className="mt-4 text-gray-700 dark:text-gray-300 text-justify">
+                    <p className="mt-4 text-gray-700  text-justify">
                       Explore our 6,350-square-foot living, breathing example of
                       energy efficiency, building-integrated green technologies
                       and renewable energy solutions.
@@ -118,10 +119,10 @@ export default function About() {
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-xl font-bold text-gray-900 ">
                       Solar Roller Mobile Lab
                     </h3>
-                    <p className="mt-4 text-gray-700 dark:text-gray-300 text-justify">
+                    <p className="mt-4 text-gray-700  text-justify">
                       Powered by solar generation, this 14 x 8 foot cargo
                       trailer is used for research, training, education and
                       outreach events.
@@ -139,10 +140,10 @@ export default function About() {
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-xl font-bold text-gray-900 ">
                       Integrated Solar and Rainwater Harvesting Labs
                     </h3>
-                    <p className="mt-4 text-gray-700 dark:text-gray-300 text-justify">
+                    <p className="mt-4 text-gray-700  text-justify">
                       Used primarily for research, training and demonstration
                       this lab is home to industry-leading solar energy
                       generation and water filtration solutions.

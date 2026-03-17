@@ -89,6 +89,8 @@ export default function PieHandler({sensorList, startDate, endDate, graphTitle, 
 
     // options for graph display to be passed on to LineChart component
     const graphOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
