@@ -14,7 +14,7 @@ export default function DashboardLayout({
         displayProfile={true}
         displayLogin={false}
       />
-      <Navbar displayDashboards displayHome={false} displayAbout={false} />
+      <Navbar displayDashboards displayHome={false} displayAbout={false} displayReports={true} />
       <main
         className="
         flex-1
