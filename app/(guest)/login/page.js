@@ -1,3 +1,4 @@
+import Script from "next/script";
 import SecondaryNav from "../../_components/SecondaryNav";
 import Navbar from "../../_components/Navbar";
 import Footer from "../../_components/Footer";
@@ -7,6 +8,11 @@ import Background from "../../_components/login/Background";
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="afterInteractive"
+      />
+
       <SecondaryNav displayLogin={false} />
       <Navbar />
       <main className="grow flex items-center justify-center relative">
