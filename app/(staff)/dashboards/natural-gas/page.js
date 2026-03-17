@@ -17,7 +17,8 @@ export default function Page() {
   const chartRef2 = useRef(null);
 
   const STORAGE_KEY = "dashboard-natural-gas";
-  const UNIT_OPTIONS = ["Watts", "kWh",];
+   // Unit state: kWh or W
+  const [unit, setUnit] = useState("kWh");
 
   const [state, setState] = useState(() =>
     loadDashboardState(STORAGE_KEY, {
@@ -72,6 +73,19 @@ export default function Page() {
     );
   };
 
+    const stats = [
+    { label: "Total Energy Consumption", value: 134350 },
+    { label: "Avg Monthly Natural Gas Usage", value: 820 },
+    { label: "Avg Monthly Electricity Usage", value: 10375 },
+    { label: "Peak Energy Month", value: "January" },
+  ];
+   // Compute displayed values based on unit
+  const displayStats = stats.map((item) => ({
+    ...item,
+    value: unit === "W" ? item.value * 1000 : item.value,
+    unit: unit,
+  }));
+
   return (
     <DashboardLayout
       title="Natural Gas Dashboard"
@@ -93,39 +107,22 @@ export default function Page() {
         <div className="flex flex-wrap gap-6 items-end mb-6">
           <DateRangePicker />
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-1">Units</label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleSelectAll("unit", UNIT_OPTIONS)}
-                className="px-2 py-1 text-lg border rounded"
-              >
-                All
-              </button>
-
-              {UNIT_OPTIONS.map((unit) => (
-                <button
-                  key={unit}
-                  onClick={() => handleMultiSelect("unit", unit)}
-                  className={`px-2 py-1 text-lg border rounded ${
-                    state.unit?.includes(unit) ? "bg-[#6D2077] text-white" : ""
-                  }`}
-                >
-                  {unit}
-                </button>
-              ))}
-            </div>
+  
           </div>
         </div>
 
         <InfoCard
-          items={[
-            { label: "Total Energy Consumption", value: "134,350 kWh" },
-            { label: "Avg Monthly Natural Gas Usage", value: "820 kWh" },
-            { label: "Avg Monthly Electricity Usage", value: "10,375 kWh" },
-            { label: "Peak Energy Month", value: "January" },
-          ]}
+          colsClass="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+          items={displayStats}
         />
-
+        <div className="flex justify-center mb-6 lg:justify-start">
+          <button
+            onClick={() => setUnit(unit === "kWh" ? "W" : "kWh")}
+            className="px-4 py-2 bg-[#005EB8] text-white rounded hover:bg-[#004080] transition"
+          >
+            Toggle Units: {unit}
+          </button>
+      </div>
 
         <div className="mt-10 flex flex-col gap-4 relative">
             <div ref={chartRef}>
