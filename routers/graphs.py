@@ -1,130 +1,413 @@
 from routers import *
+import pandas as pd
+from helpers.forecasting import get_forecast
+from pathlib import Path 
+from helpers.rate_limit import limiter
+from fastapi import APIRouter, Request
 from datetime import datetime
 
 router = APIRouter(prefix="/graphs")
 
-# Adaptive aggregation per client spec:
-#   Yearly  → x-axis: 2020, 2021, ...
-#   Monthly → x-axis: January, February, ...
-#   Daily   → x-axis: 1, 2, ... 31
-#   Hourly  → x-axis: 0, 1, ... 23
-#   Minute data in system is every 15 minutes (same-day range)
-@router.get("/data/{sensor_code}")
-async def get_data(sensor_code, start="2018-10-13", end="2025-12-31"):
+def load_natural_gas():
+    csv_path = Path("data/natural_gas.csv")
+    df = pd.read_csv(csv_path)
 
+    # show actual column names in terminal
+    print("CSV columns:", df.columns.tolist())
+
+    # remove extra spaces from headers
+    df.columns = df.columns.str.strip()
+
+    # use the real client column names
+    date_col = df.columns[0]
+    usage_col = df.columns[2]
+
+    df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+    df[usage_col] = pd.to_numeric(df[usage_col], errors="coerce")
+
+    df = df.dropna(subset=[date_col, usage_col])
+
+    # convert GJ to kWh
+    df["kwh"] = df[usage_col] * 277.777778
+
+    # month key
+    df["month"] = df[date_col].dt.strftime("%Y-%m")
+
+    monthly = df.groupby("month", as_index=False)["kwh"].sum()
+    return monthly
+
+# url format "http://127.0.0.1:8000/graphs/data/{sensor code}?start={start date}&end={end date}"
+# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-14
+# - code is the end part of the sensor name (not including the 'SaitSolarLab' part), mandatory
+# - start and end date, YYYY-MM-DD
+# - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
+# - type is for kind of aggregation, mean or sum
+@router.get("/data/{sensor_code}")
+@limiter.limit("10/minute")
+async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="none", type="mean"):
+    
+    #validation:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
+        return "enter valid sensor code"
+
+    san_start = validateDate(start)
+    if san_start == False:
+        return "invalid start date"
+    
+    # sets end date range to the same day as start if it wasn't included
+    if end == "":
+        end = san_start
+    
+    san_end = validateDate(end)
+    if san_end == False:
+        return "invalid end date"
+    
+    if san_end < san_start:
+        return "end date cannot be earlier than start date"
+    
+    allowedAgg = ["none", "H", "D", "M", "Y"]
+    if agg not in allowedAgg:
+        return "invalid aggregation interval"
+
+    allowedType = ["mean", "sum"]
+    if type not in allowedType:
+        return "invalid aggregation type"
+    
+    column_name = f"{SENSOR_PRE}{san_code}"
+
+    # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    if end == "":
-        end = start
+    if agg == "none":
+        try:
+            start_dt = datetime.strptime(str(san_start), "%Y-%m-%d")
+            end_dt = datetime.strptime(str(san_end), "%Y-%m-%d")
+            days = (end_dt - start_dt).days + 1
+        except Exception:
+            days = 1
 
-    # Normalise and compute span in days
-    try:
-        start_dt = datetime.strptime(start, "%Y-%m-%d")
-        end_dt = datetime.strptime(end, "%Y-%m-%d")
-        days = (end_dt - start_dt).days + 1
-    except Exception:
-        # Fallback: treat as single day
-        start_dt = end_dt = None
-        days = 1
+        if san_end == san_start:
+            query = f"""
+                SELECT DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0) AS ts,
+                       AVG(CAST({column_name} AS FLOAT)) AS data
+                FROM GBTAC_data
+                WHERE {column_name} IS NOT NULL
+                AND CAST(ts AS DATE) = ?
+                GROUP BY DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0)
+                ORDER BY ts
+            """
+            curs.execute(query, (san_start,))
+            rows = curs.fetchall()
 
-    col = f"{sensor_pre}{sensor_code}"
+            res = []
+            for row in rows:
+                res.append({
+                    "ts": row[0],
+                    "data": row[1]
+                })
 
-    if end == start:
-        # 15-minute buckets for a single day (minute data is every 15 minutes)
-        # Keep timestamps at exact 15-minute boundaries so the frontend can still show hourly ticks (0..23).
-        query = f"""
-            SELECT DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0) AS ts,
-                   AVG({col}) AS data
-            FROM GBTAC_data
-            WHERE {col} IS NOT NULL
-              AND CAST(ts AS DATE) = '{start}'
-            GROUP BY DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0)
-            ORDER BY ts
-        """
-    elif days <= 1:
-        # Hourly averages for up to one day (x-axis: 0..23)
-        query = f"""
-            SELECT DATEADD(hour, DATEDIFF(hour, 0, ts), 0) AS ts,
-                   AVG({col}) AS data
-            FROM GBTAC_data
-            WHERE {col} IS NOT NULL
-              AND CAST(ts AS DATE) >= '{start}'
-              AND CAST(ts AS DATE) <= '{end}'
-            GROUP BY DATEADD(hour, DATEDIFF(hour, 0, ts), 0)
-            ORDER BY ts
-        """
-    elif days <= 60:
-        # Daily averages — x-axis: day numbers 1..31
-        query = f"""
-            SELECT CAST(ts AS DATE) AS ts,
-                   AVG({col}) AS data
-            FROM GBTAC_data
-            WHERE {col} IS NOT NULL
-              AND CAST(ts AS DATE) >= '{start}'
-              AND CAST(ts AS DATE) <= '{end}'
-            GROUP BY CAST(ts AS DATE)
-            ORDER BY ts
-        """
-    elif days <= 730:
-        # Monthly averages — x-axis: January, February, ...
-        query = f"""
-            SELECT DATEADD(month, DATEDIFF(month, 0, ts), 0) AS ts,
-                   AVG({col}) AS data
-            FROM GBTAC_data
-            WHERE {col} IS NOT NULL
-              AND CAST(ts AS DATE) >= '{start}'
-              AND CAST(ts AS DATE) <= '{end}'
-            GROUP BY DATEADD(month, DATEDIFF(month, 0, ts), 0)
-            ORDER BY ts
-        """
-    else:
-        # Yearly averages — x-axis: 2020, 2021, ...
-        query = f"""
-            SELECT DATEFROMPARTS(YEAR(ts), 1, 1) AS ts,
-                   AVG({col}) AS data
-            FROM GBTAC_data
-            WHERE {col} IS NOT NULL
-              AND CAST(ts AS DATE) >= '{start}'
-              AND CAST(ts AS DATE) <= '{end}'
-            GROUP BY YEAR(ts)
-            ORDER BY ts
-        """
+            conn.close()
+            return res
 
-    curs.execute(query)
+        elif days <= 60:
+            query = f"""
+                SELECT CAST(ts AS DATE) AS ts,
+                       AVG(CAST({column_name} AS FLOAT)) AS data
+                FROM GBTAC_data
+                WHERE {column_name} IS NOT NULL
+                AND CAST(ts AS DATE) >= ?
+                AND CAST(ts AS DATE) <= ?
+                GROUP BY CAST(ts AS DATE)
+                ORDER BY ts
+            """
+            curs.execute(query, (san_start, san_end))
+            rows = curs.fetchall()
+
+            res = []
+            for row in rows:
+                res.append({
+                    "ts": row[0],
+                    "data": row[1]
+                })
+
+            conn.close()
+            return res
+
+        elif days <= 730:
+            query = f"""
+                SELECT DATEADD(month, DATEDIFF(month, 0, ts), 0) AS ts,
+                       AVG(CAST({column_name} AS FLOAT)) AS data
+                FROM GBTAC_data
+                WHERE {column_name} IS NOT NULL
+                AND CAST(ts AS DATE) >= ?
+                AND CAST(ts AS DATE) <= ?
+                GROUP BY DATEADD(month, DATEDIFF(month, 0, ts), 0)
+                ORDER BY ts
+            """
+            curs.execute(query, (san_start, san_end))
+            rows = curs.fetchall()
+
+            res = []
+            for row in rows:
+                res.append({
+                    "ts": row[0],
+                    "data": row[1]
+                })
+
+            conn.close()
+            return res
+
+        else:
+            query = f"""
+                SELECT DATEFROMPARTS(YEAR(ts), 1, 1) AS ts,
+                       AVG(CAST({column_name} AS FLOAT)) AS data
+                FROM GBTAC_data
+                WHERE {column_name} IS NOT NULL
+                AND CAST(ts AS DATE) >= ?
+                AND CAST(ts AS DATE) <= ?
+                GROUP BY YEAR(ts)
+                ORDER BY ts
+            """
+            curs.execute(query, (san_start, san_end))
+            rows = curs.fetchall()
+
+            res = []
+            for row in rows:
+                res.append({
+                    "ts": row[0],
+                    "data": row[1]
+                })
+
+            conn.close()
+            return res
+
+    query = f"""
+        SELECT ts, {column_name}
+        FROM GBTAC_data
+        WHERE {column_name} IS NOT NULL
+        AND CAST(ts AS DATE) >= ?
+        AND CAST(ts AS DATE) <= ?
+        ORDER BY ts
+    """
+
+    #query database
+    curs.execute(query, (san_start, san_end))
     rows = curs.fetchall()
 
-    res = [{"ts": row[0], "data": row[1]} for row in rows]
+    #format data 
+    res = []
+    for row in rows:
+        res.append({
+            "ts": row[0],
+            "data": row[1]
+        })
+
+
+    conn.close()
+
+    if res == []:
+        return []
+    
+    # forecast data if end date is in the future
+    if san_end > NEWEST:
+        forecasted_data = await get_forecast(san_code, NEWEST, san_end)
+        res = res + forecasted_data
+
+    # aggregates data
+    if agg != "none":
+        df = pd.DataFrame(res)
+        df = df.dropna()
+        df["ts"] = pd.to_datetime(df["ts"])
+        df = df.set_index("ts")
+
+        if type == "mean":
+            df_agg = df.resample(agg).mean()
+        else:
+            df_agg = df.resample(agg).sum()
+            
+        # df_agg = df_agg.dropna()
+        res = df_agg.reset_index().to_dict(orient="records")
+
+    return res
+
+@router.get("/total-energy/{sensor_code}")
+@limiter.limit("10/minute")
+async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""):
+    # validation
+    san_code = validateCode(sensor_code)
+    if san_code == False:
+        return "enter valid sensor code"
+
+    san_start = validateDate(start)
+    if san_start == False:
+        return "invalid start date"
+
+    # if no end date, use start
+    if end == "":
+        end = san_start
+
+    san_end = validateDate(end)
+    if san_end == False:
+        return "invalid end date"
+
+    if san_end < san_start:
+        return "end date cannot be earlier than start date"
+
+    # safe column name after validation
+    column_name = f"{SENSOR_PRE}{san_code}"
+
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    # Load and filter natural gas CSV
+    gas_df = load_natural_gas()
+
+    start_month = pd.to_datetime(san_start).strftime("%Y-%m")
+    end_month = pd.to_datetime(san_end).strftime("%Y-%m")
+
+    gas_df = gas_df[(gas_df["month"] >= start_month) & (gas_df["month"] <= end_month)]
+
+    gas_lookup = {
+        row["month"]: round(float(row["kwh"]), 2)
+        for _, row in gas_df.iterrows()
+    }
+
+    # Query SQL sensor monthly total
+    query = f"""
+        SELECT 
+            FORMAT(ts, 'yyyy-MM') AS month,
+            SUM(ABS(CAST({column_name} AS FLOAT)) / 12000.0) AS monthly_value
+        FROM GBTAC_data
+        WHERE {column_name} IS NOT NULL
+        AND CAST(ts AS DATE) >= ?
+        AND CAST(ts AS DATE) <= ?
+        GROUP BY FORMAT(ts, 'yyyy-MM')
+        ORDER BY month
+    """
+
+    curs.execute(query, (san_start, san_end))
+    rows = curs.fetchall()
+
+    sensor_lookup = {
+        row[0]: round(float(row[1]), 2)
+        for row in rows if row[1] is not None
+    }
+
+    # Merge months from both series
+    all_months = sorted(set(gas_lookup.keys()) | set(sensor_lookup.keys()))
+
+    res = []
+    for month in all_months:
+        natural_gas = gas_lookup.get(month, 0)
+        electricity = sensor_lookup.get(month, 0)
+
+        res.append({
+            "month": month,
+            "natural_gas_kwh": natural_gas,
+            "electricity_kwh": electricity,
+            "total_energy_kwh": round(natural_gas + electricity, 2)
+        })
 
     conn.close()
     return res
 
-
 # url format: "http://127.0.0.1:8000/graphs/name/{sensor code}"
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
-async def get_name(sensor_code: str):
+@limiter.limit("30/minute")
+async def get_name(request: Request, sensor_code):
+
+    # validation
+    san_code = validateCode(sensor_code)
+    if san_code == False:
+        return "enter valid sensor code"
+
+    # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
     query = """
-        SELECT sensor_description
-        FROM dbo.sensor_names
+        SELECT * FROM sensor_names
         WHERE sensor_name_source = ?
-    """
+    """    
 
-    full_sensor_code = f"{sensor_pre}{sensor_code}"
+    #query database
+    curs.execute(query, (san_code,))
+    rows = curs.fetchall()
 
-    curs.execute(query, (sensor_code,))
-    row = curs.fetchone()
+    res = rows[0][2]
+    conn.close()
+    return res
 
-    if not row:
-        curs.execute(query, (full_sensor_code,))
-        row = curs.fetchone()
+
+@router.get("/codesnames")
+@limiter.limit("30/minute")
+async def get_codesnames(request: Request):
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT sensor_name_source, sensor_name_report 
+        FROM sensor_names
+        ORDER BY sensor_name_source
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    res = []
+    for row in rows:
+        res.append({
+            "code": row[0],
+            "name": row[1]
+        })
 
     conn.close()
+    return res
 
-    if not row:
-        return sensor_code
+@router.get("/newest")
+async def get_newest():
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
 
-    return row[0]
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts DESC;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()
+
+@router.get("/oldest")
+async def get_oldest():
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts asc;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()

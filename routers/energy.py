@@ -1,27 +1,48 @@
 from routers import *
+from helpers.rate_limit import limiter
+from fastapi import APIRouter, Request
+
 router = APIRouter(prefix="/energy")
 
 @router.get("/sum/{sensor_code}")
-async def get_data(sensor_code, start="2025-12-31", end=""):
+@limiter.limit("10/minute")
+async def get_data(request: Request, sensor_code, start=NEWEST, end=""):
+
+    #validation:
+    san_code = validateCode(sensor_code)
+    if san_code == False:
+        return "enter valid sensor code"
+
+    san_start = validateDate(start)
+    if san_start == False:
+        return "invalid start date"
+    
+    # sets end date range to the same day as start if it wasn't included
+    if end == "":
+        end = san_start
+    
+    san_end = validateDate(end)
+    if san_end == False:
+        return "invalid end date"
+    
+    if san_end < san_start:
+        return "end date cannot be earlier than start date"
+    
+    column_name = f"{SENSOR_PRE}{san_code}"
 
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # date format = YYYY-MM-DD
-    # sets end date range to the same day as start if it wasn't included
-    if end == "":
-        end = start
-
     query = f"""
-        SELECT SUM({sensor_pre}{sensor_code})
-        FROM GBTAC_data 
-        WHERE CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
-        """
+        SELECT SUM({column_name})
+        FROM GBTAC_data
+        WHERE CAST(ts AS DATE) >= ?
+        AND CAST(ts AS DATE) <= ?
+    """
 
     #query database
-    curs.execute(query)
+    curs.execute(query, (san_start, san_end))
     rows = curs.fetchall()
 
     res = rows[0][0]
@@ -30,49 +51,41 @@ async def get_data(sensor_code, start="2025-12-31", end=""):
     conn.close()
     return res
 
-@router.get("/panelTotals")
-async def get_data(start="2025-12-31", end=""):
 
-    sensors = [
-        "30000_TL252",
-        "30000_TL253",
-    ]
-
-    temp_str = ""
-    for sensor in sensors:
-        temp_str += "SUM(" + sensor_pre + sensor + "), "
-    select_str = temp_str[:-2]
-
-    # open connection
+# daily average over the last 7 days
+@router.get("/dailyAvg/{sensor_code}")
+@limiter.limit("20/minute")
+async def get_daily_avg(request: Request, sensor_code):
+    
+    # validation
+    san_code = validateCode(sensor_code)
+    if san_code == False:
+        return "enter valid sensor code"
+    
+    column_name = f"{SENSOR_PRE}{san_code}"
+    
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    # date format = YYYY-MM-DD
-    # sets end date range to the same day as start if it wasn't included
-    if end == "":
-        end = start
-
     query = f"""
-        SELECT {select_str}
-        FROM GBTAC_data 
-        WHERE CAST(ts AS DATE) >= '{start}'
-        AND CAST(ts AS DATE) <= '{end}'
-        """
+        SELECT 
+        AVG({column_name})
+        FROM gbtac_data
+        WHERE ts >= (
+            SELECT DATEADD(day, -7, MAX(ts))
+            FROM GBTAC_data
+        )
+        AND ts <= (
+            SELECT MAX(ts)
+            FROM GBTAC_data
+        );
+    """
 
     #query database
     curs.execute(query)
     rows = curs.fetchall()
 
-    res = []
-    counter = 0
-    for row in rows:
-        for sum in row:
-            res.append({
-                "code": sensors[counter],
-                "sum": sum 
-            })
-            counter += 1
+    res = rows[0][0]
 
-    #close connection and send data
     conn.close()
     return res
