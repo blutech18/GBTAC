@@ -21,6 +21,7 @@ export default function LoginForm() {
   const [errors, setErrors] = useState({});
   const [loginCooldownSeconds, setLoginCooldownSeconds] = useState(0);
   const [resetCooldownSeconds, setResetCooldownSeconds] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -54,6 +55,26 @@ export default function LoginForm() {
 
     return () => clearInterval(interval);
   }, [loginCooldownSeconds]);
+
+  useEffect(() => {
+    window.onTurnstileSuccess = (token) => {
+      setCaptchaToken(token);
+    };
+
+    window.onTurnstileExpired = () => {
+      setCaptchaToken("");
+    };
+
+    window.onTurnstileError = () => {
+      setCaptchaToken("");
+    };
+
+    return () => {
+      window.onTurnstileSuccess = undefined;
+      window.onTurnstileExpired = undefined;
+      window.onTurnstileError = undefined;
+    };
+  }, []);
 
   const isSaitEmail = (email) => {
     const lower = email.toLowerCase();
@@ -134,6 +155,29 @@ export default function LoginForm() {
     return res.json();
   };
 
+  const verifyCaptcha = async (token) => {
+    const res = await fetch(`${API_BASE}/auth/verify-captcha`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ captcha_token: token }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.detail || "CAPTCHA verification failed");
+    }
+
+    return data;
+  };
+
+  const resetTurnstile = () => {
+    setCaptchaToken("");
+    if (typeof window !== "undefined" && window.turnstile) {
+      window.turnstile.reset();
+    }
+  };
+
   const validate = () => {
     const newErrors = {};
 
@@ -206,6 +250,11 @@ export default function LoginForm() {
   const handleLogin = async () => {
     if (!validate()) return;
 
+    if (!captchaToken) {
+      alert("Please complete the security check.");
+      return;
+    }
+
     const emailLower = employeeEmail.trim().toLowerCase();
 
     try {
@@ -221,6 +270,14 @@ export default function LoginForm() {
 
       setLoginCooldownSeconds(0);
 
+      try {
+        await verifyCaptcha(captchaToken);
+      } catch (captchaErr) {
+        resetTurnstile();
+        alert(captchaErr.message || "CAPTCHA verification failed. Please try again.");
+        return;
+      }
+
       const cred = await signInWithEmailAndPassword(auth, emailLower, password);
 
       const idToken = await cred.user.getIdToken(true);
@@ -230,6 +287,7 @@ export default function LoginForm() {
         alert("You are not authorized to access this app.");
         await signOut(auth);
         setPassword("");
+        resetTurnstile();
         return;
       }
 
@@ -237,9 +295,11 @@ export default function LoginForm() {
 
       setErrors({});
       setLoginCooldownSeconds(0);
+      resetTurnstile();
       router.push("/home");
     } catch (err) {
       if (err.code === "auth/too-many-requests") {
+        resetTurnstile();
         alert(
           "Too many login attempts were detected for this account. Please wait a few minutes before trying again.",
         );
@@ -264,16 +324,20 @@ export default function LoginForm() {
               ? `${mins} minute(s) ${secs} second(s)`
               : `${secs} second(s)`;
 
+          resetTurnstile();
           alert(`Too many failed login attempts. Account locked for ${timeText}.`);
         } else if (isInvalidLogin) {
+          resetTurnstile();
           alert(
             `Invalid email or password. You have ${result.remainingAttempts} attempt(s) left.`,
           );
         } else {
+          resetTurnstile();
           console.error("LOGIN ERROR:", err);
           alert("Login failed. Please try again.");
         }
       } catch (backendErr) {
+        resetTurnstile();
         console.error("BACKEND LOCKOUT ERROR:", backendErr);
         alert("Login failed. Please try again.");
       }
@@ -340,6 +404,17 @@ export default function LoginForm() {
       {errors.password && (
         <p className="text-red-500 text-sm mb-2">{errors.password}</p>
       )}
+
+      <div className="flex justify-center mb-4">
+        <div
+          className="cf-turnstile"
+          data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+          data-callback="onTurnstileSuccess"
+          data-expired-callback="onTurnstileExpired"
+          data-error-callback="onTurnstileError"
+        />
+      </div>
+
       <div className="flex justify-center">
         <button
           className="group w-1/2 bg-[#005EB8] text-white py-3 mb-6 rounded-full text-lg font-bold justify-center hover:bg-blue-700 transition flex gap-4 items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
