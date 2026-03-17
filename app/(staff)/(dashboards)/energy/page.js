@@ -151,7 +151,7 @@ export default function EnergyDashboard() {
           ]}
           startDate={state.fromDate}
           endDate={state.toDate}
-          graphTitle={"Solar Panel Generation"}
+          graphTitle={`Solar Panel Generation, ${state.fromDate} to ${state.toDate < "2025-12-31" ? state.toDate : "2025-12-31"}`}
           label={"kWh"} // **check: unsure if right unit
         />
       </div>
