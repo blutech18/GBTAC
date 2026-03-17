@@ -5,7 +5,11 @@ const GRID_COLS = {
   4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
 };
 
-export default function InfoCard({ items, horizontal = false }) {
+export default function InfoCard({
+  items,
+  horizontal = false,
+  colsClass,
+}) {
   const currentDate = new Date().toLocaleString([], {
     month: "short",
     day: "numeric",
@@ -14,10 +18,24 @@ export default function InfoCard({ items, horizontal = false }) {
   });
 
   const Card = ({ item, index }) => {
-    // item.subtitle === undefined → use auto date
-    // item.subtitle === null or ""  → show nothing
-    // item.subtitle === string      → show that string
-    const subtitleText = item.subtitle !== undefined ? item.subtitle : `As of: ${currentDate}`;
+    // Dynamic unit support
+    const unit =
+      typeof item.unit === "function" ? item.unit(item.value) : item.unit;
+
+    // Subtitle logic:
+    // undefined -> use auto date
+    // null or "" -> show nothing
+    // string -> show custom subtitle
+    const subtitleText =
+      item.subtitle !== undefined ? item.subtitle : `As of: ${currentDate}`;
+
+    // Color positive / negative values when needed
+    const valueColor =
+      typeof item.value === "number" && typeof item.unit === "function"
+        ? item.value >= 0
+          ? "text-green-600"
+          : "text-red-600"
+        : "text-gray-800";
 
     return (
       <div
@@ -30,7 +48,10 @@ export default function InfoCard({ items, horizontal = false }) {
       >
         <p className="text-sm text-gray-500">{item.label}</p>
 
-        <p className="text-2xl font-bold text-gray-800">{item.value}</p>
+        <p className={`text-2xl font-bold ${valueColor}`}>
+          {item.value}
+          {unit ? ` ${unit}` : ""}
+        </p>
 
         {subtitleText && (
           <p className="text-xs text-gray-400 mt-1">{subtitleText}</p>
@@ -49,10 +70,10 @@ export default function InfoCard({ items, horizontal = false }) {
     );
   }
 
-  const colsClass = GRID_COLS[items.length] || GRID_COLS[4];
+  const finalColsClass = colsClass || GRID_COLS[items.length] || GRID_COLS[4];
 
   return (
-    <div className={`grid ${colsClass} gap-6 mb-8`}>
+    <div className={`grid ${finalColsClass} gap-6 mb-8`}>
       {items.map((item, i) => (
         <Card key={i} item={item} index={i} />
       ))}
