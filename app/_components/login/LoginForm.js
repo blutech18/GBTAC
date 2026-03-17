@@ -34,8 +34,10 @@ export default function LoginForm() {
     const savedLockoutLevel = localStorage.getItem("lockoutLevel");
 
     if (savedLoginLockUntil) setLoginLockUntil(Number(savedLoginLockUntil));
-    if (savedFailedAttempts) setFailedLoginAttempts(Number(savedFailedAttempts));
-    if (savedResetCooldownUntil) setResetCooldownUntil(Number(savedResetCooldownUntil));
+    if (savedFailedAttempts)
+      setFailedLoginAttempts(Number(savedFailedAttempts));
+    if (savedResetCooldownUntil)
+      setResetCooldownUntil(Number(savedResetCooldownUntil));
     if (savedLockoutLevel) setLockoutLevel(Number(savedLockoutLevel));
   }, []);
 
@@ -108,36 +110,38 @@ export default function LoginForm() {
   };
 
   const handleForgotSubmit = async () => {
-  try {
-    if (resetCooldownUntil && Date.now() < resetCooldownUntil) {
-      alert(`Please wait ${resetCooldownSeconds} seconds before requesting another reset email.`);
-      return;
+    try {
+      if (resetCooldownUntil && Date.now() < resetCooldownUntil) {
+        alert(
+          `Please wait ${resetCooldownSeconds} seconds before requesting another reset email.`,
+        );
+        return;
+      }
+
+      if (!forgotEmail.trim()) {
+        alert("Please enter your email.");
+        return;
+      }
+      if (!isSaitEmail(forgotEmail.trim())) {
+        alert("Please use your SAIT email.");
+        return;
+      }
+
+      const emailToSend = forgotEmail.trim().toLowerCase();
+      await sendPasswordResetEmail(auth, emailToSend);
+
+      const cooldownUntil = Date.now() + 60 * 1000;
+      setResetCooldownUntil(cooldownUntil);
+      localStorage.setItem("resetCooldownUntil", String(cooldownUntil));
+
+      alert(`Password reset email sent to ${emailToSend}`);
+
+      setShowForgotModal(false);
+      setForgotEmail("");
+    } catch (err) {
+      alert("Reset failed: " + err.message);
     }
-
-    if (!forgotEmail.trim()) {
-      alert("Please enter your email.");
-      return;
-    }
-    if (!isSaitEmail(forgotEmail.trim())) {
-      alert("Please use your SAIT email.");
-      return;
-    }
-
-    const emailToSend = forgotEmail.trim().toLowerCase();
-    await sendPasswordResetEmail(auth, emailToSend);
-
-    const cooldownUntil = Date.now() + 60 * 1000;
-    setResetCooldownUntil(cooldownUntil);
-    localStorage.setItem("resetCooldownUntil", String(cooldownUntil));
-
-    alert(`Password reset email sent to ${emailToSend}`);
-
-    setShowForgotModal(false);
-    setForgotEmail("");
-  } catch (err) {
-    alert("Reset failed: " + err.message);
-  }
-};
+  };
 
   const handleRequestSubmit = () => {
     if (!employeeEmail.trim()) {
@@ -175,73 +179,81 @@ export default function LoginForm() {
   };
 
   const handleLogin = async () => {
-  if (loginLockUntil && Date.now() < loginLockUntil) {
-    alert(`Too many failed login attempts. Account locked for ${durationSeconds} seconds.`);
-    return;
-  }
-
-  if (!validate()) return;
-
-  try {
-    const cred = await signInWithEmailAndPassword(
-      auth,
-      employeeEmail.trim().toLowerCase(),
-      password,
-    );
-
-    const allowed = await checkAllowedUser(cred.user.email);
-
-    if (!allowed.allowed) {
-      alert("You are not authorized to access this app.");
-      await signOut(auth);
-      setPassword("");
+    if (loginLockUntil && Date.now() < loginLockUntil) {
+      alert(
+        `Too many failed login attempts. Account locked for ${durationSeconds} seconds.`,
+      );
       return;
     }
 
-    setFailedLoginAttempts(0);
-    setLoginLockUntil(null);
-    setLockoutLevel(0);
-    localStorage.removeItem("failedLoginAttempts");
-    localStorage.removeItem("loginLockUntil");
-    localStorage.removeItem("lockoutLevel");
+    if (!validate()) return;
 
-    setErrors({});
+    try {
+      const cred = await signInWithEmailAndPassword(
+        auth,
+        employeeEmail.trim().toLowerCase(),
+        password,
+      );
 
-    router.push("/home");
-  } catch (err) {
+      const allowed = await checkAllowedUser(cred.user.email);
 
-    if (err.code === "auth/too-many-requests") {
-      alert("Too many login attempts were detected for this account. Please wait a few minutes before trying again.");
-      return;
-    }
+      if (!allowed.allowed) {
+        alert("You are not authorized to access this app.");
+        await signOut(auth);
+        setPassword("");
+        return;
+      }
 
-    if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-      alert("Invalid email or password.");
-    } else {
-      alert("Login failed. Please try again.");
-    }
-
-    const nextAttempts = failedLoginAttempts + 1;
-    setFailedLoginAttempts(nextAttempts);
-    localStorage.setItem("failedLoginAttempts", String(nextAttempts));
-
-    if (nextAttempts >= 5) {
-      const nextLevel = lockoutLevel + 1;
-      const durationSeconds = getLockoutDuration(nextLevel);
-      const lockUntil = Date.now() + durationSeconds * 1000;
-
-      setLockoutLevel(nextLevel);
-      setLoginLockUntil(lockUntil);
       setFailedLoginAttempts(0);
+      setLoginLockUntil(null);
+      setLockoutLevel(0);
+      localStorage.removeItem("failedLoginAttempts");
+      localStorage.removeItem("loginLockUntil");
+      localStorage.removeItem("lockoutLevel");
 
-      localStorage.setItem("lockoutLevel", String(nextLevel));
-      localStorage.setItem("loginLockUntil", String(lockUntil));
-      localStorage.setItem("failedLoginAttempts", "0");
+      setErrors({});
 
-      alert(`Too many failed login attempts. Account locked for ${durationSeconds} seconds.`);
+      router.push("/staff-welcome-page");
+    } catch (err) {
+      if (err.code === "auth/too-many-requests") {
+        alert(
+          "Too many login attempts were detected for this account. Please wait a few minutes before trying again.",
+        );
+        return;
+      }
+
+      if (
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found"
+      ) {
+        alert("Invalid email or password.");
+      } else {
+        alert("Login failed. Please try again.");
+      }
+
+      const nextAttempts = failedLoginAttempts + 1;
+      setFailedLoginAttempts(nextAttempts);
+      localStorage.setItem("failedLoginAttempts", String(nextAttempts));
+
+      if (nextAttempts >= 5) {
+        const nextLevel = lockoutLevel + 1;
+        const durationSeconds = getLockoutDuration(nextLevel);
+        const lockUntil = Date.now() + durationSeconds * 1000;
+
+        setLockoutLevel(nextLevel);
+        setLoginLockUntil(lockUntil);
+        setFailedLoginAttempts(0);
+
+        localStorage.setItem("lockoutLevel", String(nextLevel));
+        localStorage.setItem("loginLockUntil", String(lockUntil));
+        localStorage.setItem("failedLoginAttempts", "0");
+
+        alert(
+          `Too many failed login attempts. Account locked for ${durationSeconds} seconds.`,
+        );
+      }
     }
-  }
-};
+  };
 
   return (
     <div className="w-full max-w-md bg-white/85 rounded-sm shadow-md p-8 relative">
@@ -336,7 +348,9 @@ export default function LoginForm() {
           title="Forgot Password"
           onClose={() => setShowForgotModal(false)}
           onSubmit={handleForgotSubmit}
-          submitText={resetCooldownSeconds > 0 ? `Wait ${resetCooldownSeconds}s` : "Send"}
+          submitText={
+            resetCooldownSeconds > 0 ? `Wait ${resetCooldownSeconds}s` : "Send"
+          }
           submitDisabled={resetCooldownSeconds > 0}
         >
           <input
