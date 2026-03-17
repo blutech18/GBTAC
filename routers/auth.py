@@ -1,3 +1,6 @@
+import os
+import httpx
+
 from helpers.email_service import send_reset_email
 from helpers.firebase_admin_setup import get_firestore_client, get_firebase_auth
 
@@ -16,6 +19,7 @@ router = APIRouter(prefix="/auth")
 
 db = get_firestore_client()
 firebase_auth = get_firebase_auth()
+TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY")
 
 class ResetRequest(BaseModel):
     email: EmailStr
@@ -25,6 +29,9 @@ class EmailRequest(BaseModel):
 
 class TokenRequest(BaseModel):
     idToken: str
+
+class CaptchaRequest(BaseModel):
+    captcha_token: str
 
 
 MAX_FAILED_ATTEMPTS = 2  # change to 5 later
@@ -53,6 +60,32 @@ def get_lockout_duration_seconds(level: int) -> int:
 #         return 900
 #     return 1800
 
+@router.post("/verify-captcha")
+async def verify_captcha(payload: CaptchaRequest, request: Request):
+    if not TURNSTILE_SECRET_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="Turnstile secret key is not configured.",
+        )
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            data={
+                "secret": TURNSTILE_SECRET_KEY,
+                "response": payload.captcha_token,
+                "remoteip": request.client.host if request.client else None,
+            },
+        )
+        result = response.json()
+
+    if not result.get("success", False):
+        raise HTTPException(
+            status_code=400,
+            detail="CAPTCHA verification failed.",
+        )
+
+    return {"success": True}
 
 @router.post("/reset-password")
 @limiter.limit("5/minute")
