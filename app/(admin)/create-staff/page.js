@@ -12,8 +12,8 @@ export default function Page() {
       className="min-h-screen bg-gray-50 flex flex-col"
       style={{ fontFamily: "var(--font-titillium)" }}
     >
-      <Navbar />
       <SecondaryNav displayLogin={false} displayLogout displayProfile={true}/>
+      <Navbar />
 
       <div className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto"
