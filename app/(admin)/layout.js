@@ -10,11 +10,20 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     if (loading) return;
-    if (!user || !isAllowed) router.replace("/login");
-    else if (role !== "admin") router.replace("/staff-welcome-page");
-  }, [user, isAllowed, role, loading, router]);
+
+    if (!user || !isAllowed) {
+      router.replace("/login");
+      return;
+    }
+
+    if (role === "staff") {
+      router.replace("/staff-welcome-page");
+      return;
+    }
+  }, [user, loading, isAllowed, role, router]);
 
   if (loading) return null;
+  if (!user || !isAllowed) return null;
   if (role !== "admin") return null;
 
   return children;

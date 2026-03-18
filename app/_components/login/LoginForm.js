@@ -4,7 +4,8 @@ import Modal from "./Modal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from "../../_utils/firebase";
+import { auth, db } from "../../_utils/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const API_BASE = "http://127.0.0.1:8000";
 
@@ -291,12 +292,41 @@ export default function LoginForm() {
         return;
       }
 
+      const userRef = doc(db, "allowedUsers", emailLower);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await signOut(auth);
+        setPassword("");
+        resetTurnstile();
+        alert("No access profile was found for this account.");
+        return;
+      }
+
+      const userData = userSnap.data();
+
+      if (userData.active !== true) {
+        await signOut(auth);
+        setPassword("");
+        resetTurnstile();
+        alert("This account is not active.");
+        return;
+      }
+
       await resetLoginAttempts(emailLower);
 
       setErrors({});
       setLoginCooldownSeconds(0);
       resetTurnstile();
-      router.push("/home");
+
+      if (userData.role === "admin") {
+        router.replace("/account-manager");
+      } else if (userData.role === "staff") {
+        router.replace("/staff-welcome-page");
+      } else {
+        await signOut(auth);
+        alert("This account does not have a valid role assigned.");
+      }
     } catch (err) {
       if (err.code === "auth/too-many-requests") {
         resetTurnstile();
