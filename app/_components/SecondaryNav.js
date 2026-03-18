@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "../_utils/firebase";
 
+const API_BASE = "http://localhost:8000";
+
 export default function SecondaryNav({
   displayLogin = true,
   displayLogout = false,
@@ -15,10 +17,18 @@ export default function SecondaryNav({
   const [employeeFirstName, setEmployeeFirstName] = useState("Temiloluwa");
   const [employeeLastName, setEmployeeLastName] = useState("Bankole");
   const [user, setUser] = useState(`${employeeFirstName} ${employeeLastName}`);
-  const handleLogout = async () => {
+
+  const handleLogout = async (e) => {
+    e.preventDefault();
+
     try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
       await signOut(auth);
-      router.push("/login");
+      router.push("/");
       router.refresh();
     } catch (err) {
       alert("Logout failed: " + err.message);
