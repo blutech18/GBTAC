@@ -394,7 +394,7 @@ export default function AmbientTempDashboard() {
             onStatsReady={handleStatsReady}
           />
         ) : (
-          <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+          <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
             Graph Placeholder
           </div>
         )}

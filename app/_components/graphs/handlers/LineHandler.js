@@ -78,7 +78,11 @@ export default function LineHandler({
             const results = await Promise.all(
                 list.map((code) =>
                     fetch(`${API_ENDPOINT}/graphs/data/${code}?${query}`)
-                        .then((r) => r.json())
+                        .then((r) => {
+                            if (!r.ok) return [];
+                            return r.json();
+                        })
+                        .then((data) => Array.isArray(data) ? data : [])
                         .catch(() => [])
                 )
             );

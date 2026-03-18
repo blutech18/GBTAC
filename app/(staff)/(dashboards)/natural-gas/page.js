@@ -157,7 +157,7 @@ export default function Page() {
             </div>
             </>
           ) : (
-            <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
               Select a valid date range to load charts.
             </div>
           )}

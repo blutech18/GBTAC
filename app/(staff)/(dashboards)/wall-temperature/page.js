@@ -6,6 +6,7 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
+import { useDateValidation } from "../../../_components/hooks/useDateValidation";
 
 const STORAGE_KEY = "dashboard-wall-temp";
 
@@ -79,7 +80,24 @@ export default function WallTempDashboard() {
     };
   });
 
-  const [appliedState, setAppliedState] = useState(null);
+  //initialize from saved state so chart loads immediately
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, {});
+    if (saved.fromDate && saved.toDate) {
+      return {
+        fromDate: saved.fromDate,
+        toDate: saved.toDate,
+        floors: saved.floors || [],
+        orientations: saved.orientations || [],
+      };
+    }
+    return null;
+  });
+
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2018-10-13",
+    latestDate: "2026-01-07",
+  });
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
@@ -186,11 +204,15 @@ export default function WallTempDashboard() {
           <DatePicker
             fromDate={fromDate}
             toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
             setDate={({ fromDate, toDate }) => {
               const nextState = { ...state, fromDate, toDate };
               setState(nextState);
 
-              if (fromDate && toDate) {
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
                 setAppliedState({
                   fromDate,
                   toDate,
@@ -268,7 +290,7 @@ export default function WallTempDashboard() {
             xTitle="Time"
           />
         ) : (
-          <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+          <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
             Graph Placeholder
           </div>
         )}
