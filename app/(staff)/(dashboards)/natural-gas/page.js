@@ -9,12 +9,16 @@ import DateRangePicker from "@/app/_components/DatePicker";
 import GraphPlaceholder from "@/app/_components/GraphPlaceholder";
 import InfoCard from "@/app/_components/InfoCard";
 import ExportPDFButton from "@/app/_components/ExportPDFButton";
+import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 import { FiInfo } from "react-icons/fi";
 import { useRef } from "react";
 
 export default function Page() {
   const chartRef = useRef(null);
   const chartRef2 = useRef(null);
+
+  //Todays date
+  const today = new Date().toISOString().split("T")[0];
 
   const STORAGE_KEY = "dashboard-natural-gas";
    // Unit state: kWh or W
@@ -28,29 +32,24 @@ export default function Page() {
       orientations: [],
     }),
   );
+   //initialize from saved state so it loads immediately
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    if (saved.fromDate && saved.toDate) {
+      return { fromDate: saved.fromDate, toDate: saved.toDate };
+    }
+    return null;
+  });
+  
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2023-01-04",
+    latestDate: today,
+  });
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
 
-  const handleMultiSelect = (key, value) => {
-    const currentValues = state[key] || [];
-
-    const updatedValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
-      : [...currentValues, value];
-
-    setState({ ...state, [key]: updatedValues });
-  };
-
-  const handleSelectAll = (key, options) => {
-    const currentValues = state[key] || [];
-
-    setState({
-      ...state,
-      [key]: currentValues.length === options.length ? [] : options,
-    });
-  };
 
   const handleSaveScreen = () => {
     saveDashboardState(STORAGE_KEY, state);
@@ -105,7 +104,24 @@ export default function Page() {
     >
       <div className="container mx-auto px-4 py-8" style={{ fontFamily: "var(--font-titillium)" }}>
         <div className="flex flex-wrap gap-6 items-end mb-6">
-          <DateRangePicker />
+          <DateRangePicker
+            fromDate={state.fromDate}
+            toDate={state.toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
+
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({ fromDate, toDate });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
           <div className="mb-6">
   
           </div>
@@ -124,7 +140,9 @@ export default function Page() {
           </button>
       </div>
 
-        <div className="mt-10 flex flex-col gap-4 relative">
+      <div className="mt-10 flex flex-col gap-4 relative">
+        {appliedState ? (
+          <>
             <div ref={chartRef}>
               <GraphPlaceholder />
             </div>
@@ -134,6 +152,16 @@ export default function Page() {
             <div ref={chartRef2}>
               <GraphPlaceholder />
             </div>
+            <div className="flex justify-end gap-4 mt-3">
+              <ExportPDFButton chartRef={chartRef2} fileName="natural-gas-chart-2" />
+            </div>
+            </>
+          ) : (
+            <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+              Select a valid date range to load charts.
+            </div>
+          )}
+          
             <div className="flex justify-end gap-4 mt-3">
                 <button
                   onClick={handleSaveScreen}
