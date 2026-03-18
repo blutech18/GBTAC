@@ -12,7 +12,7 @@ export default function NotificationModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-        <h2 style={{ fontFamily: "var(--font-titillium)" }} className="text-xl font-semibold text-gray-900 mb-2">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
           {title}
         </h2>
         <p className="text-gray-500 mb-6 text-sm">

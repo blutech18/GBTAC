@@ -78,7 +78,11 @@ export default function LineHandler({
             const results = await Promise.all(
                 list.map((code) =>
                     fetch(`${API_ENDPOINT}/graphs/data/${code}?${query}`)
-                        .then((r) => r.json())
+                        .then((r) => {
+                            if (!r.ok) return [];
+                            return r.json();
+                        })
+                        .then((data) => Array.isArray(data) ? data : [])
                         .catch(() => [])
                 )
             );
@@ -348,24 +352,6 @@ export default function LineHandler({
         )
     ) : null;
 
-    if (chartType === "bar" || chartType === "line") {
-        return (
-            <div>
-                {loading && (
-                    <div className="flex items-center justify-center p-8 text-gray-500 text-sm">
-                        Loading data...
-                    </div>
-                )}
-                {!loading && fetched && !hasData && (
-                    <div className="flex items-center justify-center p-8 text-gray-400 text-sm">
-                        No data available for the selected date range.
-                    </div>
-                )}
-                {!loading && hasData && chartContent}
-            </div>
-        );
-    }
-
     return (
         <div className="relative min-h-75">
             {loading && (
@@ -384,9 +370,7 @@ export default function LineHandler({
                     No data available for the selected date range.
                 </div>
             )}
-            {(!loading || fetched) && hasData && (
-                <LineChart options={graphOptions} data={graphData}/>
-            )}
+            {!loading && hasData && chartContent}
         </div>
     );
 }

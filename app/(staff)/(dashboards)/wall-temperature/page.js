@@ -6,6 +6,7 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
+import { useDateValidation } from "../../../_components/hooks/useDateValidation";
 import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 
 const STORAGE_KEY = "dashboard-wall-temp";
@@ -111,26 +112,24 @@ export default function WallTempDashboard() {
     };
   });
 
-  const [appliedState, setAppliedState] = useState({
-    fromDate: DEFAULT_FROM_DATE,
-    toDate: DEFAULT_TO_DATE,
-    floors: [],
-    orientations: [],
+  //initialize from saved state so chart loads immediately
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, {});
+    return {
+      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
+      toDate: saved.toDate || DEFAULT_TO_DATE,
+      floors: saved.floors || [],
+      orientations: saved.orientations || [],
+    };
+  });
+
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2018-10-13",
+    latestDate: "2026-01-07",
   });
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
-  useEffect(() => {
-    const nextState = {
-      fromDate: DEFAULT_FROM_DATE,
-      toDate: DEFAULT_TO_DATE,
-      floors: state.floors || [],
-      orientations: state.orientations || [],
-    };
-
-    setState(nextState);
-    setAppliedState(nextState);
-  }, []);
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
@@ -228,28 +227,34 @@ export default function WallTempDashboard() {
 
   return (
     <DashboardLayout title="Wall Temperature Dashboard">
-      <div className="flex flex-wrap gap-6 items-end mb-6">
-        <DatePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          setDate={({ fromDate, toDate }) => {
-            const nextState = { ...state, fromDate, toDate };
-            setState(nextState);
+      <div className="flex flex-wrap gap-6 items-start mb-6">
+        <div>
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
 
-            if (fromDate && toDate) {
-              setAppliedState({
-                fromDate,
-                toDate,
-                floors: nextState.floors,
-                orientations: nextState.orientations,
-              });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-        />
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({
+                  fromDate,
+                  toDate,
+                  floors: nextState.floors,
+                  orientations: nextState.orientations,
+                });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -273,7 +278,7 @@ export default function WallTempDashboard() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -298,6 +303,7 @@ export default function WallTempDashboard() {
             ))}
           </div>
         </div>
+
         <div>
           <label className="block text-sm font-medium mb-1">
             Time Interval
@@ -322,7 +328,7 @@ export default function WallTempDashboard() {
             xTitle="Time"
           />
         ) : (
-          <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+          <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
             Graph Placeholder
           </div>
         )}

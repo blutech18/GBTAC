@@ -37,11 +37,11 @@ export default function AccountsTable({search = ""}) {
   <table className="min-w-full divide-y table-fixed divide-gray-200">
     <thead className="sticky top-0 z-10" style={{ backgroundColor: "#F6F7F9" }}>
       <tr>
-        <th style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-3 text-left text-lg font-medium text-black">#</th>
-        <th style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-3 text-left text-lg font-medium text-black">Name</th>
-        <th style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-3 text-left text-lg font-medium text-black">Email</th>
-        <th style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-3 text-left text-lg font-medium text-black">Status</th>
-        <th style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-3 text-left text-lg font-medium text-black">Action</th>
+        <th className="px-6 py-3 text-left text-lg font-medium text-black">#</th>
+        <th className="px-6 py-3 text-left text-lg font-medium text-black">Name</th>
+        <th className="px-6 py-3 text-left text-lg font-medium text-black">Email</th>
+        <th className="px-6 py-3 text-left text-lg font-medium text-black">Status</th>
+        <th className="px-6 py-3 text-left text-lg font-medium text-black">Action</th>
       </tr>
     </thead>
     <tbody className="bg-white divide-y divide-gray-200 overflow-y-auto">
