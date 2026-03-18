@@ -1,78 +1,73 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
-import InfoCard from "../../../_components/InfoCard";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
-import Carousel from "@/app/_components/Carousel";
 
-const STORAGE_KEY = "dashboard-ambient-temp";
+const STORAGE_KEY = "dashboard-wall-temp";
 
-// 13 sensors mapped by floor from building floor plans
+// Mapping for the 24 Wall sensors derived from database naming
 const FLOOR_SENSOR_MAP = {
-  Basement: ["20004_TL2", "20005_TL2", "20006_TL2"],
-  "1st Floor": ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
-  "2nd Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2"],
+  Basement: [
+    "30000_TL57", "30000_TL56", "30000_TL55", // East Basement
+    "30000_TL39", "30000_TL38", // North Basement
+    "30000_TL69", "30000_TL68", "30000_TL67", "30000_TL66", "30000_TL95", // South Basement
+  ],
+  "1st Floor": [
+    "30000_TL90", // North 1st floor
+    "30000_TL71", "30000_TL70", // South 1st floor
+    "30000_TL65", "30000_TL64", "30000_TL63", "30000_TL62", "30000_TL61", "30000_TL60", "30000_TL59", "30000_TL58" // West 1st floor
+  ],
+  "2nd Floor": [],
 };
 
-// Orientation derived from display names in sensor_names table
 const SENSOR_ORIENTATION = {
-  "20004_TL2": "East",   // East 1 Basement
-  "20005_TL2": "West",   // West Basement
-  "20006_TL2": "East",   // East 2 Basement
-  "20007_TL2": "North",  // North (West) 1st Floor
-  "20008_TL2": "South",  // South 1 1st Floor
-  "20009_TL2": "South",  // South 2 1st Floor
-  "20010_TL2": "East",   // East 1st Floor
-  "20011_TL2": "Middle", // Middle 1st Floor
-  "20012_TL2": "West",   // West 2nd Floor
-  "20013_TL2": "Middle", // Middle 2nd Floor
-  "20014_TL2": "East",   // East 2nd Floor
-  "20015_TL2": "South",  // South 1 2nd Floor
-  "20016_TL2": "South",  // South 2 2nd Floor
+  "30000_TL57": "East", "30000_TL56": "East", "30000_TL55": "East",
+  "30000_TL39": "North", "30000_TL38": "North", "30000_TL90": "North",
+  "30000_TL69": "South", "30000_TL68": "South", "30000_TL67": "South", "30000_TL66": "South",
+  "30000_TL95": "South", "30000_TL71": "South", "30000_TL70": "South",
+  "30000_TL62": "West", "30000_TL61": "West", "30000_TL60": "West", "30000_TL59": "West", "30000_TL58": "West",
+  "30000_TL65": "West", "30000_TL64": "West", "30000_TL63": "West"
 };
 
 const SENSOR_LABELS = {
-  "20004_TL2": "East 1 Basement",
-  "20005_TL2": "West Basement",
-  "20006_TL2": "East 2 Basement",
-  "20007_TL2": "North (West) 1st Floor",
-  "20008_TL2": "South 1 1st Floor",
-  "20009_TL2": "South 2 1st Floor",
-  "20010_TL2": "East 1st Floor",
-  "20011_TL2": "Middle 1st Floor",
-  "20012_TL2": "West 2nd Floor",
-  "20013_TL2": "Middle 2nd Floor",
-  "20014_TL2": "East 2nd Floor",
-  "20015_TL2": "South 1 2nd Floor",
-  "20016_TL2": "South 2 2nd Floor"
-};
-
-const formatAsOf = (ts, sensorCode) => {
-  if (!ts) return null;
-  const formatted = new Date(ts).toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  const sensorName = SENSOR_LABELS[sensorCode] || sensorCode;
-  return `As of ${formatted} ${sensorName}`;
+  // Basement East
+  "30000_TL57": "East 1 Basement",
+  "30000_TL56": "East 2 Basement",
+  "30000_TL55": "East 3 Basement",
+  
+  // Basement North
+  "30000_TL39": "North 1 Basement",
+  "30000_TL38": "North 2 Basement",
+  
+  // Basement South
+  "30000_TL69": "South 1 Basement",
+  "30000_TL68": "South 2 Basement",
+  "30000_TL67": "South 3 Basement",
+  "30000_TL66": "South 4 Basement",
+  "30000_TL95": "South 5 Basement",
+  
+  // 1st Floor
+  "30000_TL90": "North 1st Floor",
+  "30000_TL71": "South 1 1st Floor",
+  "30000_TL70": "South 2 1st Floor",
+  "30000_TL65": "West 1 1st Floor",
+  "30000_TL64": "West 2 1st Floor",
+  "30000_TL63": "West 3 1st Floor",
+  "30000_TL62": "West 4 1st Floor",
+  "30000_TL61": "West 5 1st Floor",
+  "30000_TL60": "West 6 1st Floor",
+  "30000_TL59": "West 7 1st Floor",
+  "30000_TL58": "West 8 1st Floor",
 };
 
 const FLOOR_OPTIONS = ["Basement", "1st Floor", "2nd Floor"];
-const ORIENTATION_OPTIONS = ["North", "South", "East", "West", "Middle"];
-const FLOOR_IMAGES = {
-  Basement: "/floors/GBTAC-basement-level.png",
-  "1st Floor": "/floors/GBTAC-level1.png",
-  "2nd Floor": "/floors/GBTAC-level2.png",
-};
+const ORIENTATION_OPTIONS = ["North", "South", "East", "West"];
 
-export default function AmbientTempDashboard() {
+export default function WallTempDashboard() {
   const [state, setState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
     return {
@@ -85,9 +80,6 @@ export default function AmbientTempDashboard() {
   });
 
   const [appliedState, setAppliedState] = useState(null);
-  const [kpiStats, setKpiStats] = useState(null);
-
-  const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
@@ -95,7 +87,6 @@ export default function AmbientTempDashboard() {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
 
-  // Step 1: filter by floor (empty = all floors after Apply)
   const floorFiltered =
     !appliedState
       ? []
@@ -103,7 +94,6 @@ export default function AmbientTempDashboard() {
         ? Object.values(FLOOR_SENSOR_MAP).flat()
         : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
 
-  // Step 2: filter by orientation (empty = all orientations)
   const activeSensors =
     !appliedState
       ? []
@@ -114,7 +104,6 @@ export default function AmbientTempDashboard() {
           );
 
   const handleMultiSelect = (key, value) => {
-    setKpiStats(null);
     setState((prev) => {
       const currentValues = prev[key] || [];
 
@@ -145,7 +134,6 @@ export default function AmbientTempDashboard() {
   };
 
   const handleSelectAll = (key, options) => {
-    setKpiStats(null);
     setState((prev) => {
       const currentValues = prev[key] || [];
 
@@ -171,14 +159,12 @@ export default function AmbientTempDashboard() {
   };
 
   const handleSaveScreen = () => {
-    // Save state to localStorage
     saveDashboardState(STORAGE_KEY, state);
 
-    // Save this dashboard to recent dashboards
     saveRecentDashboard({
-      id: "ambient-temperature",
-      title: "Ambient Temperature Dashboard",
-      path: "/dashboards/ambient-temperature",
+      id: "wall-temperature",
+      title: "Wall Temperature Dashboard",
+      path: "/dashboards/wall-temperature",
       summary: {
         fromDate: state.fromDate,
         toDate: state.toDate,
@@ -194,7 +180,7 @@ export default function AmbientTempDashboard() {
   };
 
   return (
-    <DashboardLayout title="Ambient Temperature Dashboard">
+    <DashboardLayout title="Wall Temperature Dashboard">
       <div className="flex flex-wrap gap-6 items-end mb-6">
         <DatePicker
           fromDate={fromDate}
@@ -202,7 +188,6 @@ export default function AmbientTempDashboard() {
           setDate={({ fromDate, toDate }) => {
             const nextState = { ...state, fromDate, toDate };
             setState(nextState);
-            setKpiStats(null);
 
             if (fromDate && toDate) {
               setAppliedState({
@@ -268,26 +253,6 @@ export default function AmbientTempDashboard() {
         </div>
       </div>
 
-      <InfoCard
-        items={[
-          {
-            label: "Average Building Temperature",
-            value: kpiStats ? kpiStats.avg.toFixed(2) + "°C" : "—",
-            subtitle: null,
-          },
-          {
-            label: "High",
-            value: kpiStats ? kpiStats.max.toFixed(2) + "°C" : "—",
-            subtitle: kpiStats ? formatAsOf(kpiStats.maxTs, kpiStats.maxSensorCode) : null,
-          },
-          {
-            label: "Low",
-            value: kpiStats ? kpiStats.min.toFixed(2) + "°C" : "—",
-            subtitle: kpiStats ? formatAsOf(kpiStats.minTs, kpiStats.minSensorCode) : null,
-          },
-        ]}
-      />
-
       <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4 mt-6">
         {appliedState && activeSensors.length > 0 ? (
           <LineHandler
@@ -296,42 +261,13 @@ export default function AmbientTempDashboard() {
             sensorLabels={SENSOR_LABELS}
             startDate={appliedState.fromDate}
             endDate={appliedState.toDate}
-            graphTitle="Ambient Temperature"
+            graphTitle="Wall Temperature"
             yTitle="Temperature (°C)"
             xTitle="Time"
-            onStatsReady={handleStatsReady}
           />
         ) : (
           <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
             Graph Placeholder
-          </div>
-        )}
-      </div>
-
-      <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
-        <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
-
-        {floors.length === 0 ? (
-          <div className="border border-dashed p-6 text-center text-sm text-gray-500">
-            Select a floor to preview layout.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4 items-center">
-            {floors.map((floor) =>
-              FLOOR_IMAGES[floor] ? ( // only render if the image exists
-                <div key={floor} className="text-center mt-8">
-                  <p className="text-xl mb-2 font-medium">{floor}</p>
-
-                  <Image
-                    src={FLOOR_IMAGES[floor]}
-                    alt={floor}
-                    width={1300}
-                    height={500}
-                    className="border rounded-lg shadow-md hover:shadow-lg transition"
-                  />
-                </div>
-              ) : null,
-            )}
           </div>
         )}
       </div>

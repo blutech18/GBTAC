@@ -1,15 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "./Modal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut,
-} from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../../_utils/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+const API_BASE = "http://127.0.0.1:8000";
 
 export default function LoginForm() {
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -19,7 +17,62 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [loginCooldownSeconds, setLoginCooldownSeconds] = useState(0);
+  const [resetCooldownSeconds, setResetCooldownSeconds] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (resetCooldownSeconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setResetCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [resetCooldownSeconds]);
+
+  useEffect(() => {
+    if (loginCooldownSeconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setLoginCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [loginCooldownSeconds]);
+
+  useEffect(() => {
+    window.onTurnstileSuccess = (token) => {
+      setCaptchaToken(token);
+    };
+
+    window.onTurnstileExpired = () => {
+      setCaptchaToken("");
+    };
+
+    window.onTurnstileError = () => {
+      setCaptchaToken("");
+    };
+
+    return () => {
+      window.onTurnstileSuccess = undefined;
+      window.onTurnstileExpired = undefined;
+      window.onTurnstileError = undefined;
+    };
+  }, []);
 
   const isSaitEmail = (email) => {
     const lower = email.toLowerCase();
@@ -30,17 +83,97 @@ export default function LoginForm() {
     );
   };
 
-  const checkAllowedUser = async (email) => {
-    const emailLower = email.toLowerCase();
-    const ref = doc(db, "allowedUsers", emailLower);
-    const snap = await getDoc(ref);
+  const checkLockout = async (email) => {
+    const res = await fetch(`${API_BASE}/auth/check-lockout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
 
-    if (!snap.exists()) return { allowed: false, reason: "not_whitelisted" };
+    if (!res.ok) {
+      throw new Error("Failed to check lockout");
+    }
 
-    const data = snap.data();
-    if (data.active !== true) return { allowed: false, reason: "inactive" };
+    return res.json();
+  };
 
-    return { allowed: true, role: data.role || "user" };
+  const recordFailedLogin = async (email) => {
+    const res = await fetch(`${API_BASE}/auth/record-failed-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to record failed login");
+    }
+
+    return res.json();
+  };
+
+  const resetLoginAttempts = async (email) => {
+    const res = await fetch(`${API_BASE}/auth/reset-login-attempts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to reset login attempts");
+    }
+
+    return res.json();
+  };
+
+  const checkAllowedUserWithToken = async (idToken) => {
+    const res = await fetch(`${API_BASE}/auth/check-allowed-user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to check allowed user");
+    }
+
+    return res.json();
+  };
+
+  const requestPasswordReset = async (email) => {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to request password reset");
+    }
+
+    return res.json();
+  };
+
+  const verifyCaptcha = async (token) => {
+    const res = await fetch(`${API_BASE}/auth/verify-captcha`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ captcha_token: token }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.detail || "CAPTCHA verification failed");
+    }
+
+    return data;
+  };
+
+  const resetTurnstile = () => {
+    setCaptchaToken("");
+    if (typeof window !== "undefined" && window.turnstile) {
+      window.turnstile.reset();
+    }
   };
 
   const validate = () => {
@@ -64,15 +197,25 @@ export default function LoginForm() {
         alert("Please enter your email.");
         return;
       }
+
       if (!isSaitEmail(forgotEmail.trim())) {
         alert("Please use your SAIT email.");
         return;
       }
 
       const emailToSend = forgotEmail.trim().toLowerCase();
-      await sendPasswordResetEmail(auth, emailToSend);
-      alert(`Password reset email sent to ${emailToSend}`);
+      const result = await requestPasswordReset(emailToSend);
 
+      if (!result.success) {
+        setResetCooldownSeconds(result.remainingSeconds || 0);
+        alert(
+          `Please wait ${result.remainingSeconds} seconds before requesting another reset email.`,
+        );
+        return;
+      }
+
+      alert(`Password reset email sent to ${emailToSend}`);
+      setResetCooldownSeconds(60);
       setShowForgotModal(false);
       setForgotEmail("");
     } catch (err) {
@@ -105,25 +248,131 @@ export default function LoginForm() {
   const handleLogin = async () => {
     if (!validate()) return;
 
-    try {
-      const cred = await signInWithEmailAndPassword(
-        auth,
-        employeeEmail.trim().toLowerCase(),
-        password,
-      );
+    if (!captchaToken) {
+      alert("Please complete the security check.");
+      return;
+    }
 
-      const allowed = await checkAllowedUser(cred.user.email);
+    const emailLower = employeeEmail.trim().toLowerCase();
+
+    try {
+      const lockoutStatus = await checkLockout(emailLower);
+
+      if (lockoutStatus.locked) {
+        setLoginCooldownSeconds(lockoutStatus.remainingSeconds);
+        alert(
+          `Too many failed login attempts. Please wait ${lockoutStatus.remainingSeconds} seconds before trying again.`,
+        );
+        return;
+      }
+
+      setLoginCooldownSeconds(0);
+
+      try {
+        await verifyCaptcha(captchaToken);
+      } catch (captchaErr) {
+        resetTurnstile();
+        alert(
+          captchaErr.message ||
+            "CAPTCHA verification failed. Please try again.",
+        );
+        return;
+      }
+
+      const cred = await signInWithEmailAndPassword(auth, emailLower, password);
+
+      const idToken = await cred.user.getIdToken(true);
+      const allowed = await checkAllowedUserWithToken(idToken);
 
       if (!allowed.allowed) {
         alert("You are not authorized to access this app.");
         await signOut(auth);
         setPassword("");
+        resetTurnstile();
         return;
       }
 
-      router.push("/home");
+      const userRef = doc(db, "allowedUsers", emailLower);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await signOut(auth);
+        setPassword("");
+        resetTurnstile();
+        alert("No access profile was found for this account.");
+        return;
+      }
+
+      const userData = userSnap.data();
+
+      if (userData.active !== true) {
+        await signOut(auth);
+        setPassword("");
+        resetTurnstile();
+        alert("This account is not active.");
+        return;
+      }
+
+      await resetLoginAttempts(emailLower);
+
+      setErrors({});
+      setLoginCooldownSeconds(0);
+      resetTurnstile();
+
+      if (userData.role === "admin") {
+        router.replace("/account-manager");
+      } else if (userData.role === "staff") {
+        router.replace("/staff-welcome-page");
+      } else {
+        await signOut(auth);
+        alert("This account does not have a valid role assigned.");
+      }
     } catch (err) {
-      alert("Login failed: " + err.message);
+      if (err.code === "auth/too-many-requests") {
+        resetTurnstile();
+        alert(
+          "Too many login attempts were detected for this account. Please wait a few minutes before trying again.",
+        );
+        return;
+      }
+
+      const isInvalidLogin =
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/invalid-credential";
+
+      try {
+        const result = await recordFailedLogin(emailLower);
+
+        if (result.locked) {
+          setLoginCooldownSeconds(result.remainingSeconds);
+
+          const mins = Math.floor(result.remainingSeconds / 60);
+          const secs = result.remainingSeconds % 60;
+          const timeText =
+            mins > 0
+              ? `${mins} minute(s) ${secs} second(s)`
+              : `${secs} second(s)`;
+
+          resetTurnstile();
+          alert(
+            `Too many failed login attempts. Account locked for ${timeText}.`,
+          );
+        } else if (isInvalidLogin) {
+          resetTurnstile();
+          alert(
+            `Invalid email or password. You have ${result.remainingAttempts} attempt(s) left.`,
+          );
+        } else {
+          resetTurnstile();
+          console.error("LOGIN ERROR:", err);
+          alert("Login failed. Please try again.");
+        }
+      } catch (backendErr) {
+        resetTurnstile();
+        console.error("BACKEND LOCKOUT ERROR:", backendErr);
+        alert("Login failed. Please try again.");
+      }
     }
   };
 
@@ -187,12 +436,24 @@ export default function LoginForm() {
       {errors.password && (
         <p className="text-red-500 text-sm mb-2">{errors.password}</p>
       )}
+
+      <div className="flex justify-center mb-4">
+        <div
+          className="cf-turnstile"
+          data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+          data-callback="onTurnstileSuccess"
+          data-expired-callback="onTurnstileExpired"
+          data-error-callback="onTurnstileError"
+        />
+      </div>
+
       <div className="flex justify-center">
         <button
-          className="group w-1/2 bg-[#005EB8] text-white py-3 mb-6 rounded-full text-lg font-bold justify-center hover:bg-blue-700 transition flex gap-4 items-center"
+          className="group w-1/2 bg-[#005EB8] text-white py-3 mb-6 rounded-full text-lg font-bold justify-center hover:bg-blue-700 transition flex gap-4 items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
           onClick={handleLogin}
+          disabled={loginCooldownSeconds > 0}
         >
-          Login
+          {loginCooldownSeconds > 0 ? `Wait ${loginCooldownSeconds}s` : "Login"}
           <Image
             src="/icons/arrow-right.png"
             alt="chevron"
@@ -219,7 +480,10 @@ export default function LoginForm() {
           title="Forgot Password"
           onClose={() => setShowForgotModal(false)}
           onSubmit={handleForgotSubmit}
-          submitText="Send"
+          submitText={
+            resetCooldownSeconds > 0 ? `Wait ${resetCooldownSeconds}s` : "Send"
+          }
+          submitDisabled={resetCooldownSeconds > 0}
         >
           <input
             type="email"

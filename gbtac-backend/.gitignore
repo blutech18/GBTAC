@@ -1,6 +1,12 @@
-.vscode
+.vscode/
+
+venv/
 
 .env
 
 __pycache__
-routers/__pycache__
+
+forecasts/
+
+secrets/
+*.json
