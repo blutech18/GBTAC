@@ -8,11 +8,11 @@ import GraphPlaceholder from "../../../_components/GraphPlaceholder";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import Carousel from "@/app/_components/Carousel";
+import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 
 const STORAGE_KEY = "dashboard-water-level";
 
 export default function WaterLevelDashboard() {
-  const [appliedState, setAppliedState] = useState(null);
   const [state, setState] = useState(() =>
     loadDashboardState(STORAGE_KEY, {
       fromDate: "",
@@ -20,6 +20,20 @@ export default function WaterLevelDashboard() {
       visibleGraphs: {},
     }),
   );
+
+  //initialize from saved state so it loads immediately
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    if (saved.fromDate && saved.toDate) {
+      return { fromDate: saved.fromDate, toDate: saved.toDate };
+    }
+    return null;
+  });
+
+   const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2018-10-13",
+    latestDate: "2026-01-07",
+  });
 
   const { fromDate, toDate } = state;
 
@@ -102,11 +116,15 @@ export default function WaterLevelDashboard() {
       <DatePicker
         fromDate={fromDate}
         toDate={toDate}
+        errors={errors}
+        onDateChange={(field, value, otherDate) => {
+          setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+        }}
         setDate={({ fromDate, toDate }) => {
           const nextState = { ...state, fromDate, toDate };
           handleStateChange(nextState);
 
-          if (fromDate && toDate) {
+          if (fromDate && toDate && validateAll(fromDate, toDate)) {
             setAppliedState({ fromDate, toDate });
           } else {
             setAppliedState(null);
