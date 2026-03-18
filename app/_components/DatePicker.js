@@ -1,10 +1,6 @@
-export default function DateRangePicker({
-  fromDate,
-  toDate,
-  setDate
-}) {
+export default function DateRangePicker({ fromDate, toDate, setDate }) {
   return (
-    <div className="flex flex-wrap gap-4 items-end mb-6">
+    <div className="flex flex-wrap gap-4 items-end">
       <div>
         <label className="block text-sm text-gray-600 mb-1">From</label>
         <input
@@ -13,7 +9,7 @@ export default function DateRangePicker({
           onChange={(e) =>
             setDate({
               fromDate: e.target.value,
-              toDate
+              toDate,
             })
           }
           className="border rounded px-3 py-2"
@@ -28,7 +24,7 @@ export default function DateRangePicker({
           onChange={(e) =>
             setDate({
               fromDate,
-              toDate: e.target.value
+              toDate: e.target.value,
             })
           }
           className="border rounded px-3 py-2"
@@ -39,7 +35,7 @@ export default function DateRangePicker({
         onClick={() =>
           setDate({
             fromDate,
-            toDate
+            toDate,
           })
         }
         className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"

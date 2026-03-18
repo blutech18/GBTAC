@@ -1,7 +1,7 @@
 import Image from "next/image";
 export default function Footer() {
   return (
-    <div className="w-full bg-[#6D2077] border-t border-[#6D2077] flex flex-row justify-between items-center gap-5 p-4 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
+    <div className="w-full bg-[#6D2077] border-t border-[#6D2077] flex flex-row justify-between items-center gap-5 px-4 py-3 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
       <div className="text-[#F1FAF5] text-xs md:text-lg">
         <p>{new Date().getFullYear()}. Capstone Project for GBTAC, SAIT.</p>
       </div>
