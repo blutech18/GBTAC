@@ -9,31 +9,50 @@ import InfoCard from "../../../_components/InfoCard";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "@/app/_components/Carousel";
+import { useSearchParams } from "next/navigation";
+import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
+import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
+
 
 const STORAGE_KEY = "dashboard-ambient-temp";
+const DEFAULT_FROM_DATE = "2024-10-01";
+const DEFAULT_TO_DATE = "2024-10-07";
+
 
 // 13 sensors mapped by floor from building floor plans
 const FLOOR_SENSOR_MAP = {
   Basement: ["20004_TL2", "20005_TL2", "20006_TL2"],
-  "1st Floor": ["20007_TL2", "20008_TL2", "20009_TL2", "20010_TL2", "20011_TL2"],
-  "2nd Floor": ["20012_TL2", "20013_TL2", "20014_TL2", "20015_TL2", "20016_TL2"],
+  "1st Floor": [
+    "20007_TL2",
+    "20008_TL2",
+    "20009_TL2",
+    "20010_TL2",
+    "20011_TL2",
+  ],
+  "2nd Floor": [
+    "20012_TL2",
+    "20013_TL2",
+    "20014_TL2",
+    "20015_TL2",
+    "20016_TL2",
+  ],
 };
 
 // Orientation derived from display names in sensor_names table
 const SENSOR_ORIENTATION = {
-  "20004_TL2": "East",   // East 1 Basement
-  "20005_TL2": "West",   // West Basement
-  "20006_TL2": "East",   // East 2 Basement
-  "20007_TL2": "North",  // North (West) 1st Floor
-  "20008_TL2": "South",  // South 1 1st Floor
-  "20009_TL2": "South",  // South 2 1st Floor
-  "20010_TL2": "East",   // East 1st Floor
+  "20004_TL2": "East", // East 1 Basement
+  "20005_TL2": "West", // West Basement
+  "20006_TL2": "East", // East 2 Basement
+  "20007_TL2": "North", // North (West) 1st Floor
+  "20008_TL2": "South", // South 1 1st Floor
+  "20009_TL2": "South", // South 2 1st Floor
+  "20010_TL2": "East", // East 1st Floor
   "20011_TL2": "Middle", // Middle 1st Floor
-  "20012_TL2": "West",   // West 2nd Floor
+  "20012_TL2": "West", // West 2nd Floor
   "20013_TL2": "Middle", // Middle 2nd Floor
-  "20014_TL2": "East",   // East 2nd Floor
-  "20015_TL2": "South",  // South 1 2nd Floor
-  "20016_TL2": "South",  // South 2 2nd Floor
+  "20014_TL2": "East", // East 2nd Floor
+  "20015_TL2": "South", // South 1 2nd Floor
+  "20016_TL2": "South", // South 2 2nd Floor
 };
 
 const SENSOR_LABELS = {
@@ -49,7 +68,7 @@ const SENSOR_LABELS = {
   "20013_TL2": "Middle 2nd Floor",
   "20014_TL2": "East 2nd Floor",
   "20015_TL2": "South 1 2nd Floor",
-  "20016_TL2": "South 2 2nd Floor"
+  "20016_TL2": "South 2 2nd Floor",
 };
 
 const formatAsOf = (ts, sensorCode) => {
@@ -76,42 +95,66 @@ export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
     return {
-      fromDate: "",
-      toDate: "",
-      floors: [],
-      orientations: [],
-      ...saved,
+      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
+      toDate: saved.toDate || DEFAULT_TO_DATE,
+      floors: saved.floors || [],
+      orientations: saved.orientations || [],
     };
   });
 
-  const [appliedState, setAppliedState] = useState(null);
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
+
+  useEffect(() => {
+    if (from === "staff-welcome-page") {
+      console.log("Came from StaffHome via URL");
+    }
+  }, [from]);
+
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, {});
+    if (saved.fromDate && saved.toDate) {
+      return {
+        fromDate: saved.fromDate,
+        toDate: saved.toDate,
+        floors: saved.floors || [],
+        orientations: saved.orientations || [],
+      };
+    }
+    return null;
+  });
+
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2018-12-08",
+    latestDate: "2024-11-05",
+  });
+
   const [kpiStats, setKpiStats] = useState(null);
 
   const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
+
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
 
   // Step 1: filter by floor (empty = all floors after Apply)
-  const floorFiltered =
-    !appliedState
-      ? []
-      : appliedState.floors.length === 0
-        ? Object.values(FLOOR_SENSOR_MAP).flat()
-        : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
+  const floorFiltered = !appliedState
+    ? []
+    : appliedState.floors.length === 0
+      ? Object.values(FLOOR_SENSOR_MAP).flat()
+      : appliedState.floors.flatMap((f) => FLOOR_SENSOR_MAP[f] || []);
 
   // Step 2: filter by orientation (empty = all orientations)
-  const activeSensors =
-    !appliedState
-      ? []
-      : appliedState.orientations.length === 0
-        ? floorFiltered
-        : floorFiltered.filter((code) =>
-            appliedState.orientations.includes(SENSOR_ORIENTATION[code]),
-          );
+  const activeSensors = !appliedState
+    ? []
+    : appliedState.orientations.length === 0
+      ? floorFiltered
+      : floorFiltered.filter((code) =>
+          appliedState.orientations.includes(SENSOR_ORIENTATION[code]),
+        );
 
   const handleMultiSelect = (key, value) => {
     setKpiStats(null);
@@ -126,7 +169,7 @@ export default function AmbientTempDashboard() {
         key === "floors" ? FLOOR_OPTIONS : ORIENTATION_OPTIONS;
 
       const sortedValues = optionOrder.filter((option) =>
-        updatedValues.includes(option)
+        updatedValues.includes(option),
       );
 
       const nextState = { ...prev, [key]: sortedValues };
@@ -170,6 +213,59 @@ export default function AmbientTempDashboard() {
     });
   };
 
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return null;
+
+    const [year, month, day] = dateStr.split("-");
+    return new Date(year, month - 1, day); // local time
+  };
+
+  const formatDateRange = (from, to) => {
+    if (!from || !to) return null;
+
+    const fromDate = parseLocalDate(from);
+    const toDate = parseLocalDate(to);
+
+    const fromFormatted = fromDate.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+
+    const toFormatted = toDate.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+
+    return `As of: ${fromFormatted} - ${toFormatted}`;
+  };
+
+  const stats = [
+    {
+      label: "Average Building Temperature",
+      value: kpiStats ? kpiStats.avg.toFixed(2) : "—",
+      unit: "°C",
+      subtitle: kpiStats
+        ? formatAsOf(kpiStats.avgTs, kpiStats.avgSensorCode)
+        : formatDateRange(appliedState?.fromDate, appliedState?.toDate),
+    },
+    {
+      label: "High",
+      value: kpiStats ? kpiStats.max.toFixed(2) : "—",
+      unit: "°C",
+      subtitle: kpiStats
+        ? formatAsOf(kpiStats.maxTs, kpiStats.maxSensorCode)
+        : formatDateRange(appliedState?.fromDate, appliedState?.toDate),
+    },
+    {
+      label: "Low",
+      value: kpiStats ? kpiStats.min.toFixed(2) : "—",
+      unit: "°C",
+      subtitle: kpiStats
+        ? formatAsOf(kpiStats.minTs, kpiStats.minSensorCode)
+        : formatDateRange(appliedState?.fromDate, appliedState?.toDate),
+    },
+  ];
+
   const handleSaveScreen = () => {
     // Save state to localStorage
     saveDashboardState(STORAGE_KEY, state);
@@ -178,7 +274,7 @@ export default function AmbientTempDashboard() {
     saveRecentDashboard({
       id: "ambient-temperature",
       title: "Ambient Temperature Dashboard",
-      path: "/dashboards/ambient-temperature",
+      path: "/ambient-temperature?from=staff-welcome-page",
       summary: {
         fromDate: state.fromDate,
         toDate: state.toDate,
@@ -195,29 +291,35 @@ export default function AmbientTempDashboard() {
 
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
-      <div className="flex flex-wrap gap-6 items-end mb-6">
-        <DatePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          setDate={({ fromDate, toDate }) => {
-            const nextState = { ...state, fromDate, toDate };
-            setState(nextState);
-            setKpiStats(null);
+      <div className="flex flex-wrap gap-6 items-start mb-6">
+        <div>
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
+              setKpiStats(null);
 
-            if (fromDate && toDate) {
-              setAppliedState({
-                fromDate,
-                toDate,
-                floors: nextState.floors,
-                orientations: nextState.orientations,
-              });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-        />
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({
+                  fromDate,
+                  toDate,
+                  floors: nextState.floors,
+                  orientations: nextState.orientations,
+                });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -241,7 +343,7 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -266,29 +368,28 @@ export default function AmbientTempDashboard() {
             ))}
           </div>
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Time Interval
+          </label>
+          <TimeGranularityDropdown />
+        </div>
       </div>
 
-      <InfoCard
-        items={[
-          {
-            label: "Average Building Temperature",
-            value: kpiStats ? kpiStats.avg.toFixed(2) + "°C" : "—",
-            subtitle: null,
-          },
-          {
-            label: "High",
-            value: kpiStats ? kpiStats.max.toFixed(2) + "°C" : "—",
-            subtitle: kpiStats ? formatAsOf(kpiStats.maxTs, kpiStats.maxSensorCode) : null,
-          },
-          {
-            label: "Low",
-            value: kpiStats ? kpiStats.min.toFixed(2) + "°C" : "—",
-            subtitle: kpiStats ? formatAsOf(kpiStats.minTs, kpiStats.minSensorCode) : null,
-          },
-        ]}
-      />
+      <div className="lg:hidden mb-6">
+        <Carousel items={stats} horizontal />
+      </div>
+      <div className="hidden lg:block">
+        <InfoCard
+          colsClass="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          items={stats}
+        />
+      </div>
 
-      <div id="chart-print-area" className="bg-white rounded-lg shadow-md p-4 mt-6">
+      <div
+        id="chart-print-area"
+        className="bg-white rounded-lg shadow-md p-4 mt-6"
+      >
         {appliedState && activeSensors.length > 0 ? (
           <LineHandler
             key={`${appliedState.fromDate}-${appliedState.toDate}-${activeSensors.join(",")}`}
@@ -303,13 +404,13 @@ export default function AmbientTempDashboard() {
             onStatsReady={handleStatsReady}
           />
         ) : (
-          <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+          <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
             Graph Placeholder
           </div>
         )}
       </div>
 
-      <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
+      <div className="mt-6 p-4 border rounded bg-white">
         <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
 
         {floors.length === 0 ? (

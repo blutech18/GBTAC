@@ -1,14 +1,15 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Titillium_Web, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthContextProvider } from "./_utils/auth-context";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const titilliumWeb = Titillium_Web({
+  variable: "--font-titillium-web",
   subsets: ["latin"],
+  weight: ["300", "400", "600", "700", "900"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
@@ -21,11 +22,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${titilliumWeb.variable} ${dmSans.variable} antialiased`}
       >
-        <AuthContextProvider>
-          {children}
-        </AuthContextProvider>
+        <AuthContextProvider>{children}</AuthContextProvider>
       </body>
     </html>
   );

@@ -6,9 +6,9 @@ import Link from "next/link";
 export default function AccountRow({ account }) {
   return (
     <tr>
-      <td style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-4 whitespace-nowrap text-black">{account.id}</td>
-      <td style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-4 whitespace-nowrap text-black">{account.name}</td>
-      <td style={{ fontFamily: "var(--font-titillium)" }} className="px-6 py-4 whitespace-nowrap text-black">{account.email}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-black">{account.id}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-black">{account.name}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-black">{account.email}</td>
       <td className="px-6 py-4 whitespace-nowrap flex items-center gap-2">
         <span
           className="h-3 w-3 rounded-full"

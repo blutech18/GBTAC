@@ -13,10 +13,10 @@ export default function Navbar({
       className="
         w-full bg-[#A6192E] text-white
         sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32
-        p-4
+        px-4 py-4 flex items-center justify-between
       "
     >
-      <ul className="flex space-x-8 text-white">
+      <ul className="font-heading flex space-x-8 text-white text-lg">
         {displayHome && (
           <li>
             <Link href="/" className="hover:opacity-70 transition">
@@ -27,8 +27,8 @@ export default function Navbar({
 
         {displayAbout && (
           <li>
-            <Link href="/about" className="hover:opacity-70 transition">
-              About
+            <Link href="/about-us" className="hover:opacity-70 transition">
+              About Us
             </Link>
           </li>
         )}
@@ -51,7 +51,7 @@ export default function Navbar({
             >
               <li>
                 <Link
-                  href="/dashboards/water-level"
+                  href="/water-level?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Cistern Level
@@ -59,7 +59,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/energy"
+                  href="/energy?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Energy
@@ -67,7 +67,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/ambient-temperature"
+                  href="/ambient-temperature?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Ambient Temperature
@@ -75,7 +75,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/wall-temperature"
+                  href="/wall-temperature?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Wall Temperature
@@ -83,7 +83,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/natural-gas"
+                  href="/natural-gas?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Natural Gas
@@ -91,7 +91,7 @@ export default function Navbar({
               </li>
               <li>
                 <Link
-                  href="/dashboards/custom"
+                  href="/custom?from=staff-welcome-page"
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Custom Charts
@@ -112,10 +112,10 @@ export default function Navbar({
         {displayAccountMngmt && (
           <li>
             <Link
-              href="/account-management"
+              href="/account-manager"
               className="hover:opacity-70 transition"
             >
-              Account Management
+              Manage Accounts
             </Link>
           </li>
         )}
@@ -123,9 +123,9 @@ export default function Navbar({
           <li>
             <Link
               href="/dashboard-management"
-              className="block px-4 py-2 hover:bg-gray-100"
+              className="hover:opacity-70 transition"
             >
-              Dashboard Management
+              Manage Dashboard
             </Link>
           </li>
         )}

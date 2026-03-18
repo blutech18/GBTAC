@@ -1,6 +1,7 @@
 import SecondaryNav from "./SecondaryNav";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import Breadcrumbs from "./Breadcrumbs";
 
 export default function DashboardLayout({
   title,
@@ -14,23 +15,31 @@ export default function DashboardLayout({
         displayProfile={true}
         displayLogin={false}
       />
-      <Navbar displayDashboards displayHome={false} displayAbout={false} />
+      <Navbar
+        displayDashboards
+        displayHome={false}
+        displayAbout={false}
+        displayReports={true}
+      />
+      <Breadcrumbs />
       <main
         className="
         flex-1
         sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32
-        p-8
+        px-4 pt-2 pb-8
       "
       >
         <div className="mb-6 flex items-start justify-between gap-4">
-          <h1 className="text-3xl font-semibold text-gray-800">{title}</h1>
+          <h1 className="text-3xl lg:text-5xl font-semibold text-gray-800">
+            {title}
+          </h1>
           {titleRight}
         </div>
 
         {children}
       </main>
 
-      <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8 px-4">
+      <div className="text-center text-lg text-gray-500 mt-8 px-4">
         This information is displayed for educational purposes only.
       </div>
 

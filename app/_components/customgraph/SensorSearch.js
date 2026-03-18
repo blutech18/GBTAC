@@ -26,7 +26,7 @@ export default function SensorSearch({ selectedSensors = [], setSelectedSensors,
   };
 
   return (
-    <div className="bg-white rounded-sm shadow-sm p-4 w-full h-80 flex flex-col" style={{ fontFamily: "var(--font-titillium)" }}>
+    <div className="bg-white rounded-sm shadow-sm p-4 w-full h-80 flex flex-col">
       <div className="flex items-center mb-2 gap-2">
         <p className="font-semibold text-black">Sensor Search:</p>
         <input
