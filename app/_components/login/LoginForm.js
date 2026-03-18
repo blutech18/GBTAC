@@ -7,7 +7,7 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../../_utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "http://localhost:8000";
 
 export default function LoginForm() {
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -137,6 +137,23 @@ export default function LoginForm() {
     }
 
     return res.json();
+  };
+
+  const createSessionLogin = async (idToken) => {
+    const res = await fetch(`${API_BASE}/auth/session-login`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.detail || "Failed to create session");
+    }
+
+    return data;
   };
 
   const requestPasswordReset = async (email) => {
@@ -313,6 +330,9 @@ export default function LoginForm() {
         return;
       }
 
+      console.log("Before createSessionLogin");
+      await createSessionLogin(idToken);
+      console.log("After createSessionLogin");
       await resetLoginAttempts(emailLower);
 
       setErrors({});
