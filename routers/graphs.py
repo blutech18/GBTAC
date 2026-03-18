@@ -226,8 +226,8 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
             df_agg = df.resample(agg.lower()).mean()
         else:
             df_agg = df.resample(agg.lower()).sum()
-            
-        # df_agg = df_agg.dropna()
+
+        df_agg = df_agg.astype(object).where(pd.notna(df_agg), other=None)
         res = df_agg.reset_index().to_dict(orient="records")
 
     return res
