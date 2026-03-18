@@ -107,6 +107,7 @@ export default function EnergyDashboard() {
 
   return (
     <DashboardLayout title="Energy Dashboard">
+      <div className="flex flex-wrap gap-6 items-end mb-6">
       <DatePicker
         fromDate={state.fromDate}
         toDate={state.toDate}
