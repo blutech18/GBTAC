@@ -132,7 +132,7 @@ export default function LineHandler({
         setFetched(false);
         fetchData(sensorList, startDate, endDate);
         fetchNames(sensorList);
-    }, [sensorKey, startDate, endDate, canFetch]);
+    }, [sensorKey, startDate, endDate, canFetch, aggTime, aggType]);
     
     // sets defaults
     const labels = 0; // x axis labels
@@ -164,7 +164,7 @@ export default function LineHandler({
 
     // runs when sensorData or sensor names change
     useEffect(() => {
-        if(fetched && sensorData.length > 0){
+        if(fetched && sensorData.length > 0 && Array.isArray(sensorData[0]) && sensorData[0].length > 0 && sensors.every(s => s.name !== null)){
             const labels = sensorData[0].map(d => new Date(d.ts));
 
             setXMin(labels[0]);
@@ -270,9 +270,8 @@ export default function LineHandler({
             else if(unit == "month") setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month                
             else if(unit == "year") setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month
             
-            
         }
-    }, [sensorData, sensors, fetched, onStatsReady]);
+    }, [sensorData, sensors, fetched, onStatsReady, aggTime]);
 
     const displayUnit = unit || getTimeUnit();
 

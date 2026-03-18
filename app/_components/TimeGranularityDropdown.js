@@ -4,7 +4,7 @@
 import { useState } from "react";
 
 export default function TimeGranularityDropdown({ onChange = () => {} }) {
-  const [timeInterval, setTimeInterval] = useState("hourly");
+  const [timeInterval, setTimeInterval] = useState("none");
 
   const handleChange = (e) => {
     const selectedInterval = e.target.value;
@@ -21,10 +21,10 @@ export default function TimeGranularityDropdown({ onChange = () => {} }) {
           className="border p-2 rounded text-gray-500"
         >
           <option value="none">None</option>
-          <option value="hourly">Hourly</option>
-          <option value="daily">Daily</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
+          <option value="H">Hourly</option>
+          <option value="D">Daily</option>
+          <option value="M">Monthly</option>
+          <option value="Y">Yearly</option>
         </select>
       </div>
     </div>
