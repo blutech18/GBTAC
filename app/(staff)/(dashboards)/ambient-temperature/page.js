@@ -10,6 +10,7 @@ import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "@/app/_components/Carousel";
 import { useSearchParams } from "next/navigation";
+import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 
 const STORAGE_KEY = "dashboard-ambient-temp";
 
@@ -250,7 +251,7 @@ export default function AmbientTempDashboard() {
     saveRecentDashboard({
       id: "ambient-temperature",
       title: "Ambient Temperature Dashboard",
-      path: "/dashboards/ambient-temperature",
+      path: "/ambient-temperature?from=staff-welcome-page",
       summary: {
         fromDate: state.fromDate,
         toDate: state.toDate,
@@ -289,7 +290,7 @@ export default function AmbientTempDashboard() {
           }}
         />
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -313,7 +314,7 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -337,6 +338,12 @@ export default function AmbientTempDashboard() {
               </button>
             ))}
           </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Time Interval
+          </label>
+          <TimeGranularityDropdown />
         </div>
       </div>
 
@@ -373,7 +380,7 @@ export default function AmbientTempDashboard() {
         )}
       </div>
 
-      <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
+      <div className="mt-6 p-4 border rounded bg-white">
         <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
 
         {floors.length === 0 ? (

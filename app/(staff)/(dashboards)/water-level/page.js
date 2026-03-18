@@ -8,6 +8,7 @@ import GraphPlaceholder from "../../../_components/GraphPlaceholder";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import Carousel from "@/app/_components/Carousel";
+import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 
 const STORAGE_KEY = "dashboard-water-level";
 
@@ -81,7 +82,7 @@ export default function WaterLevelDashboard() {
     saveRecentDashboard({
       id: "water-level",
       title: "Cistern Level Dashboard",
-      path: "/dashboards/water-level",
+      path: "/water-level?from=staff-welcome-page",
       summary: {
         fromDate: state.fromDate,
         toDate: state.toDate,
@@ -99,20 +100,29 @@ export default function WaterLevelDashboard() {
 
   return (
     <DashboardLayout title="Cistern Level Dashboard">
-      <DatePicker
-        fromDate={fromDate}
-        toDate={toDate}
-        setDate={({ fromDate, toDate }) => {
-          const nextState = { ...state, fromDate, toDate };
-          handleStateChange(nextState);
+      <div className="flex flex-row gap-6 mb-6 items-center">
+        <DatePicker
+          fromDate={fromDate}
+          toDate={toDate}
+          setDate={({ fromDate, toDate }) => {
+            const nextState = { ...state, fromDate, toDate };
+            handleStateChange(nextState);
 
-          if (fromDate && toDate) {
-            setAppliedState({ fromDate, toDate });
-          } else {
-            setAppliedState(null);
-          }
-        }}
-      />
+            if (fromDate && toDate) {
+              setAppliedState({ fromDate, toDate });
+            } else {
+              setAppliedState(null);
+            }
+          }}
+        />
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Time Interval
+          </label>
+          <TimeGranularityDropdown />
+        </div>
+      </div>
+
       <div className="lg:hidden mb-6">
         <Carousel items={stats} horizontal />
       </div>
