@@ -6,6 +6,7 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "../../../_components/Carousel";
+import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 import { useDateValidation } from "../../../_components/hooks/useDateValidation";
 
 import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
@@ -88,7 +89,7 @@ export default function EnergyDashboard() {
     saveRecentDashboard({
       id: "energy",
       title: "Energy Dashboard",
-      path: "/dashboards/energy",
+      path: "/energy?from=staff-welcome-page",
       summary: {
         fromDate: state.fromDate,
         toDate: state.toDate,
@@ -118,13 +119,20 @@ export default function EnergyDashboard() {
           const nextState = { ...state, fromDate, toDate };
           setState(nextState);
 
-          if (fromDate && toDate && validateAll(fromDate, toDate)) {
-            setAppliedState({ fromDate, toDate });
-          } else {
-            setAppliedState(null);
-          }
-        }}
-      />
+            if (fromDate && toDate && validateAll(fromDate, toDate)) {
+              setAppliedState({ fromDate, toDate });
+            } else {
+              setAppliedState(null);
+            }
+          }}
+        />
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Time Interval
+          </label>
+          <TimeGranularityDropdown />
+        </div>
+      </div>
       <div className="lg:hidden mb-6">
         <Carousel items={displayStats} horizontal />
       </div>

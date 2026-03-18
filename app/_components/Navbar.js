@@ -13,10 +13,10 @@ export default function Navbar({
       className="
         w-full bg-[#A6192E] text-white
         sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32
-        p-4
+        px-4 py-4 flex items-center justify-between
       "
     >
-      <ul className="flex space-x-8 text-white">
+      <ul className="font-heading flex space-x-8 text-white text-lg">
         {displayHome && (
           <li>
             <Link href="/" className="hover:opacity-70 transition">

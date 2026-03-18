@@ -15,7 +15,12 @@ export default function DashboardLayout({
         displayProfile={true}
         displayLogin={false}
       />
-      <Navbar displayDashboards displayHome={false} displayAbout={false} displayReports={true} />
+      <Navbar
+        displayDashboards
+        displayHome={false}
+        displayAbout={false}
+        displayReports={true}
+      />
       <Breadcrumbs />
       <main
         className="
@@ -25,14 +30,16 @@ export default function DashboardLayout({
       "
       >
         <div className="mb-6 flex items-start justify-between gap-4">
-          <h1 className="text-3xl font-semibold text-gray-800">{title}</h1>
+          <h1 className="text-3xl lg:text-5xl font-semibold text-gray-800">
+            {title}
+          </h1>
           {titleRight}
         </div>
 
         {children}
       </main>
 
-      <div className="text-center text-md text-gray-500 dark:text-gray-500 mt-12 mb-12 px-4">
+      <div className="text-center text-lg text-gray-500 mt-8 px-4">
         This information is displayed for educational purposes only.
       </div>
 
