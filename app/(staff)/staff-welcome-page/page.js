@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { loadRecentDashboards } from "../../utils/saveRecentDashboard";
 import RecentDashboardCard from "../../_components/RecentDashboardCard";
 import Breadcrumbs from "@/app/_components/Breadcrumbs";
@@ -10,15 +11,51 @@ import Footer from "../../_components/Footer";
 import Image from "next/image";
 import Link from "next/link";
 
+const API_BASE = "http://localhost:8000";
+
 export default function StaffHome() {
   const [recent, setRecent] = useState([]);
-  const [user, setUser] = useState("Temiloluwa Bankole");
+  const [user, setUser] = useState("Staff");
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+    const checkSession = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          router.replace("/");
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.role !== "staff") {
+          router.replace("/account-manager");
+          return;
+        }
+
+        setUser(data.email);
+        setLoading(false);
+      } catch (error) {
+        router.replace("/");
+      }
+    };
+
+    checkSession();
+  }, [router]);
 
   useEffect(() => {
     const savedDashboards = loadRecentDashboards().filter((d) => d.saved);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecent(savedDashboards);
   }, []);
+
+  if (!mounted || loading) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FDFDFD] font-sans">
@@ -56,7 +93,6 @@ export default function StaffHome() {
       <main className="flex-1 pb-12 px-4 pt-2 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32">
         <section className="relative mx-auto pb-10">
           <div className="relative bg-[#FDFDFD] overflow-hidden">
-            {/* Content area */}
             <p className="text-xl md:text-2xl font-light text-gray-600 mb-10 max-w-3xl">
               Access your tools, reports, and dashboards to manage building
               performance.
