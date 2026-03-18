@@ -107,27 +107,29 @@ export default function EnergyDashboard() {
 
   return (
     <DashboardLayout title="Energy Dashboard">
-      <div className="flex flex-wrap gap-6 items-end mb-6">
-      <DatePicker
-        fromDate={state.fromDate}
-        toDate={state.toDate}
-        errors={errors}
-        onDateChange={(field, value, otherDate) => {
-          //validate on every change, shows errors immediately
-          setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
-        }}
-        setDate={({ fromDate, toDate }) => {
-          const nextState = { ...state, fromDate, toDate };
-          setState(nextState);
-
-            if (fromDate && toDate && validateAll(fromDate, toDate)) {
-              setAppliedState({ fromDate, toDate });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-        />
+      <div className="flex flex-wrap gap-6 items-start mb-6">
         <div>
+          <DatePicker
+            fromDate={state.fromDate}
+            toDate={state.toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              //validate on every change, shows errors immediately
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
+
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({ fromDate, toDate });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
+        <div className="mt-0.5">
           <label className="block text-sm font-medium mb-1">
             Time Interval
           </label>

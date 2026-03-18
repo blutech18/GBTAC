@@ -114,25 +114,27 @@ export default function WaterLevelDashboard() {
 
   return (
     <DashboardLayout title="Cistern Level Dashboard">
-      <div className="flex flex-row gap-6 mb-6 items-center">
-        <DatePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          errors={errors}
-        onDateChange={(field, value, otherDate) => {
-          setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
-        }}
-        setDate={({ fromDate, toDate }) => {
-            const nextState = { ...state, fromDate, toDate };
-            handleStateChange(nextState);
+      <div className="flex flex-wrap gap-6 mb-6 items-start">
+        <div>
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              handleStateChange(nextState);
 
-            if (fromDate && toDate && validateAll(fromDate, toDate)) {
-              setAppliedState({ fromDate, toDate });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-        />
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({ fromDate, toDate });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
         <div>
           <label className="block text-sm font-medium mb-1">
             Time Interval

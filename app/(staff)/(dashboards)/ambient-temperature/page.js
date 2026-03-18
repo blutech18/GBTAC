@@ -291,8 +291,8 @@ export default function AmbientTempDashboard() {
 
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
-      <div className="flex flex-wrap lg:flex-nowrap gap-6 items-start mb-6">
-        <div className="shrink-0">
+      <div className="flex flex-wrap gap-6 items-start mb-6">
+        <div>
           <DatePicker
             fromDate={fromDate}
             toDate={toDate}
@@ -319,7 +319,7 @@ export default function AmbientTempDashboard() {
           />
         </div>
 
-        <div className="shrink-0">
+        <div>
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -343,7 +343,7 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
 
-        <div className="shrink-0">
+        <div>
           <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
             <button
