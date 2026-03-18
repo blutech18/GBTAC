@@ -15,8 +15,12 @@ export default function Page() {
     const [timeInterval, setTimeInterval] = useState("hourly");
     const [pdfBlob, setPdfBlob] = useState(null);
 
-    const handleGenerate = () => {
-        console.log("Generating report with:", { selectedSensors, from, to, timeInterval });
+    const handleGenerate = async () => {
+        console.log(selectedSensors);
+        const res = await fetch(`http://127.0.0.1:8000/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`);
+        const pdf = await res.blob();
+        setPdfBlob(pdf);
+
     }
     const handleClear = () => {
         setSelectedSensors([]);

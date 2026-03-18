@@ -14,9 +14,9 @@ export default function SensorPanel({ sensors = [], selectedSensors = [], onSele
   );
   //Handle checkbox toggle
   const handleToggle = (sensor) => {
-    const isSelected = selectedSensors.some(s => s.id === sensor.id);
+    const isSelected = selectedSensors.some(s => s.code === sensor.code);
     if (isSelected) {
-      onSelect(selectedSensors.filter(s => s.id !== sensor.id));
+      onSelect(selectedSensors.filter(s => s.code !== sensor.code));
     } else {
       onSelect([...selectedSensors, sensor]);
     }
@@ -48,7 +48,7 @@ export default function SensorPanel({ sensors = [], selectedSensors = [], onSele
             <label key={sensor.id} className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={selectedSensors.some(s => s.id === sensor.id)}
+                checked={selectedSensors.some(s => s.code === sensor.code)}
                 onChange={() => handleToggle(sensor)}
                 className="w-4 h-4"
               />

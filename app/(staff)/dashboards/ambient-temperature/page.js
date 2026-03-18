@@ -292,6 +292,7 @@ export default function AmbientTempDashboard() {
         {appliedState && activeSensors.length > 0 ? (
           <LineHandler
             key={`${appliedState.fromDate}-${appliedState.toDate}-${activeSensors.join(",")}`}
+            chartType={"line"}
             sensorList={activeSensors}
             sensorLabels={SENSOR_LABELS}
             startDate={appliedState.fromDate}
