@@ -1,23 +1,18 @@
-import { useState } from "react"
+import { useState } from "react";
 
-export default function DateRangePicker({
-  fromDate,
-  toDate,
-  setDate
-}) {
-
-  const [tempFrom, setTempFrom] = useState(fromDate)
-  const [tempTo, setTempTo] = useState(toDate)
+export default function DateRangePicker({ fromDate, toDate, setDate }) {
+  const [tempFrom, setTempFrom] = useState(fromDate);
+  const [tempTo, setTempTo] = useState(toDate);
 
   const setDates = () => {
     setDate({
       fromDate: tempFrom,
-      toDate: tempTo
-    })
-  }
+      toDate: tempTo,
+    });
+  };
 
   return (
-    <div className="flex flex-wrap gap-4 items-end mb-6">
+    <div className="flex flex-wrap gap-4 items-end">
       <div>
         <label className="block text-sm text-gray-600 mb-1">From</label>
         <input
