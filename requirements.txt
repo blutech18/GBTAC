@@ -10,3 +10,4 @@ slowapi
 pydantic[email]
 firebase-admin
 httpx
+sendgrid

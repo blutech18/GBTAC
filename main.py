@@ -9,6 +9,7 @@ from helpers.rate_limit import limiter
 from routers.graphs import router as graph_router
 from routers.energy import router as energy_router
 from routers.auth import router as auth_router
+from routers.report import router as report_router
 
 app = FastAPI()
 app.state.limiter = limiter
@@ -20,6 +21,7 @@ app.add_middleware( CORSMiddleware, allow_origins=["http://localhost:3000"], all
 app.include_router(graph_router)
 app.include_router(energy_router)
 app.include_router(auth_router)
+app.include_router(report_router)
 
 @app.get("/")
 async def root():

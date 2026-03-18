@@ -25,7 +25,7 @@ def useable_forecast(file_path):
     return False
     
 
-async def get_forecast(sensor_code, start=NEWEST, end=""):
+def get_forecast(sensor_code, start=NEWEST, end=""):
 
     #forecasting
     forecasts_dir = Path(__file__).resolve().parent.parent / "forecasts"

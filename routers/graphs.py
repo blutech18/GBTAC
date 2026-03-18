@@ -108,7 +108,7 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
     
     # forecast data if end date is in the future
     if san_end > NEWEST:
-        forecasted_data = await get_forecast(san_code, NEWEST, san_end)
+        forecasted_data = get_forecast(san_code, NEWEST, san_end)
         res = res + forecasted_data
 
     # aggregates data
@@ -119,9 +119,9 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
         df = df.set_index("ts")
 
         if type == "mean":
-            df_agg = df.resample(agg).mean()
+            df_agg = df.resample(agg.lower()).mean()
         else:
-            df_agg = df.resample(agg).sum()
+            df_agg = df.resample(agg.lower()).sum()
             
         # df_agg = df_agg.dropna()
         res = df_agg.reset_index().to_dict(orient="records")
@@ -269,41 +269,41 @@ async def get_codesnames(request: Request):
 @router.get("/newest")
 async def get_newest():
     # open connection
-    conn = pyodbc.connect(connection_str)
-    curs = conn.cursor()
+    # conn = pyodbc.connect(connection_str)
+    # curs = conn.cursor()
 
-    query = """
-        SELECT TOP 1 ts
-        FROM GBTAC_data
-        ORDER BY ts DESC;
-        """ 
+    # query = """
+    #     SELECT TOP 1 ts
+    #     FROM GBTAC_data
+    #     ORDER BY ts DESC;
+    #     """ 
 
-    #query database
-    curs.execute(query)
-    rows = curs.fetchall()
+    # #query database
+    # curs.execute(query)
+    # rows = curs.fetchall()
 
-    conn.close()
-    res = rows[0][0]
+    # conn.close()
+    # res = rows[0][0]
 
-    return res.date()
+    return NEWEST
 
 @router.get("/oldest")
 async def get_oldest():
     # open connection
-    conn = pyodbc.connect(connection_str)
-    curs = conn.cursor()
+    # conn = pyodbc.connect(connection_str)
+    # curs = conn.cursor()
 
-    query = """
-        SELECT TOP 1 ts
-        FROM GBTAC_data
-        ORDER BY ts asc;
-        """ 
+    # query = """
+    #     SELECT TOP 1 ts
+    #     FROM GBTAC_data
+    #     ORDER BY ts asc;
+    #     """ 
 
-    #query database
-    curs.execute(query)
-    rows = curs.fetchall()
+    # #query database
+    # curs.execute(query)
+    # rows = curs.fetchall()
 
-    conn.close()
-    res = rows[0][0]
+    # conn.close()
+    # res = rows[0][0]
 
-    return res.date()
+    return OLDEST
