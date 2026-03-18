@@ -6,6 +6,7 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "../../../_components/Carousel";
+import { useDateValidation } from "../../../_components/useDateValidation";
 
 import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
 import PieHandler from "@/app/_components/graphs/handlers/PieHandler";
@@ -14,13 +15,25 @@ import InfoCard from "@/app/_components/InfoCard";
 const STORAGE_KEY = "dashboard-energy";
 
 export default function EnergyDashboard() {
-  const [appliedState, setAppliedState] = useState(null);
   const [state, setState] = useState(() =>
-    loadDashboardState(STORAGE_KEY, {
-      fromDate: "",
-      toDate: "",
-    }),
+    loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" })
   );
+
+  //initialize from saved state so charts load immediately on page load
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    if (saved.fromDate && saved.toDate) {
+      return { fromDate: saved.fromDate, toDate: saved.toDate };
+    }
+    return null;
+  });
+
+  //errors from date validation
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2019-02-13",
+    latestDate: "2026-01-8",
+  });
+
 
   const parseLocalDate = (dateStr) => {
     if (!dateStr) return null;
@@ -96,11 +109,16 @@ export default function EnergyDashboard() {
       <DatePicker
         fromDate={state.fromDate}
         toDate={state.toDate}
+        errors={errors}
+        onDateChange={(field, value, otherDate) => {
+          //validate on every change, shows errors immediately
+          setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+        }}
         setDate={({ fromDate, toDate }) => {
           const nextState = { ...state, fromDate, toDate };
           setState(nextState);
 
-          if (fromDate && toDate) {
+          if (fromDate && toDate && validateAll(fromDate, toDate)) {
             setAppliedState({ fromDate, toDate });
           } else {
             setAppliedState(null);
@@ -134,9 +152,9 @@ export default function EnergyDashboard() {
             "30000_TL341", // GBT Consumption Hourly Wh
             "30000_TL339", // GBT Net Energy Hourly Wh
           ]}
-          startDate={state.fromDate}
-          endDate={state.toDate}
-          graphTitle={`Consumption vs Generation, ${state.fromDate} to ${state.toDate}`}
+          startDate={appliedState?.fromDate}
+          endDate={appliedState?.toDate}
+          graphTitle={`Consumption vs Generation, ${appliedState?.fromDate} to ${appliedState?.toDate}`}
           yTitle={"Wh"}
           xTitle={"hours"}
           xUnit={"hour"}
@@ -149,9 +167,9 @@ export default function EnergyDashboard() {
             "30000_TL252", // PV-CarportSolar_Total
             "30000_TL253", // PV-RooftopSolar_Total
           ]}
-          startDate={state.fromDate}
-          endDate={state.toDate}
-          graphTitle={`Solar Panel Generation, ${state.fromDate} to ${state.toDate < "2025-12-31" ? state.toDate : "2025-12-31"}`}
+          startDate={appliedState?.fromDate}
+          endDate={appliedState?.toDate}
+          graphTitle={`Solar Panel Generation, ${appliedState?.fromDate} to ${appliedState?.toDate < "2025-12-31" ? appliedState?.toDate : "2025-12-31"}`}
           label={"kWh"} // **check: unsure if right unit
         />
       </div>

@@ -11,7 +11,9 @@ import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "@/app/_components/Carousel";
 import { useSearchParams } from "next/navigation";
 
+
 const STORAGE_KEY = "dashboard-ambient-temp";
+
 
 // 13 sensors mapped by floor from building floor plans
 const FLOOR_SENSOR_MAP = {
