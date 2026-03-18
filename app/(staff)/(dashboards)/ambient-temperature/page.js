@@ -12,6 +12,8 @@ import Carousel from "@/app/_components/Carousel";
 import { useSearchParams } from "next/navigation";
 
 const STORAGE_KEY = "dashboard-ambient-temp";
+const DEFAULT_FROM_DATE = "2018-04-08";
+const DEFAULT_TO_DATE = "2025-12-31";
 
 // 13 sensors mapped by floor from building floor plans
 const FLOOR_SENSOR_MAP = {
@@ -89,11 +91,10 @@ export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
     return {
-      fromDate: "",
-      toDate: "",
-      floors: [],
-      orientations: [],
-      ...saved,
+      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
+      toDate: saved.toDate || DEFAULT_TO_DATE,
+      floors: saved.floors || [],
+      orientations: saved.orientations || [],
     };
   });
 
@@ -105,12 +106,29 @@ export default function AmbientTempDashboard() {
       console.log("Came from StaffHome via URL");
     }
   }, [from]);
-  const [appliedState, setAppliedState] = useState(null);
+  const [appliedState, setAppliedState] = useState({
+    fromDate: state.fromDate,
+    toDate: state.toDate,
+    floors: state.floors,
+    orientations: state.orientations,
+  });
   const [kpiStats, setKpiStats] = useState(null);
 
   const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
+
+  useEffect(() => {
+    const nextState = {
+      fromDate: DEFAULT_FROM_DATE,
+      toDate: DEFAULT_TO_DATE,
+      floors: state.floors || [],
+      orientations: state.orientations || [],
+    };
+
+    setState(nextState);
+    setAppliedState(nextState);
+  }, []);
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
@@ -193,7 +211,7 @@ export default function AmbientTempDashboard() {
     if (!dateStr) return null;
 
     const [year, month, day] = dateStr.split("-");
-    return new Date(year, month - 1, day); // local time ✅
+    return new Date(year, month - 1, day); // local time
   };
 
   const formatDateRange = (from, to) => {
