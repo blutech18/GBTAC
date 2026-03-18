@@ -134,6 +134,20 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
       newErrors.lastName = "No numbers or special characters.";
 
     if (!isAdmin) {
+      if (!formData.email.trim())
+        newErrors.email = "Email is required.";
+      else if (!formData.email.includes("@"))
+        newErrors.email = "Enter a valid email.";
+      else {
+        const emailLower = formData.email.toLowerCase();
+        if (
+          !emailLower.endsWith("@sait.ca") &&
+          !emailLower.endsWith("@edu.sait.ca") &&
+          !emailLower.endsWith("@gmail.com")
+        )
+          newErrors.email = "Must be a SAIT or Gmail email.";
+      }
+
       if (formData.newPassword) {
         if (!currentPasswordVerified)
           newErrors.currentPassword = "Please verify your current password first.";
@@ -303,14 +317,30 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
 
         <div className="flex flex-col">
           <label className="font-semibold text-gray-800 mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            readOnly
-            className="border rounded-lg p-3 bg-gray-100 text-gray-500 cursor-not-allowed"
-          />
-          <p className="text-xs text-gray-400 mt-1">Email cannot be changed.</p>
+          {isAdmin ? (
+            <>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                readOnly
+                className="border rounded-lg p-3 bg-gray-100 text-gray-500 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-400 mt-1">Email cannot be changed.</p>
+            </>
+          ) : (
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
+            />
+          )}
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+          )}
         </div>
 
         {isAdmin && (
