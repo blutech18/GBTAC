@@ -6,7 +6,7 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "../../../_components/Carousel";
-import { useDateValidation } from "../../../_components/useDateValidation";
+import { useDateValidation } from "../../../_components/hooks/useDateValidation";
 
 import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
 import PieHandler from "@/app/_components/graphs/handlers/PieHandler";

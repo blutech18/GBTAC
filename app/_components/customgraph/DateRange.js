@@ -2,7 +2,7 @@
 //The component also includes basic styling to match the overall design of the application.
 //This component also has two other dropdowns containing the times (Hourly, Daily, Monthly, Yearly) and the aggregation.
 "use client";
-import { useDateValidation } from "../useDateValidation";
+import { useDateValidation } from "../hooks/useDateValidation";
 
 export default function DateRange({ dateRange, setDateRange, aggSettings, setAggSettings }) {
   const { errors, setErrors, validate, validateAll, clearErrors } = useDateValidation({

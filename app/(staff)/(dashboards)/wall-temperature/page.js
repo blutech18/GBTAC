@@ -181,28 +181,30 @@ export default function WallTempDashboard() {
 
   return (
     <DashboardLayout title="Wall Temperature Dashboard">
-      <div className="flex flex-wrap gap-6 items-end mb-6">
-        <DatePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          setDate={({ fromDate, toDate }) => {
-            const nextState = { ...state, fromDate, toDate };
-            setState(nextState);
+      <div className="flex flex-wrap lg:flex-nowrap gap-6 items-start mb-6">
+        <div className="shrink-0">
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
 
-            if (fromDate && toDate) {
-              setAppliedState({
-                fromDate,
-                toDate,
-                floors: nextState.floors,
-                orientations: nextState.orientations,
-              });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-        />
+              if (fromDate && toDate) {
+                setAppliedState({
+                  fromDate,
+                  toDate,
+                  floors: nextState.floors,
+                  orientations: nextState.orientations,
+                });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
 
-        <div className="mb-6">
+        <div className="shrink-0">
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -226,7 +228,7 @@ export default function WallTempDashboard() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div className="shrink-0">
           <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
             <button

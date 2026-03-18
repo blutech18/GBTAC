@@ -10,6 +10,7 @@ import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "@/app/_components/Carousel";
 import { useSearchParams } from "next/navigation";
+import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 
 
 const STORAGE_KEY = "dashboard-ambient-temp";
@@ -107,7 +108,25 @@ export default function AmbientTempDashboard() {
       console.log("Came from StaffHome via URL");
     }
   }, [from]);
-  const [appliedState, setAppliedState] = useState(null);
+
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, {});
+    if (saved.fromDate && saved.toDate) {
+      return {
+        fromDate: saved.fromDate,
+        toDate: saved.toDate,
+        floors: saved.floors || [],
+        orientations: saved.orientations || [],
+      };
+    }
+    return null;
+  });
+
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2018-12-08",
+    latestDate: "2024-11-05",
+  });
+
   const [kpiStats, setKpiStats] = useState(null);
 
   const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
@@ -269,29 +288,35 @@ export default function AmbientTempDashboard() {
 
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
-      <div className="flex flex-wrap gap-6 items-end mb-6">
-        <DatePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          setDate={({ fromDate, toDate }) => {
-            const nextState = { ...state, fromDate, toDate };
-            setState(nextState);
-            setKpiStats(null);
+      <div className="flex flex-wrap lg:flex-nowrap gap-6 items-start mb-6">
+        <div className="shrink-0">
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
+              setKpiStats(null);
 
-            if (fromDate && toDate) {
-              setAppliedState({
-                fromDate,
-                toDate,
-                floors: nextState.floors,
-                orientations: nextState.orientations,
-              });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-        />
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({
+                  fromDate,
+                  toDate,
+                  floors: nextState.floors,
+                  orientations: nextState.orientations,
+                });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
 
-        <div className="mb-6">
+        <div className="shrink-0">
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -315,7 +340,7 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div className="shrink-0">
           <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
             <button
