@@ -14,6 +14,8 @@ import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 
 
 const STORAGE_KEY = "dashboard-ambient-temp";
+const DEFAULT_FROM_DATE = "2024-10-01";
+const DEFAULT_TO_DATE = "2024-10-07";
 
 
 // 13 sensors mapped by floor from building floor plans
@@ -132,17 +134,6 @@ export default function AmbientTempDashboard() {
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
-  useEffect(() => {
-    const nextState = {
-      fromDate: DEFAULT_FROM_DATE,
-      toDate: DEFAULT_TO_DATE,
-      floors: state.floors || [],
-      orientations: state.orientations || [],
-    };
-
-    setState(nextState);
-    setAppliedState(nextState);
-  }, []);
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);

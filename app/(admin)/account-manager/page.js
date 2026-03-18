@@ -13,7 +13,7 @@ export default function Page() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FdFdFd] font-sans">
-      <SecondaryNav displayLogin={false} displayProfile={true} />
+      <SecondaryNav displayLogin={false} displayLogout={true} displayProfile={true} />
       <Navbar displayAbout={false} displayHome={false} displayDashboardMngmt={true} displayAccountMngmt={true} />
       
     <main className="bg-gray-50 flex-1 w-full flex flex-col">

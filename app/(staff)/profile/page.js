@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useAuth } from "../../_utils/auth-context";
 
 export default function ProfilePage() {
-  const { role } = "staff"; //change to "staff" to see staff edit profile page for now
+  const { role } = useAuth(); //change to "staff" to see staff edit profile page for now
   const isAdmin = role === "admin";
 
 

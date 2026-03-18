@@ -84,15 +84,12 @@ export default function WallTempDashboard() {
   //initialize from saved state so chart loads immediately
   const [appliedState, setAppliedState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
-    if (saved.fromDate && saved.toDate) {
-      return {
-        fromDate: saved.fromDate,
-        toDate: saved.toDate,
-        floors: saved.floors || [],
-        orientations: saved.orientations || [],
-      };
-    }
-    return null;
+    return {
+      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
+      toDate: saved.toDate || DEFAULT_TO_DATE,
+      floors: saved.floors || [],
+      orientations: saved.orientations || [],
+    };
   });
 
   const { errors, setErrors, validate, validateAll } = useDateValidation({
@@ -102,17 +99,6 @@ export default function WallTempDashboard() {
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
 
-  useEffect(() => {
-    const nextState = {
-      fromDate: DEFAULT_FROM_DATE,
-      toDate: DEFAULT_TO_DATE,
-      floors: state.floors || [],
-      orientations: state.orientations || [],
-    };
-
-    setState(nextState);
-    setAppliedState(nextState);
-  }, []);
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
