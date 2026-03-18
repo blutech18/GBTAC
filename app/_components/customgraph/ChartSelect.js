@@ -70,10 +70,7 @@ export default function ChartSelect({
   };
 
   return (
-    <div
-      style={{ fontFamily: "var(--font-titillium)" }}
-      className="bg-white rounded shadow-sm p-4 w-1/2"
-    >
+    <div className="bg-white rounded shadow-sm p-4 w-1/2">
       <h2 className="font-semibold text-black mb-2">
         Load An Existing Chart
       </h2>

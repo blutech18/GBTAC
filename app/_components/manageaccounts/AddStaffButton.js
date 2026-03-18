@@ -7,9 +7,7 @@ export default function AddStaffButton() {
   return (
     <Link href="/create-staff">
       <button
-        className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
-        style={{ fontFamily: "var(--font-titillium)" }}
-      >
+        className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition">
         Add Staff
       </button>
     </Link>

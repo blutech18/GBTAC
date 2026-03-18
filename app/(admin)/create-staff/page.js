@@ -8,10 +8,7 @@ import Link from "next/link";
 
 export default function Page() {
   return (
-    <main
-      className="min-h-screen bg-gray-50 flex flex-col"
-      style={{ fontFamily: "var(--font-titillium)" }}
-    >
+    <main className="min-h-screen bg-gray-50 flex flex-col">
       <SecondaryNav displayLogin={false} displayLogout displayProfile={true}/>
       <Navbar displayAbout={false}/>
 

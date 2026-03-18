@@ -18,7 +18,7 @@ export default function Page() {
       
     <main className="bg-gray-50 flex-1 w-full flex flex-col">
       <div className="w-full sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 py-8 flex-1">
-        <h1 className="text-3xl font-bold mb-10 text-[#212529]" style={{ fontFamily: "var(--font-titillium)" }}>
+        <h1 className="text-3xl font-bold mb-10 text-[#212529]">
           Manage Accounts
         </h1>
         <div className="mb-6 flex items-center justify-between gap-4">

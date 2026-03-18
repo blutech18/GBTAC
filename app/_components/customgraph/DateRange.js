@@ -27,10 +27,7 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
   };
 
   return (
-    <div
-      style={{ fontFamily: "var(--font-titillium)" }}
-      className="bg-white rounded-sm shadow-sm p-4 w-full h-full"
-    >
+    <div className="bg-white rounded-sm shadow-sm p-4 w-full h-full">
       <h2 className="font-semibold text-black mb-4">Time and Aggregation Settings</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
