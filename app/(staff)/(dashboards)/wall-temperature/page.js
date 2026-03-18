@@ -9,6 +9,8 @@ import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import { useDateValidation } from "../../../_components/hooks/useDateValidation";
 
 const STORAGE_KEY = "dashboard-wall-temp";
+const DEFAULT_FROM_DATE = "2018-10-13";
+const DEFAULT_TO_DATE = "2025-12-31";
 
 // Mapping for the 24 Wall sensors derived from database naming
 const FLOOR_SENSOR_MAP = {
@@ -72,11 +74,10 @@ export default function WallTempDashboard() {
   const [state, setState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
     return {
-      fromDate: "",
-      toDate: "",
-      floors: [],
-      orientations: [],
-      ...saved,
+      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
+      toDate: saved.toDate || DEFAULT_TO_DATE,
+      floors: saved.floors || [],
+      orientations: saved.orientations || [],
     };
   });
 
@@ -100,6 +101,18 @@ export default function WallTempDashboard() {
   });
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
+
+  useEffect(() => {
+    const nextState = {
+      fromDate: DEFAULT_FROM_DATE,
+      toDate: DEFAULT_TO_DATE,
+      floors: state.floors || [],
+      orientations: state.orientations || [],
+    };
+
+    setState(nextState);
+    setAppliedState(nextState);
+  }, []);
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);

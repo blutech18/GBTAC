@@ -92,11 +92,10 @@ export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
     return {
-      fromDate: "",
-      toDate: "",
-      floors: [],
-      orientations: [],
-      ...saved,
+      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
+      toDate: saved.toDate || DEFAULT_TO_DATE,
+      floors: saved.floors || [],
+      orientations: saved.orientations || [],
     };
   });
 
@@ -132,6 +131,18 @@ export default function AmbientTempDashboard() {
   const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
+
+  useEffect(() => {
+    const nextState = {
+      fromDate: DEFAULT_FROM_DATE,
+      toDate: DEFAULT_TO_DATE,
+      floors: state.floors || [],
+      orientations: state.orientations || [],
+    };
+
+    setState(nextState);
+    setAppliedState(nextState);
+  }, []);
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
@@ -214,7 +225,7 @@ export default function AmbientTempDashboard() {
     if (!dateStr) return null;
 
     const [year, month, day] = dateStr.split("-");
-    return new Date(year, month - 1, day); // local time ✅
+    return new Date(year, month - 1, day); // local time
   };
 
   const formatDateRange = (from, to) => {

@@ -10,12 +10,21 @@ export default function StaffLayout({ children }) {
 
   useEffect(() => {
     if (loading) return;
-    if (!user || !isAllowed) router.replace("/login");
-  }, [user, isAllowed, loading, router]);
+
+    if (!user || !isAllowed) {
+      router.replace("/login");
+      return;
+    }
+
+    if (role === "admin") {
+      router.replace("/account-manager");
+      return;
+    }
+  }, [user, loading, isAllowed, role, router]);
 
   if (loading) return null;
-
-  if (role !== "staff" && role !== "admin") return null;
+  if (!user || !isAllowed) return null;
+  if (role !== "staff") return null;
 
   return children;
 }
