@@ -4,7 +4,7 @@ import httpx
 from helpers.email_service import send_reset_email
 from helpers.firebase_admin_setup import get_firestore_client, get_firebase_auth
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Response, Cookie, Depends
 from pydantic import BaseModel, EmailStr
 from urllib.parse import quote
 from helpers.rate_limit import limiter
@@ -15,11 +15,17 @@ from firebase_admin import firestore
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
+from typing import Optional
+
 router = APIRouter(prefix="/auth")
+
+# initialize Firebase Admin and Firestore client
 
 db = get_firestore_client()
 firebase_auth = get_firebase_auth()
 TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET_KEY")
+
+# DATA MODELS
 
 class ResetRequest(BaseModel):
     email: EmailStr
@@ -33,9 +39,14 @@ class TokenRequest(BaseModel):
 class CaptchaRequest(BaseModel):
     captcha_token: str
 
+# CONFIGURATION
 
 MAX_FAILED_ATTEMPTS = 2  # change to 5 later
 RESET_COOLDOWN_SECONDS = 60  
+SESSION_COOKIE_NAME = "session"
+SESSION_EXPIRES_SECONDS = 60 * 60 * 8  # 8 hours fixed session duration for simplicity, can be changed to refresh tokens later
+
+# HELPER FUNCTIONS
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
@@ -60,6 +71,50 @@ def get_lockout_duration_seconds(level: int) -> int:
 #         return 900
 #     return 1800
 
+def get_allowed_user_data(email: str):
+    email = normalize_email(email)
+    doc_ref = db.collection("allowedUsers").document(email)
+    snap = doc_ref.get()
+
+    if not snap.exists:
+        return None
+
+    data = snap.to_dict()
+
+    if data.get("active") is not True:
+        return None
+
+    return data
+
+async def get_current_user_from_session(
+    session: Optional[str] = Cookie(default=None, alias=SESSION_COOKIE_NAME)
+):
+    if not session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        decoded_claims = firebase_auth.verify_session_cookie(
+            session,
+            check_revoked=True
+        )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    email = normalize_email(decoded_claims.get("email", ""))
+    allowed_user = get_allowed_user_data(email)
+
+    if not allowed_user:
+        raise HTTPException(status_code=403, detail="User is not allowed")
+
+    return {
+        "uid": decoded_claims.get("uid"),
+        "email": email,
+        "role": allowed_user.get("role", "user"),
+    }
+
+# ENDPOINTS
+
+# CAPTCHA verification endpoint for frontend to call before allowing password reset or login attempts
 @router.post("/verify-captcha")
 async def verify_captcha(payload: CaptchaRequest, request: Request):
     if not TURNSTILE_SECRET_KEY:
@@ -87,6 +142,7 @@ async def verify_captcha(payload: CaptchaRequest, request: Request):
 
     return {"success": True}
 
+# Password reset endpoint
 @router.post("/reset-password")
 @limiter.limit("5/minute")
 def reset_password(request: Request, data: ResetRequest):
@@ -130,7 +186,7 @@ def reset_password(request: Request, data: ResetRequest):
         "remainingSeconds": 0,
     }
 
-
+# Endpoints for tracking login attempts and lockout status
 @router.post("/check-lockout")
 def check_lockout(payload: EmailRequest):
     email = normalize_email(payload.email)
@@ -164,7 +220,7 @@ def check_lockout(payload: EmailRequest):
 
     return {"locked": False, "remainingSeconds": 0}
 
-
+# Endpoint to record failed login attempts and apply lockout if necessary
 @router.post("/record-failed-login")
 def record_failed_login(payload: EmailRequest):
     email = normalize_email(payload.email)
@@ -221,7 +277,7 @@ def record_failed_login(payload: EmailRequest):
         "lockoutLevel": lockout_level,
     }
 
-
+# Endpoint to reset login attempts after successful login or password reset
 @router.post("/reset-login-attempts")
 def reset_login_attempts(payload: EmailRequest):
     email = normalize_email(payload.email)
@@ -239,7 +295,7 @@ def reset_login_attempts(payload: EmailRequest):
 
     return {"success": True}
 
-
+# Endpoint to check if user is allowed (exists in allowedUsers collection and active) based on Firebase ID token
 @router.post("/check-allowed-user")
 def check_allowed_user(payload: TokenRequest):
     try:
@@ -248,20 +304,86 @@ def check_allowed_user(payload: TokenRequest):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     email = normalize_email(decoded_token.get("email", ""))
+    allowed_user = get_allowed_user_data(email)
 
-    doc_ref = db.collection("allowedUsers").document(email)
-    snap = doc_ref.get()
-
-    if not snap.exists:
-        return {"allowed": False}
-
-    data = snap.to_dict()
-
-    if data.get("active") is not True:
+    if not allowed_user:
         return {"allowed": False}
 
     return {
         "allowed": True,
         "email": email,
-        "role": data.get("role", "user"),
+        "role": allowed_user.get("role", "user"),
+    }
+
+# Endpoint to create session cookie after successful login on frontend and return user info
+@router.post("/session-login")
+def session_login(payload: TokenRequest, response: Response):
+    try:
+        decoded_token = firebase_auth.verify_id_token(payload.idToken)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    email = normalize_email(decoded_token.get("email", ""))
+    allowed_user = get_allowed_user_data(email)
+
+    if not allowed_user:
+        raise HTTPException(status_code=403, detail="User is not allowed")
+
+    try:
+        session_cookie = firebase_auth.create_session_cookie(
+            payload.idToken,
+            expires_in=timedelta(seconds=SESSION_EXPIRES_SECONDS)
+        )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Failed to create session")
+
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_cookie,
+        max_age=SESSION_EXPIRES_SECONDS,
+        httponly=True,
+        secure=False,   # change to True in production HTTPS
+        samesite="lax",
+        path="/",
+    )
+
+    return {
+        "success": True,
+        "message": "Session created",
+        "email": email,
+        "role": allowed_user.get("role", "user"),
+    }
+
+# Endpoint to get current user info based on session cookie, used for frontend to check if user is logged in and get their role
+@router.get("/me")
+def get_me(user=Depends(get_current_user_from_session)):
+    return {
+        "authenticated": True,
+        "email": user["email"],
+        "role": user["role"],
+        "uid": user["uid"],
+    }
+
+# Endpoint to log out by clearing session cookie and revoking Firebase refresh tokens so that existing session cookies become invalid immediately
+@router.post("/logout")
+def logout(
+    response: Response,
+    session: Optional[str] = Cookie(default=None, alias=SESSION_COOKIE_NAME)
+):
+    if session:
+        try:
+            decoded_claims = firebase_auth.verify_session_cookie(session, check_revoked=True)
+            firebase_auth.revoke_refresh_tokens(decoded_claims["uid"])
+        except Exception:
+            pass
+
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        path="/",
+        samesite="lax",
+    )
+
+    return {
+        "success": True,
+        "message": "Logged out",
     }
