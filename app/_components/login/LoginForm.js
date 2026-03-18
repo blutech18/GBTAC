@@ -320,9 +320,9 @@ export default function LoginForm() {
       resetTurnstile();
 
       if (userData.role === "admin") {
-        router.replace("/admin-home");
+        router.replace("/account-manager");
       } else if (userData.role === "staff") {
-        router.replace("/home");
+        router.replace("/staff-welcome-page");
       } else {
         await signOut(auth);
         alert("This account does not have a valid role assigned.");

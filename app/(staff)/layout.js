@@ -16,13 +16,15 @@ export default function StaffLayout({ children }) {
       return;
     }
 
-    if (role !== "staff") {
-      router.replace("/admin-home");
+    if (role === "admin") {
+      router.replace("/account-manager");
+      return;
     }
-  }, [user, isAllowed, role, loading, router]);
+  }, [user, loading, isAllowed, role, router]);
 
   if (loading) return null;
-  if (!user || !isAllowed || role !== "staff") return null;
+  if (!user || !isAllowed) return null;
+  if (role !== "staff") return null;
 
   return children;
 }
