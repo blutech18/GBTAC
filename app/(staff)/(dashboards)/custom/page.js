@@ -138,6 +138,22 @@ export default function Page() {
 
   //Apply button handler
   const handleApply = () => {
+    if (
+      !tempChartSettings.chartTitle ||
+      !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.chartTitle) ||
+      tempChartSettings.chartTitle.length > 50 ||
+      (tempChartSettings.xAxisTitle && !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.xAxisTitle)) ||
+      (tempChartSettings.yAxisTitle && !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.yAxisTitle)) ||
+      !["line", "bar"].includes(tempChartSettings.chartType)
+    ) {
+      setError("Please handle all errors in Chart Settings before applying.");
+      return;
+    }
+    if (!["H", "D", "M", "Y"].includes(tempAggregationSettings.time) ||
+    !["mean", "sum"].includes(tempAggregationSettings.type)) {
+      setError("Please handle all errors in Time and Aggregation Settings before applying.");
+      return;
+    }
     if (tempSelectedSensors.length === 0) {
       setError("Please select at least one sensor");
       return;

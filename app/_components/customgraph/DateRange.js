@@ -3,12 +3,17 @@
 //This component also has two other dropdowns containing the times (Hourly, Daily, Monthly, Yearly) and the aggregation.
 "use client";
 import { useDateValidation } from "../hooks/useDateValidation";
+import { useState } from "react";
 
 export default function DateRange({ dateRange, setDateRange, aggSettings, setAggSettings }) {
-  const { errors, setErrors, validate, validateAll, clearErrors } = useDateValidation({
+
+  const { errors, setErrors, validate} = useDateValidation({
     earliestDate: "2017-01-01",
     latestDate: "2025-12-31"
   });
+
+  const [aggErrors, setAggErrors] = useState({});
+
   const safeDateRange = {
     from: dateRange?.from ?? "",
     to: dateRange?.to ?? ""
@@ -24,6 +29,17 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
     const otherDate = field === "from" ? safeDateRange.to : safeDateRange.from;
     setErrors(prev => ({ ...prev, [field]: validate(field, value, otherDate) }));
   };
+
+  const handleAggChange = (field, value) => {
+  setAggSettings?.(prev => ({ ...prev, [field]: value }));
+  if (field === "time" && !["H", "D", "M", "Y"].includes(value)) {
+    setAggErrors(prev => ({ ...prev, time: "Invalid time interval" }));
+  } else if (field === "type" && !["mean", "sum"].includes(value)) {
+    setAggErrors(prev => ({ ...prev, type: "Invalid aggregation type" }));
+  } else {
+    setAggErrors(prev => ({ ...prev, [field]: null }));
+  }
+};
 
   return (
     <div className="bg-white rounded-sm shadow-sm p-4 w-full h-full">
@@ -63,26 +79,32 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
         <label className="text-sm text-black mb-1">Time Interval</label>
         <select
           value={safeAggSettings.time}
-          onChange={(e) => setAggSettings?.(prev => ({...prev, time: e.target.value}))}
-          className="border p-2 rounded text-gray-500"
+          onChange={(e) => handleAggChange("time", e.target.value)}
+          className={`border p-2 rounded text-gray-500 ${aggErrors.time ? "border-red-500" : ""}`}
         >
           <option value="H">Hourly</option>
           <option value="D">Daily</option>
           <option value="M">Monthly</option>
           <option value="Y">Yearly</option>
         </select>
+        {aggErrors.time && (
+          <p className="text-red-500 text-xs mt-1">{aggErrors.time}</p>
+        )}
       </div>
 
       <div className="flex flex-col">
         <label className="text-sm text-black mb-1">Aggregation</label>
         <select
           value={safeAggSettings.type}
-          onChange={(e) => setAggSettings?.(prev => ({...prev, type: e.target.value}))}
-          className="border p-2 rounded text-gray-500"
+          onChange={(e) => handleAggChange("type", e.target.value)}
+          className={`border p-2 rounded text-gray-500 ${aggErrors.type ? "border-red-500" : ""}`}
         >
           <option value="mean">Average</option>
           <option value="sum">Sum</option>
         </select>
+        {aggErrors.type && (
+          <p className="text-red-500 text-xs mt-1">{aggErrors.type}</p>
+        )}
       </div>
     </div>
 
