@@ -2,7 +2,7 @@
 // It wraps the SensorPanel, DatePicker,  and TimeGranularityDropdown components, and passes the state down to them as props.
 
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SensorPanel from "./SensorPanel";
 import TimeGranularityDropdown from "../TimeGranularityDropdown";
 
@@ -14,7 +14,8 @@ export default function ReportControls({
   onGenerate,
 }) {
   const [errorMessage, setErrorMessage] = useState("");
-
+  const [sensors, setSensors] = useState();
+  
   const handleGenerateReport = () => {
     if (selectedSensors.length === 0) {
       setErrorMessage("Please select at least one sensor.");
@@ -36,7 +37,7 @@ export default function ReportControls({
       setErrorMessage("From date cannot be more than 8 years ago.");
       return;
     }
-
+    
     //To date can't be past 2025-12-31
     const maxToDate = new Date("2025-12-31");
     const toDate = new Date(to);
@@ -44,30 +45,25 @@ export default function ReportControls({
       setErrorMessage("To date cannot be past December 31, 2025.");
       return;
     }
-
-
+    
+    
     setErrorMessage("");
     onGenerate(); // ⬆️ Lift the actual report generation up
   };
+  
+  const loadSensors = async () => {
+    const res = await fetch("http://127.0.0.1:8000/graphs/codesnames")
+    const data = await res.json()
+    setSensors(data)
+  }
 
-  const mockSensors = [
-    { id: 1, name: "Temperature Sensor - Boiler Room" },
-    { id: 2, name: "Humidity Sensor - Warehouse" },
-    { id: 3, name: "Pressure Sensor - Pipeline A" },
-    { id: 4, name: "Gas Flow Sensor - Line 2" },
-    { id: 5, name: "CO2 Sensor - Office Floor" },
-    { id: 6, name: "Temperature Sensor - Storage" },
-    { id: 7, name: "Vibration Sensor - Motor 1" },
-    { id: 8, name: "Humidity Sensor - Greenhouse" },
-    { id: 9, name: "Pressure Sensor - Tank 3" },
-    { id: 10, name: "Gas Flow Sensor - Line 1" },
-    { id: 11, name: "CO2 Sensor - Lab" },
-    { id: 12, name: "Temperature Sensor - Server Room" },
-  ];
+  useEffect(() => {
+    loadSensors();
+  }, []);
 
   return (
     <div className="space-y-6">
-      <SensorPanel sensors={mockSensors} selectedSensors={selectedSensors} onSelect={onSensorsChange} />
+      <SensorPanel sensors={sensors} selectedSensors={selectedSensors} onSelect={onSensorsChange} />
 
       <div className="flex flex-col w-full space-y-2 text-[#212529]" style={{ fontFamily: "var(--font-titillium)" }}>
         <div className="flex flex-wrap gap-4 items-end mb-2">

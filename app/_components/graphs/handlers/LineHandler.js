@@ -164,7 +164,7 @@ export default function LineHandler({
 
     // runs when sensorData or sensor names change
     useEffect(() => {
-        if(fetched && sensorData.length > 0){
+        if(fetched && sensorData.length > 0 && Array.isArray(sensorData[0]) && sensorData[0].length > 0){
             const labels = sensorData[0].map(d => new Date(d.ts));
 
             setXMin(labels[0]);
