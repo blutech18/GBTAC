@@ -54,39 +54,47 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", _user=De
 
 
 # daily average over the last 7 days
-@router.get("/dailyAvg/{sensor_code}")
+@router.get("/cards")
 @limiter.limit("20/minute")
-async def get_daily_avg(request: Request, sensor_code, _user=Depends(get_current_user_from_session)):
+async def get_card_data(request: Request, start, end):
+
+    san_start = validateDate(start)
+    if san_start == False:
+        return "invalid start date"
     
-    # validation
-    san_code = validateCode(sensor_code)
-    if san_code == False:
-        return "enter valid sensor code"
+    san_end = validateDate(end)
+    if san_end == False:
+        return "invalid end date"
     
-    column_name = f"{SENSOR_PRE}{san_code}"
-    
+    if san_end < san_start:
+        return "end date cannot be earlier than start date"
+       
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
     query = f"""
-        SELECT 
-        AVG({column_name})
-        FROM gbtac_data
-        WHERE ts >= (
-            SELECT DATEADD(day, -7, MAX(ts))
-            FROM GBTAC_data
-        )
-        AND ts <= (
-            SELECT MAX(ts)
-            FROM GBTAC_data
-        );
+        select max(SaitSolarLab_30000_TL340) as "Max Generation", 
+        min(SaitSolarLab_30000_TL340) as "Min Generation", 
+        max(SaitSolarLab_30000_TL341) as "Max Consumption", 
+        min(SaitSolarLab_30000_TL340) as "Min Consumption"
+        from gbtac_data
+        where cast(ts as date) >= ?
+        and cast(ts as date) <= ?
     """
 
     #query database
-    curs.execute(query)
+    curs.execute(query, (san_start, san_end))
+    columns = [column[0] for column in curs.description]
     rows = curs.fetchall()
 
-    res = rows[0][0]
+    res = []
+    i = 0
+    for col in columns:
+        res.append({
+            "label": col,
+            "value": rows[0][i]
+        })
+        i += 1
 
     conn.close()
     return res
