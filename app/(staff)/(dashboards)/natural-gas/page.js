@@ -9,6 +9,7 @@ import DateRangePicker from "@/app/_components/DatePicker";
 import GraphPlaceholder from "@/app/_components/GraphPlaceholder";
 import InfoCard from "@/app/_components/InfoCard";
 import ExportPDFButton from "@/app/_components/ExportPDFButton";
+import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 import { FiInfo } from "react-icons/fi";
 import { useRef } from "react";
 
@@ -16,8 +17,12 @@ export default function Page() {
   const chartRef = useRef(null);
   const chartRef2 = useRef(null);
 
+  //Todays date
+  const today = new Date().toISOString().split("T")[0];
+
   const STORAGE_KEY = "dashboard-natural-gas";
-  const UNIT_OPTIONS = ["Watts", "kWh",];
+   // Unit state: kWh or W
+  const [unit, setUnit] = useState("kWh");
 
   const [state, setState] = useState(() =>
     loadDashboardState(STORAGE_KEY, {
@@ -27,29 +32,24 @@ export default function Page() {
       orientations: [],
     }),
   );
+   //initialize from saved state so it loads immediately
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    if (saved.fromDate && saved.toDate) {
+      return { fromDate: saved.fromDate, toDate: saved.toDate };
+    }
+    return null;
+  });
+  
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2023-01-04",
+    latestDate: today,
+  });
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
 
-  const handleMultiSelect = (key, value) => {
-    const currentValues = state[key] || [];
-
-    const updatedValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
-      : [...currentValues, value];
-
-    setState({ ...state, [key]: updatedValues });
-  };
-
-  const handleSelectAll = (key, options) => {
-    const currentValues = state[key] || [];
-
-    setState({
-      ...state,
-      [key]: currentValues.length === options.length ? [] : options,
-    });
-  };
 
   const handleSaveScreen = () => {
     saveDashboardState(STORAGE_KEY, state);
@@ -72,6 +72,19 @@ export default function Page() {
     );
   };
 
+    const stats = [
+    { label: "Total Energy Consumption", value: 134350 },
+    { label: "Avg Monthly Natural Gas Usage", value: 820 },
+    { label: "Avg Monthly Electricity Usage", value: 10375 },
+    { label: "Peak Energy Month", value: "January" },
+  ];
+   // Compute displayed values based on unit
+  const displayStats = stats.map((item) => ({
+    ...item,
+    value: unit === "W" ? item.value * 1000 : item.value,
+    unit: unit,
+  }));
+
   return (
     <DashboardLayout
       title="Natural Gas Dashboard"
@@ -89,60 +102,66 @@ export default function Page() {
         </button>
       }
     >
-      <div className="container mx-auto px-4 py-8" style={{ fontFamily: "var(--font-titillium)" }}>
+      <div className="container mx-auto px-4 py-8">
         <div className="flex flex-wrap gap-6 items-end mb-6">
-          <DateRangePicker />
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-1">Units</label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleSelectAll("unit", UNIT_OPTIONS)}
-                className="px-2 py-1 text-lg border rounded"
-              >
-                All
-              </button>
+          <DateRangePicker
+            fromDate={state.fromDate}
+            toDate={state.toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
 
-              {UNIT_OPTIONS.map((unit) => (
-                <button
-                  key={unit}
-                  onClick={() => handleMultiSelect("unit", unit)}
-                  className={`px-2 py-1 text-lg border rounded ${
-                    state.unit?.includes(unit) ? "bg-[#6D2077] text-white" : ""
-                  }`}
-                >
-                  {unit}
-                </button>
-              ))}
-            </div>
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({ fromDate, toDate });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+          <div className="mb-6">
+  
           </div>
         </div>
 
         <InfoCard
-          items={[
-            { label: "Total Energy Consumption", value: "134,350 kWh" },
-            { label: "Avg Monthly Natural Gas Usage", value: "820 kWh" },
-            { label: "Avg Monthly Electricity Usage", value: "10,375 kWh" },
-            { label: "Peak Energy Month", value: "January" },
-          ]}
+          colsClass="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+          items={displayStats}
         />
+        <div className="flex justify-center mb-6 lg:justify-start">
+          <button
+            onClick={() => setUnit(unit === "kWh" ? "W" : "kWh")}
+            className="px-4 py-2 bg-[#005EB8] text-white rounded hover:bg-[#004080] transition"
+          >
+            Toggle Units: {unit}
+          </button>
+      </div>
 
-
-        <div className="mt-10 flex flex-col gap-4 relative">
+      <div className="mt-10 flex flex-col gap-4 relative">
+        {appliedState ? (
+          <>
             <div ref={chartRef}>
               <GraphPlaceholder />
             </div>
             <div className="flex justify-end gap-4 mt-3">
-                <button
-                  onClick={handleSaveScreen}
-                  className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
-                >
-                  Save Screen
-                </button>
               <ExportPDFButton chartRef={chartRef} fileName="natural-gas-chart" />
             </div>
             <div ref={chartRef2}>
               <GraphPlaceholder />
             </div>
+            <div className="flex justify-end gap-4 mt-3">
+              <ExportPDFButton chartRef={chartRef2} fileName="natural-gas-chart-2" />
+            </div>
+            </>
+          ) : (
+            <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
+              Select a valid date range to load charts.
+            </div>
+          )}
+          
             <div className="flex justify-end gap-4 mt-3">
                 <button
                   onClick={handleSaveScreen}

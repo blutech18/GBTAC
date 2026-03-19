@@ -1,3 +1,6 @@
+"use client";
+import { useState, useEffect } from "react";
+import { auth } from "./_utils/firebase";
 import SecondaryNav from "./_components/SecondaryNav";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
@@ -5,6 +8,15 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+
+    return () => unsubscribe();
+  }, []);
   return (
     <div className="flex flex-col min-h-screen bg-[#FdFdFd] font-sans">
       <SecondaryNav />
@@ -23,11 +35,19 @@ export default function Home() {
 
           {/* CTA */}
           <div className="mt-10">
-            <Link href="/guest-dashboard">
-              <button className="px-8 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
-                Go to Guest Dashboard
-              </button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/staff-welcome-page">
+                <button className="px-8 py-3 font-heading text-lg bg-[#6D2077] text-white rounded-sm hover:bg-[#4C145A] font-bold transition">
+                  Go to My Welcome Page
+                </button>
+              </Link>
+            ) : (
+              <Link href="/guest-dashboard">
+                <button className="px-8 py-3 font-heading text-lg bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
+                  Go to Guest Dashboard
+                </button>
+              </Link>
+            )}
           </div>
 
           {/* Image */}

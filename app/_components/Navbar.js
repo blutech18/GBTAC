@@ -13,10 +13,10 @@ export default function Navbar({
       className="
         w-full bg-[#A6192E] text-white
         sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32
-        p-4
+        px-4 py-4 flex items-center justify-between
       "
     >
-      <ul className="flex space-x-8 text-white">
+      <ul className="font-heading flex space-x-8 text-white text-lg">
         {displayHome && (
           <li>
             <Link href="/" className="hover:opacity-70 transition">
@@ -112,10 +112,10 @@ export default function Navbar({
         {displayAccountMngmt && (
           <li>
             <Link
-              href="/account-management"
+              href="/account-manager"
               className="hover:opacity-70 transition"
             >
-              Account Management
+              Manage Accounts
             </Link>
           </li>
         )}
@@ -123,9 +123,9 @@ export default function Navbar({
           <li>
             <Link
               href="/dashboard-management"
-              className="block px-4 py-2 hover:bg-gray-100"
+              className="hover:opacity-70 transition"
             >
-              Dashboard Management
+              Manage Dashboard
             </Link>
           </li>
         )}

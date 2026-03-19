@@ -10,8 +10,14 @@ import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "@/app/_components/Carousel";
 import { useSearchParams } from "next/navigation";
+import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
+import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
+
 
 const STORAGE_KEY = "dashboard-ambient-temp";
+const DEFAULT_FROM_DATE = "2024-10-01";
+const DEFAULT_TO_DATE = "2024-10-07";
+
 
 // 13 sensors mapped by floor from building floor plans
 const FLOOR_SENSOR_MAP = {
@@ -89,11 +95,10 @@ export default function AmbientTempDashboard() {
   const [state, setState] = useState(() => {
     const saved = loadDashboardState(STORAGE_KEY, {});
     return {
-      fromDate: "",
-      toDate: "",
-      floors: [],
-      orientations: [],
-      ...saved,
+      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
+      toDate: saved.toDate || DEFAULT_TO_DATE,
+      floors: saved.floors || [],
+      orientations: saved.orientations || [],
     };
   });
 
@@ -105,12 +110,31 @@ export default function AmbientTempDashboard() {
       console.log("Came from StaffHome via URL");
     }
   }, [from]);
-  const [appliedState, setAppliedState] = useState(null);
+
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, {});
+    if (saved.fromDate && saved.toDate) {
+      return {
+        fromDate: saved.fromDate,
+        toDate: saved.toDate,
+        floors: saved.floors || [],
+        orientations: saved.orientations || [],
+      };
+    }
+    return null;
+  });
+
+  const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2018-12-08",
+    latestDate: "2024-11-05",
+  });
+
   const [kpiStats, setKpiStats] = useState(null);
 
   const handleStatsReady = useCallback((stats) => setKpiStats(stats), []);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
+
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
@@ -193,7 +217,7 @@ export default function AmbientTempDashboard() {
     if (!dateStr) return null;
 
     const [year, month, day] = dateStr.split("-");
-    return new Date(year, month - 1, day); // local time ✅
+    return new Date(year, month - 1, day); // local time
   };
 
   const formatDateRange = (from, to) => {
@@ -250,7 +274,7 @@ export default function AmbientTempDashboard() {
     saveRecentDashboard({
       id: "ambient-temperature",
       title: "Ambient Temperature Dashboard",
-      path: "/dashboards/ambient-temperature",
+      path: "/ambient-temperature?from=staff-welcome-page",
       summary: {
         fromDate: state.fromDate,
         toDate: state.toDate,
@@ -267,29 +291,35 @@ export default function AmbientTempDashboard() {
 
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
-      <div className="flex flex-wrap gap-6 items-end mb-6">
-        <DatePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          setDate={({ fromDate, toDate }) => {
-            const nextState = { ...state, fromDate, toDate };
-            setState(nextState);
-            setKpiStats(null);
+      <div className="flex flex-wrap gap-6 items-start mb-6">
+        <div>
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value, otherDate) => {
+              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
+              setKpiStats(null);
 
-            if (fromDate && toDate) {
-              setAppliedState({
-                fromDate,
-                toDate,
-                floors: nextState.floors,
-                orientations: nextState.orientations,
-              });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-        />
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({
+                  fromDate,
+                  toDate,
+                  floors: nextState.floors,
+                  orientations: nextState.orientations,
+                });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -313,7 +343,7 @@ export default function AmbientTempDashboard() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium mb-1">Orientation</label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -338,6 +368,12 @@ export default function AmbientTempDashboard() {
             ))}
           </div>
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Time Interval
+          </label>
+          <TimeGranularityDropdown />
+        </div>
       </div>
 
       <div className="lg:hidden mb-6">
@@ -357,6 +393,7 @@ export default function AmbientTempDashboard() {
         {appliedState && activeSensors.length > 0 ? (
           <LineHandler
             key={`${appliedState.fromDate}-${appliedState.toDate}-${activeSensors.join(",")}`}
+            chartType={"line"}
             sensorList={activeSensors}
             sensorLabels={SENSOR_LABELS}
             startDate={appliedState.fromDate}
@@ -367,13 +404,13 @@ export default function AmbientTempDashboard() {
             onStatsReady={handleStatsReady}
           />
         ) : (
-          <div className="h-[350px] flex items-center justify-center text-gray-400 text-sm">
+          <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
             Graph Placeholder
           </div>
         )}
       </div>
 
-      <div className="mt-6 p-4 border rounded bg-white dark:bg-gray-900">
+      <div className="mt-6 p-4 border rounded bg-white">
         <h3 className="font-semibold mb-4">Selected Floor Layout</h3>
 
         {floors.length === 0 ? (

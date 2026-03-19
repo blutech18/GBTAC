@@ -2,10 +2,13 @@
 //The component also includes basic styling to match the overall design of the application.
 //This component also has two other dropdowns containing the times (Hourly, Daily, Monthly, Yearly) and the aggregation.
 "use client";
-import { useState } from "react";
+import { useDateValidation } from "../hooks/useDateValidation";
 
 export default function DateRange({ dateRange, setDateRange, aggSettings, setAggSettings }) {
-  const [errors, setErrors] = useState({});
+  const { errors, setErrors, validate, validateAll, clearErrors } = useDateValidation({
+    earliestDate: "2017-01-01",
+    latestDate: "2025-12-31"
+  });
   const safeDateRange = {
     from: dateRange?.from ?? "",
     to: dateRange?.to ?? ""
@@ -15,32 +18,6 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
     type: aggSettings?.type ?? "mean"
   };
 
-  const validate = (field, value, otherDate) => {
-    if (field === "from") {
-      if (!value) return "From date is required";
-      if (otherDate && value > otherDate) return "From date must be before To date";
-    }
-    if (field === "to") {
-      if (!value) return "To date is required";
-      if (otherDate && value < otherDate) return "To date must be after From date";
-    }
-    if (field === "from") {
-      if (!value) return "i  date is required";
-      if (otherDate && value > otherDate) return "From date must be before To date";
-      const today = new Date();
-      const from = new Date(value);
-      const diffYears = (today - from) / (1000 * 60 * 60 * 24 * 365);
-      if (diffYears > 8) return "Start date cannot be more than 8 years ago";
-    }
-    if (field === "to") {
-    if (!value) return "To date is required";
-    if (otherDate && value < otherDate) return "To date must be after From date";
-    const maxToDate = new Date("2025-12-31");
-    const toDate = new Date(value);
-    if (toDate > maxToDate) return "To date cannot be past December 31, 2025";
-  }
-    return null;
-  };
 
   const handleChange = (field, value) => {
     if (!setDateRange) return;
@@ -50,10 +27,7 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
   };
 
   return (
-    <div
-      style={{ fontFamily: "var(--font-titillium)" }}
-      className="bg-white rounded-sm shadow-sm p-4 w-full h-full"
-    >
+    <div className="bg-white rounded-sm shadow-sm p-4 w-full h-full">
       <h2 className="font-semibold text-black mb-4">Time and Aggregation Settings</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

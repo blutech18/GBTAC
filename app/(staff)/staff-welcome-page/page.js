@@ -9,15 +9,34 @@ import Navbar from "../../_components/Navbar";
 import Footer from "../../_components/Footer";
 import Image from "next/image";
 import Link from "next/link";
+import { auth, db } from "../../_utils/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function StaffHome() {
   const [recent, setRecent] = useState([]);
-  const [user, setUser] = useState("Temiloluwa Bankole");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const user = `${firstName} ${lastName}`;
 
   useEffect(() => {
     const savedDashboards = loadRecentDashboards().filter((d) => d.saved);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecent(savedDashboards);
+
+    const fetchUserName = async () => {
+      if (auth.currentUser?.email) {
+        const userDoc = doc(db, "allowedUsers", auth.currentUser.email);
+        const docSnap = await getDoc(userDoc);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setFirstName(data.firstName || "");
+          setLastName(data.lastName || "");
+        } else {
+          console.log("No such document!");
+        }
+      }
+    };
+    fetchUserName();
   }, []);
 
   return (
@@ -45,7 +64,7 @@ export default function StaffHome() {
         />
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="absolute inset-0 flex flex-row items-center sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 z-0">
-          <h1 className="text-3xl md:text-4xl lg:text-6xl font-extrabold tracking-tight text-white px-4 lg:px-0">
+          <h1 className="text-4xl md:text-4xl lg:text-7xl font-extrabold tracking-tight text-white px-4 lg:px-0">
             Welcome, {user}!
           </h1>
         </div>
@@ -62,14 +81,14 @@ export default function StaffHome() {
               performance.
             </p>
 
-            <div className="mb-10 flex flex-wrap gap-6">
+            <div className="mb-10 flex flex-wrap gap-6 justify-center lg:justify-start">
               <Link href="/report">
-                <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
+                <button className="font-heading text-lg px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
                   Reports
                 </button>
               </Link>
               <Link href="/profile">
-                <button className="px-6 py-3 bg-[#6D2077] text-white rounded-sm hover:bg-[#4C145A] font-bold transition">
+                <button className="font-heading text-lg px-6 py-3 bg-[#6D2077] text-white rounded-sm hover:bg-[#4C145A] font-bold transition">
                   Profile
                 </button>
               </Link>
