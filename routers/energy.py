@@ -1,12 +1,13 @@
 from routers import *
 from helpers.rate_limit import limiter
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
+from helpers.auth_dependencies import get_current_user_from_session
 
 router = APIRouter(prefix="/energy")
 
 @router.get("/sum/{sensor_code}")
 @limiter.limit("10/minute")
-async def get_data(request: Request, sensor_code, start=NEWEST, end=""):
+async def get_data(request: Request, sensor_code, start=NEWEST, end="", _user=Depends(get_current_user_from_session)):
 
     #validation:
     san_code = validateCode(sensor_code)
