@@ -29,7 +29,7 @@ export default function EnergyDashboard() {
   });
 
   //errors from date validation
-  const { errors, setErrors, validate, validateAll } = useDateValidation({
+  const { errors, validateAll } = useDateValidation({
     earliestDate: "2019-02-13",
     latestDate: "2026-01-8",
   });
@@ -68,6 +68,14 @@ export default function EnergyDashboard() {
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
+
+  //validate dates on every change to show errors immediately
+  useEffect(() => {
+    if (state.fromDate && state.toDate) {
+      validateAll(state.fromDate, state.toDate);
+    }
+  }, [  state.fromDate, state.toDate, validateAll]);
+
 
   // Base stats
   const stats = [
@@ -114,10 +122,9 @@ export default function EnergyDashboard() {
             fromDate={state.fromDate}
             toDate={state.toDate}
             errors={errors}
-            onDateChange={(field, value, otherDate) => {
-              //validate on every change, shows errors immediately
-              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
-            }}
+            onDateChange={(field, value) => {
+               setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
+              }}
             setDate={({ fromDate, toDate }) => {
               const nextState = { ...state, fromDate, toDate };
               setState(nextState);

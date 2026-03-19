@@ -123,7 +123,7 @@ export default function AmbientTempDashboard() {
     return null;
   });
 
-  const { errors, setErrors, validate, validateAll } = useDateValidation({
+  const { errors, validateAll } = useDateValidation({
     earliestDate: "2018-12-08",
     latestDate: "2024-11-05",
   });
@@ -138,6 +138,14 @@ export default function AmbientTempDashboard() {
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
+
+  useEffect(() => {
+    if (state.fromDate && state.toDate) {
+      validateAll(state.fromDate, state.toDate);
+    }
+  }, [state.fromDate, state.toDate, validateAll]);
+
+
 
   // Step 1: filter by floor (empty = all floors after Apply)
   const floorFiltered = !appliedState
@@ -298,9 +306,9 @@ export default function AmbientTempDashboard() {
             fromDate={fromDate}
             toDate={toDate}
             errors={errors}
-            onDateChange={(field, value, otherDate) => {
-              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
-            }}
+            onDateChange={(field, value) => {
+               setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
+              }}
             setDate={({ fromDate, toDate }) => {
               const nextState = { ...state, fromDate, toDate };
               setState(nextState);

@@ -42,7 +42,7 @@ export default function Page() {
     return null;
   });
   
-  const { errors, setErrors, validate, validateAll } = useDateValidation({
+  const { errors, validateAll } = useDateValidation({
     earliestDate: "2023-01-04",
     latestDate: today,
   });
@@ -50,6 +50,14 @@ export default function Page() {
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
+
+  //Validate dates on every change to show errors immediately
+  useEffect(() => {
+    if (state.fromDate && state.toDate) {
+      validateAll(state.fromDate, state.toDate);
+    }
+  }, [  state.fromDate, state.toDate, validateAll]);
+
 
 
   const handleSaveScreen = () => {
@@ -109,9 +117,9 @@ export default function Page() {
             fromDate={state.fromDate}
             toDate={state.toDate}
             errors={errors}
-            onDateChange={(field, value, otherDate) => {
-              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
-            }}
+            onDateChange={(field, value) => {
+               setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
+              }}
             setDate={({ fromDate, toDate }) => {
               const nextState = { ...state, fromDate, toDate };
               setState(nextState);
