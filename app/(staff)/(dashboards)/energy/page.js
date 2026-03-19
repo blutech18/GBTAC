@@ -6,7 +6,6 @@ import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "../../../_components/Carousel";
-import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 import { useDateValidation } from "../../../_components/hooks/useDateValidation";
 
 import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
@@ -63,6 +62,8 @@ export default function EnergyDashboard() {
   };
   // Unit state: kWh or W
   const [unit, setUnit] = useState("kWh");
+
+  const [aggregation, setAggregation] = useState("none");
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
@@ -127,13 +128,9 @@ export default function EnergyDashboard() {
                 setAppliedState(null);
               }
             }}
+            aggregation={aggregation}
+            setAggregation={setAggregation}
           />
-        </div>
-        <div className="mt-0.5">
-          <label className="block text-sm font-medium mb-1">
-            Time Interval
-          </label>
-          <TimeGranularityDropdown />
         </div>
       </div>
       <div className="lg:hidden mb-6">
@@ -168,8 +165,8 @@ export default function EnergyDashboard() {
           yTitle={"Wh"}
           xTitle={"hours"}
           xUnit={"hour"}
-          aggTime={"none"}
-          aggType={"mean"}
+          aggTime={aggregation}
+          aggType={"sum"}
         />
 
         <PieHandler
