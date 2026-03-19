@@ -45,7 +45,7 @@ export default function SensorPanel({ sensors = [], selectedSensors = [], onSele
       <div className="flex flex-col gap-1">
         {filteredSensors.length > 0 ? (
           filteredSensors.map((sensor) => (
-            <label key={sensor.id} className="flex items-center gap-2">
+            <label key={sensor.code} className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={selectedSensors.some(s => s.code === sensor.code)}
