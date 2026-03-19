@@ -2,8 +2,10 @@
 // The dropdown includes options for Hourly, Daily, Monthly, and Yearly intervals.
 "use client";
 import { useState } from "react";
-export default function TimeGranularityDropdown({ onChange }) {
-  const [timeInterval, setTimeInterval] = useState("H");
+
+export default function TimeGranularityDropdown({ onChange = () => {} }) {
+  const [timeInterval, setTimeInterval] = useState("none");
+
   const handleChange = (e) => {
     const selectedInterval = e.target.value;
     setTimeInterval(selectedInterval);

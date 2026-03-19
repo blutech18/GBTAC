@@ -10,7 +10,6 @@ import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import Carousel from "@/app/_components/Carousel";
 import { useSearchParams } from "next/navigation";
-import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 
 
@@ -289,6 +288,8 @@ export default function AmbientTempDashboard() {
     );
   };
 
+  const [aggregation, setAggregation] = useState("none");
+
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
       <div className="flex flex-wrap gap-6 items-start mb-6">
@@ -316,6 +317,8 @@ export default function AmbientTempDashboard() {
                 setAppliedState(null);
               }
             }}
+            aggregation={aggregation}
+            setAggregation={setAggregation}
           />
         </div>
 
@@ -368,12 +371,6 @@ export default function AmbientTempDashboard() {
             ))}
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Time Interval
-          </label>
-          <TimeGranularityDropdown />
-        </div>
       </div>
 
       <div className="lg:hidden mb-6">
@@ -401,6 +398,8 @@ export default function AmbientTempDashboard() {
             graphTitle="Ambient Temperature"
             yTitle="Temperature (°C)"
             xTitle="Time"
+            aggTime={aggregation}
+            aggType={"mean"}
             onStatsReady={handleStatsReady}
           />
         ) : (

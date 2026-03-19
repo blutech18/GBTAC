@@ -7,7 +7,6 @@ import DatePicker from "../../../_components/DatePicker";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import { useDateValidation } from "../../../_components/hooks/useDateValidation";
-import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 
 const STORAGE_KEY = "dashboard-wall-temp";
 const DEFAULT_FROM_DATE = "2018-10-13";
@@ -225,6 +224,8 @@ export default function WallTempDashboard() {
     );
   };
 
+  const [aggregation, setAggregation] = useState("none");
+
   return (
     <DashboardLayout title="Wall Temperature Dashboard">
       <div className="flex flex-wrap gap-6 items-start mb-6">
@@ -251,6 +252,8 @@ export default function WallTempDashboard() {
                 setAppliedState(null);
               }
             }}
+            aggregation={aggregation}
+            setAggregation={setAggregation}
           />
         </div>
 
@@ -303,13 +306,6 @@ export default function WallTempDashboard() {
             ))}
           </div>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Time Interval
-          </label>
-          <TimeGranularityDropdown />
-        </div>
       </div>
 
       <div
@@ -326,6 +322,8 @@ export default function WallTempDashboard() {
             graphTitle="Wall Temperature"
             yTitle="Temperature (°C)"
             xTitle="Time"
+            aggTime={aggregation}
+            aggType={"mean"}
           />
         ) : (
           <div className="h-87.5 flex items-center justify-center text-gray-400 text-sm">
