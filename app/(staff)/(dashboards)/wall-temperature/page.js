@@ -235,35 +235,35 @@ export default function WallTempDashboard() {
 
   return (
     <DashboardLayout title="Wall Temperature Dashboard">
-      <div className="flex flex-wrap gap-6 items-start mb-6">
-        <div>
-          <DatePicker
-            fromDate={fromDate}
-            toDate={toDate}
-            errors={errors}
-            onDateChange={(field, value) => {
-               setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
-              }}
-            setDate={({ fromDate, toDate }) => {
-              const nextState = { ...state, fromDate, toDate };
-              setState(nextState);
-
-              if (fromDate && toDate && validateAll(fromDate, toDate)) {
-                setAppliedState({
-                  fromDate,
-                  toDate,
-                  floors: nextState.floors,
-                  orientations: nextState.orientations,
-                });
-              } else {
-                setAppliedState(null);
-              }
+      <div className="mb-6">
+        <DatePicker
+          fromDate={fromDate}
+          toDate={toDate}
+          errors={errors}
+          onDateChange={(field, value) => {
+             setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
             }}
-            aggregation={aggregation}
-            setAggregation={setAggregation}
-          />
-        </div>
+          setDate={({ fromDate, toDate }) => {
+            const nextState = { ...state, fromDate, toDate };
+            setState(nextState);
 
+            if (fromDate && toDate && validateAll(fromDate, toDate)) {
+              setAppliedState({
+                fromDate,
+                toDate,
+                floors: nextState.floors,
+                orientations: nextState.orientations,
+              });
+            } else {
+              setAppliedState(null);
+            }
+          }}
+          aggregation={aggregation}
+          setAggregation={setAggregation}
+        />
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-6 items-start">
         <div>
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
