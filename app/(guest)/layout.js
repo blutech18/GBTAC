@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../_utils/auth-context";
 
@@ -9,11 +9,10 @@ export default function GuestLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
+  const allowGuestPath = pathname === "/about-us";
+
+  useLayoutEffect(() => {
     if (loading) return;
-
-    const allowGuestPath = pathname === "/about-us";
-
     if (!user || !isAllowed || allowGuestPath) return;
 
     if (role === "admin") {
@@ -25,9 +24,19 @@ export default function GuestLayout({ children }) {
       router.replace("/staff-welcome-page");
       return;
     }
-  }, [user, loading, isAllowed, role, pathname, router]);
+  }, [user, loading, isAllowed, role, allowGuestPath, router]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-gray-600 text-sm">Loading...</p>
+      </div>
+    );
+  }
+
+  if (user && isAllowed && !allowGuestPath) {
+    return null;
+  }
 
   return children;
 }
