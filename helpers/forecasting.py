@@ -10,6 +10,7 @@ from config import connection_str
 NEWEST = str_to_date(get_newest())
 OLDEST = str_to_date(get_oldest())
 
+# checks if a forecast file exists with valid data for the sensor
 def useable_forecast(file_path):
     if not file_path.is_file():
         return False
@@ -84,24 +85,13 @@ def forecast(sensor_code):
     # This handles any interval (1min, 5min, hourly, daily, etc.) automatically.
     deltas = df["ds"].diff().dropna()
     freq_seconds = int(deltas.median().total_seconds())
- 
-    # Map to a pandas frequency string Prophet can use.
-    # Fall back to the raw second offset if no named alias fits.
-    freq_map = {
-        1:     "s",
-        60:    "min",
-        300:   "5min",
-        600:   "10min",
-        900:   "15min",
-        1800:  "30min",
-        3600:  "h",
-        86400: "D",
-    }
-    freq = freq_map.get(freq_seconds, f"{freq_seconds}s")
- 
-    # Always forecast exactly 10 days ahead regardless of sensor resolution
-    periods = int((10 * 86400) / freq_seconds)
 
+    # all frequencies under an hour is turned to an hour
+    freq_secs = max(freq_seconds, 3600)  
+    freq = f"{freq_secs}s"
+ 
+    # ensures forecast is 10 days
+    periods = int((10 * 86400) / freq_seconds)
 
     model = Prophet()
     model.fit(df)
