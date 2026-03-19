@@ -37,7 +37,7 @@ def load_natural_gas():
     return monthly
 
 # url format "http://127.0.0.1:8000/graphs/data/{sensor code}?start={start date}&end={end date}"
-# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-14
+# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-18&agg=D
 # - code is the end part of the sensor name (not including the 'SaitSolarLab' part), mandatory
 # - start and end date, YYYY-MM-DD
 # - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
@@ -80,108 +80,6 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    if agg == "none":
-        try:
-            start_dt = datetime.strptime(str(san_start), "%Y-%m-%d")
-            end_dt = datetime.strptime(str(san_end), "%Y-%m-%d")
-            days = (end_dt - start_dt).days + 1
-        except Exception:
-            days = 1
-
-        if san_end == san_start:
-            query = f"""
-                SELECT DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) = ?
-                GROUP BY DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start,))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
-
-        elif days <= 60:
-            query = f"""
-                SELECT CAST(ts AS DATE) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) >= ?
-                AND CAST(ts AS DATE) <= ?
-                GROUP BY CAST(ts AS DATE)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start, san_end))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
-
-        elif days <= 730:
-            query = f"""
-                SELECT DATEADD(month, DATEDIFF(month, 0, ts), 0) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) >= ?
-                AND CAST(ts AS DATE) <= ?
-                GROUP BY DATEADD(month, DATEDIFF(month, 0, ts), 0)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start, san_end))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
-
-        else:
-            query = f"""
-                SELECT DATEFROMPARTS(YEAR(ts), 1, 1) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) >= ?
-                AND CAST(ts AS DATE) <= ?
-                GROUP BY YEAR(ts)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start, san_end))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
 
     query = f"""
         SELECT ts, {column_name}
@@ -372,42 +270,8 @@ async def get_codesnames(request: Request):
 
 @router.get("/newest")
 async def get_newest():
-    # open connection
-    # conn = pyodbc.connect(connection_str)
-    # curs = conn.cursor()
-
-    # query = """
-    #     SELECT TOP 1 ts
-    #     FROM GBTAC_data
-    #     ORDER BY ts DESC;
-    #     """ 
-
-    # #query database
-    # curs.execute(query)
-    # rows = curs.fetchall()
-
-    # conn.close()
-    # res = rows[0][0]
-
     return NEWEST
 
 @router.get("/oldest")
 async def get_oldest():
-    # open connection
-    # conn = pyodbc.connect(connection_str)
-    # curs = conn.cursor()
-
-    # query = """
-    #     SELECT TOP 1 ts
-    #     FROM GBTAC_data
-    #     ORDER BY ts asc;
-    #     """ 
-
-    # #query database
-    # curs.execute(query)
-    # rows = curs.fetchall()
-
-    # conn.close()
-    # res = rows[0][0]
-
     return OLDEST
