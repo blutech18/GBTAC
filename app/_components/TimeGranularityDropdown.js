@@ -19,7 +19,7 @@ export default function TimeGranularityDropdown({ onChange = () => {} }) {
         <select
           value={timeInterval}
           onChange={handleChange}
-          className="border p-2 rounded text-gray-500"
+          className="border p-2 rounded text-gray-600"
         >
           <option value="none">None</option>
           <option value="H">Hourly</option>
