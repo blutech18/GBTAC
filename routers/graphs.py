@@ -3,7 +3,8 @@ import pandas as pd
 from helpers.forecasting import get_forecast
 from pathlib import Path 
 from helpers.rate_limit import limiter
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
+from helpers.auth_dependencies import get_current_user_from_session
 from datetime import datetime
 
 router = APIRouter(prefix="/graphs")
@@ -44,7 +45,7 @@ def load_natural_gas():
 # - type is for kind of aggregation, mean or sum
 @router.get("/data/{sensor_code}")
 @limiter.limit("10/minute")
-async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="none", type="mean"):
+async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="none", type="mean", _user=Depends(get_current_user_from_session)):
     
     #validation:
     san_code = validateCode(sensor_code)
@@ -132,7 +133,7 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
 
 @router.get("/total-energy/{sensor_code}")
 @limiter.limit("10/minute")
-async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""):
+async def total_energy(request: Request, sensor_code, start="2023-01-01", end="", _user=Depends(get_current_user_from_session)):
     # validation
     san_code = validateCode(sensor_code)
     if san_code == False:
@@ -216,7 +217,7 @@ async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
 @limiter.limit("30/minute")
-async def get_name(request: Request, sensor_code):
+async def get_name(request: Request, sensor_code, _user=Depends(get_current_user_from_session)):
 
     # validation
     san_code = validateCode(sensor_code)
@@ -243,7 +244,7 @@ async def get_name(request: Request, sensor_code):
 
 @router.get("/codesnames")
 @limiter.limit("30/minute")
-async def get_codesnames(request: Request):
+async def get_codesnames(request: Request, _user=Depends(get_current_user_from_session)):
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
@@ -269,9 +270,43 @@ async def get_codesnames(request: Request):
     return res
 
 @router.get("/newest")
-async def get_newest():
-    return NEWEST
+async def get_newest(_user=Depends(get_current_user_from_session)):
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts DESC;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()
 
 @router.get("/oldest")
-async def get_oldest():
-    return OLDEST
+async def get_oldest(_user=Depends(get_current_user_from_session)):
+    # open connection
+    conn = pyodbc.connect(connection_str)
+    curs = conn.cursor()
+
+    query = """
+        SELECT TOP 1 ts
+        FROM GBTAC_data
+        ORDER BY ts asc;
+        """ 
+
+    #query database
+    curs.execute(query)
+    rows = curs.fetchall()
+
+    conn.close()
+    res = rows[0][0]
+
+    return res.date()
