@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebase";
+
+const API_BASE = "http://localhost:8000";
 
 const AuthContext = createContext({
   user: null,
@@ -19,25 +20,13 @@ export function AuthContextProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      setLoading(true);
-
-      if (!u) {
-        setUser(null);
-        setRole(null);
-        setIsAllowed(false);
-        setLoading(false);
-        return;
-      }
-
-      const email = (u.email || "").toLowerCase();
-
+    const checkSession = async () => {
       try {
-        const ref = doc(db, "allowedUsers", email);
-        const snap = await getDoc(ref);
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          credentials: "include",
+        });
 
-        if (!snap.exists()) {
-          await signOut(auth);
+        if (!res.ok) {
           setUser(null);
           setRole(null);
           setIsAllowed(false);
@@ -45,34 +34,40 @@ export function AuthContextProvider({ children }) {
           return;
         }
 
-        const data = snap.data();
-        if (data.active !== true) {
-          await signOut(auth);
-          setUser(null);
-          setRole(null);
-          setIsAllowed(false);
-          setLoading(false);
-          return;
-        }
+        const data = await res.json();
 
-        setUser(u);
+        setUser({ email: data.email, uid: data.uid });
         setRole(data.role || "user");
         setIsAllowed(true);
-        setLoading(false);
       } catch (err) {
-        await signOut(auth);
         setUser(null);
         setRole(null);
         setIsAllowed(false);
+      } finally {
         setLoading(false);
       }
-    });
+    };
 
-    return () => unsub();
+    checkSession();
   }, []);
 
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {}
+
+    await signOut(auth);
+
+    setUser(null);
+    setRole(null);
+    setIsAllowed(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, role, isAllowed }}>
+    <AuthContext.Provider value={{ user, loading, role, isAllowed, logout }}>
       {children}
     </AuthContext.Provider>
   );
