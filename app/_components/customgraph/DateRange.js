@@ -18,7 +18,6 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
     type: aggSettings?.type ?? "mean"
   };
 
-
   const handleChange = (field, value) => {
     if (!setDateRange) return;
     setDateRange(prev => ({ ...prev, [field]: value }));

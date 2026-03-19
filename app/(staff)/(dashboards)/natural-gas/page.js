@@ -21,7 +21,8 @@ export default function Page() {
   const today = new Date().toISOString().split("T")[0];
 
   const STORAGE_KEY = "dashboard-natural-gas";
-   // Unit state: kWh or W
+  
+  //Unit state: kWh or W
   const [unit, setUnit] = useState("kWh");
 
   const [state, setState] = useState(() =>
@@ -122,9 +123,6 @@ export default function Page() {
               }
             }}
           />
-          <div className="mb-6">
-  
-          </div>
         </div>
 
         <InfoCard
@@ -163,12 +161,12 @@ export default function Page() {
           )}
           
             <div className="flex justify-end gap-4 mt-3">
-                <button
-                  onClick={handleSaveScreen}
-                  className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
-                >
-                  Save Screen
-                </button>
+              <button
+                onClick={handleSaveScreen}
+                className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
+              >
+                Save Screen
+              </button>
             <ExportPDFButton chartRef={chartRef2} fileName="natural-gas-chart-2" />
           </div>
         </div>

@@ -1,5 +1,5 @@
-//This component holds the state for all controls
-// It wraps the SensorPanel, DatePicker,  and TimeGranularityDropdown components, and passes the state down to them as props.
+//This component holds the state for all Report controls
+//It wraps the SensorPanel, DatePicker,  and TimeGranularityDropdown components, and passes the state down to them as props.
 
 "use client";
 import { useState, useEffect } from "react";
@@ -45,10 +45,8 @@ export default function ReportControls({
       setErrorMessage("To date cannot be past December 31, 2025.");
       return;
     }
-    
-    
     setErrorMessage("");
-    onGenerate(); // ⬆️ Lift the actual report generation up
+    onGenerate(); 
   };
   
   const loadSensors = async () => {
@@ -57,7 +55,9 @@ export default function ReportControls({
     setSensors(data)
   }
 
+  //Load sensor options for the SensorPanel when the component mounts
   useEffect(() => {
+    //eslint-disable-next-line react-hooks/set-state-in-effect
     loadSensors();
   }, []);
 

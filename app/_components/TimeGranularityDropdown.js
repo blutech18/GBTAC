@@ -1,5 +1,6 @@
 // This component allows users to select the time granularity for data visualization.
 // The dropdown includes options for Hourly, Daily, Monthly, and Yearly intervals.
+
 "use client";
 import { useState } from "react";
 

@@ -1,28 +1,25 @@
+//This component displays the generated PDF report in an iframe.
+//The PDF is passesed as a Blob object through the pdfBlob prop. If no PDF is available, it shows a placeholder message.
+
 "use client";
 
 export default function PDFViewer({ pdfBlob, onClear }) {
   return (
-    // This container uses Tailwind CSS for styling while the PDF calendar/datepicker is from Material-UI
+ 
     <div className="w-full max-w-4xl mx-auto bg-white shadow-lg border border-gray-200 rounded-xl p-6 space-y-6">
-      <p
-        className="text-center my-2 italic textfont-semibold"
-        style={{ fontFamily: "var(--font-titillium)" }}
-      >
+      <p className="text-center my-2 italic textfont-semibold">
         Preview
       </p>
 
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 min-h-[400px] flex justify-center items-center">
         {!pdfBlob && (
-          <div
-            className="text-gray-500"
-            style={{ fontFamily: "var(--font-titillium)" }}
-          >
+          <div className="text-gray-500">
             No report generated yet.
           </div>
         )}
         {pdfBlob && (
           <iframe
-            src={URL.createObjectURL(pdfBlob)}
+            src={URL.createObjectURL(pdfBlob)} //create a temporary URL for the PDF blob to display in the iframe
             width="100%"
             height="500px"
             style={{ border: "none" }}

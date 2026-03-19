@@ -1,4 +1,5 @@
 //This is a reusable date validation hook for sensor dashboards. 
+
 //It provides the earliest and latest allowed dates, and validates that the "from" date is before the "to" date.
 
 "use client";
@@ -29,13 +30,13 @@ export const useDateValidation = ({ earliestDate, latestDate } = {}) => {
         })}`;
       ;
     }
-
     return null;
   };
 
+  //Validates both dates and sets error state
   const validateAll = (fromDate, toDate) => {
-    const fromError = validate("from", fromDate, toDate);
-    const toError = validate("to", toDate, fromDate);
+    const fromError = validate("from", fromDate, toDate); //otherDate = toDate
+    const toError = validate("to", toDate, fromDate); //otherDate = fromDate
     setErrors({ from: fromError, to: toError });
     return !fromError && !toError;
   };
