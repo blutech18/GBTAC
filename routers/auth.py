@@ -3,6 +3,7 @@ import httpx
 
 from helpers.email_service import send_reset_email
 from helpers.firebase_admin_setup import get_firestore_client, get_firebase_auth
+from helpers.auth_dependencies import SESSION_COOKIE_NAME, normalize_email, get_allowed_user_data
 
 from fastapi import APIRouter, Request, HTTPException, Response, Cookie, Depends
 from pydantic import BaseModel, EmailStr
@@ -16,6 +17,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
 from typing import Optional
+from helpers.auth_dependencies import get_current_user_from_session
 
 router = APIRouter(prefix="/auth")
 
@@ -43,13 +45,9 @@ class CaptchaRequest(BaseModel):
 
 MAX_FAILED_ATTEMPTS = 2  # change to 5 later
 RESET_COOLDOWN_SECONDS = 60  
-SESSION_COOKIE_NAME = "session"
 SESSION_EXPIRES_SECONDS = 60 * 60 * 8  # 8 hours fixed session duration for simplicity, can be changed to refresh tokens later
 
 # HELPER FUNCTIONS
-
-def normalize_email(email: str) -> str:
-    return email.strip().lower()
 
 def get_lockout_duration_seconds(level: int) -> int:
     # TEST VALUES
@@ -70,47 +68,6 @@ def get_lockout_duration_seconds(level: int) -> int:
 #     elif level == 3:
 #         return 900
 #     return 1800
-
-def get_allowed_user_data(email: str):
-    email = normalize_email(email)
-    doc_ref = db.collection("allowedUsers").document(email)
-    snap = doc_ref.get()
-
-    if not snap.exists:
-        return None
-
-    data = snap.to_dict()
-
-    if data.get("active") is not True:
-        return None
-
-    return data
-
-async def get_current_user_from_session(
-    session: Optional[str] = Cookie(default=None, alias=SESSION_COOKIE_NAME)
-):
-    if not session:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    try:
-        decoded_claims = firebase_auth.verify_session_cookie(
-            session,
-            check_revoked=True
-        )
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid or expired session")
-
-    email = normalize_email(decoded_claims.get("email", ""))
-    allowed_user = get_allowed_user_data(email)
-
-    if not allowed_user:
-        raise HTTPException(status_code=403, detail="User is not allowed")
-
-    return {
-        "uid": decoded_claims.get("uid"),
-        "email": email,
-        "role": allowed_user.get("role", "user"),
-    }
 
 # ENDPOINTS
 
@@ -342,8 +299,8 @@ def session_login(payload: TokenRequest, response: Response):
         value=session_cookie,
         max_age=SESSION_EXPIRES_SECONDS,
         httponly=True,
-        secure=False,   # change to True in production HTTPS
-        samesite="lax",
+        secure=True,
+        samesite="none",
         path="/",
     )
 
@@ -356,12 +313,11 @@ def session_login(payload: TokenRequest, response: Response):
 
 # Endpoint to get current user info based on session cookie, used for frontend to check if user is logged in and get their role
 @router.get("/me")
-def get_me(user=Depends(get_current_user_from_session)):
+async def get_current_user_me(current_user=Depends(get_current_user_from_session)):
     return {
-        "authenticated": True,
-        "email": user["email"],
-        "role": user["role"],
-        "uid": user["uid"],
+        "uid": current_user["uid"],
+        "email": current_user["email"],
+        "role": current_user["role"],
     }
 
 # Endpoint to log out by clearing session cookie and revoking Firebase refresh tokens so that existing session cookies become invalid immediately

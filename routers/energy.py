@@ -1,7 +1,7 @@
 from routers import *
 from helpers.rate_limit import limiter
 from fastapi import APIRouter, Request, Depends
-from routers.auth import get_current_user_from_session
+from helpers.auth_dependencies import get_current_user_from_session
 
 router = APIRouter(prefix="/energy")
 
