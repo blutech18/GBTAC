@@ -1,30 +1,48 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../_utils/auth-context";
+
+const API_BASE = "http://localhost:8000";
 
 export default function StaffLayout({ children }) {
-  const { user, loading, isAllowed, role } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    setMounted(true);
+  }, []);
 
-    if (!user || !isAllowed) {
-      router.replace("/login");
-      return;
-    }
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          credentials: "include",
+        });
 
-    if (role === "admin") {
-      router.replace("/account-manager");
-      return;
-    }
-  }, [user, loading, isAllowed, role, router]);
+        if (!res.ok) {
+          router.replace("/");
+          return;
+        }
 
-  if (loading) return null;
-  if (!user || !isAllowed) return null;
-  if (role !== "staff") return null;
+        const data = await res.json();
+
+        if (data.role !== "staff") {
+          router.replace("/account-manager");
+          return;
+        }
+
+        setLoading(false);
+      } catch (error) {
+        router.replace("/");
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
+  if (!mounted || loading) return null;
 
   return children;
 }
