@@ -257,8 +257,9 @@ def reset_login_attempts(payload: EmailRequest):
 def check_allowed_user(payload: TokenRequest):
     try:
         decoded_token = firebase_auth.verify_id_token(payload.idToken)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        print("VERIFY TOKEN ERROR:", repr(e))
+        raise HTTPException(status_code=401, detail=str(e))
 
     email = normalize_email(decoded_token.get("email", ""))
     allowed_user = get_allowed_user_data(email)
@@ -277,8 +278,9 @@ def check_allowed_user(payload: TokenRequest):
 def session_login(payload: TokenRequest, response: Response):
     try:
         decoded_token = firebase_auth.verify_id_token(payload.idToken)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        print("SESSION LOGIN VERIFY ERROR:", repr(e))
+        raise HTTPException(status_code=401, detail=str(e))
 
     email = normalize_email(decoded_token.get("email", ""))
     allowed_user = get_allowed_user_data(email)
@@ -291,16 +293,17 @@ def session_login(payload: TokenRequest, response: Response):
             payload.idToken,
             expires_in=timedelta(seconds=SESSION_EXPIRES_SECONDS)
         )
-    except Exception:
-        raise HTTPException(status_code=401, detail="Failed to create session")
+    except Exception as e:
+        print("CREATE SESSION COOKIE ERROR:", repr(e))
+        raise HTTPException(status_code=401, detail=str(e))
 
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=session_cookie,
         max_age=SESSION_EXPIRES_SECONDS,
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=False,
+        samesite="lax",
         path="/",
     )
 
