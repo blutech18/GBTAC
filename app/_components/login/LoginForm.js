@@ -128,15 +128,24 @@ export default function LoginForm() {
   const checkAllowedUserWithToken = async (idToken) => {
     const res = await fetch(`${API_BASE}/auth/check-allowed-user`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ idToken }),
     });
 
+    const data = await res.json().catch(() => null);
+
     if (!res.ok) {
-      throw new Error("Failed to check allowed user");
+      console.error("Allowed user check failed:", res.status, data);
+      throw new Error(
+        typeof data?.detail === "string"
+          ? data.detail
+          : JSON.stringify(data?.detail || data || "Failed to check allowed user")
+      );
     }
 
-    return res.json();
+    return data;
   };
 
   const createSessionLogin = async (idToken) => {

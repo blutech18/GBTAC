@@ -7,7 +7,7 @@ import PieChart from "../PieChart"
 
 Chart.register(CategoryScale);
 
-const API_ENDPOINT = "http://127.0.0.1:8000";
+const API_ENDPOINT = "http://localhost:8000";
 
 export default function PieHandler({sensorList, startDate, endDate, graphTitle, label}){
     const canFetch =
@@ -39,11 +39,11 @@ export default function PieHandler({sensorList, startDate, endDate, graphTitle, 
             setFetched(false);
             const withData = await Promise.all(
                 list.map(async (code, i) =>{
-                    const res = await fetch(`${API_ENDPOINT}/energy/sum/${code}?start=${startDate}&end=${endDate}`);
+                    const res = await fetch(`${API_ENDPOINT}/energy/sum/${code}?start=${startDate}&end=${endDate}`, {credentials: "include",});
                     const data = await res.json();
                     let name = code
                     try{
-                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`);
+                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`, {credentials: "include",});
                         const data = await res.json();
                         name = data
                     } catch {
