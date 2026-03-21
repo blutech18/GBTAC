@@ -53,7 +53,7 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", _user=De
     return res
 
 
-# daily average over the last 7 days
+# returns card information
 @router.get("/cards")
 @limiter.limit("20/minute")
 async def get_card_data(request: Request, start, end):
@@ -73,10 +73,12 @@ async def get_card_data(request: Request, start, end):
     curs = conn.cursor()
 
     query = f"""
-        select max(SaitSolarLab_30000_TL340) as "Max Generation", 
-        min(SaitSolarLab_30000_TL340) as "Min Generation", 
-        max(SaitSolarLab_30000_TL341) as "Max Consumption", 
-        min(SaitSolarLab_30000_TL340) as "Min Consumption"
+        select avg(SaitSolarLab_30000_TL340) as "Average Generation",
+        max(SaitSolarLab_30000_TL340) as "Maximum Generation", 
+        min(SaitSolarLab_30000_TL340) as "Minimum Generation",
+        avg(SaitSolarLab_30000_TL341) as "Average Consumption", 
+        max(SaitSolarLab_30000_TL341) as "Maximum Consumption", 
+        min(SaitSolarLab_30000_TL341) as "Minimum Consumption"
         from gbtac_data
         where cast(ts as date) >= ?
         and cast(ts as date) <= ?
