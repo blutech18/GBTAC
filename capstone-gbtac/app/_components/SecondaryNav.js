@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../_utils/firebase";
 
 export default function SecondaryNav({
@@ -12,9 +12,37 @@ export default function SecondaryNav({
   displayProfile = false,
 }) {
   const router = useRouter();
-  const [employeeFirstName, setEmployeeFirstName] = useState("Temiloluwa");
-  const [employeeLastName, setEmployeeLastName] = useState("Bankole");
-  const [user, setUser] = useState(`${employeeFirstName} ${employeeLastName}`);
+  const [employeeFirstName, setEmployeeFirstName] = useState("");
+  const [employeeLastName, setEmployeeLastName] = useState("");
+  const [user, setUser] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser?.email) {
+        try {
+          const response = await fetch(
+            `http://localhost:8000/auth/staff/${encodeURIComponent(currentUser.email)}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const firstName = data.firstName || "";
+            const lastName = data.lastName || "";
+            setEmployeeFirstName(firstName);
+            setEmployeeLastName(lastName);
+            setUser(`${firstName} ${lastName}`);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user profile:", error);
+        }
+      } else {
+        setEmployeeFirstName("");
+        setEmployeeLastName("");
+        setUser("");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
   const handleLogout = async () => {
     try {
       await signOut(auth);

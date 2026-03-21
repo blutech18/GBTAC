@@ -270,6 +270,7 @@ def check_allowed_user(payload: TokenRequest):
 class StaffUpdateRequest(BaseModel):
     firstName: str
     lastName: str
+    email: str
     role: str
     active: bool
 
@@ -300,20 +301,71 @@ def get_staff(email: str):
 
 @router.put("/staff/{email}")
 def update_staff(email: str, payload: StaffUpdateRequest):
-    """Update editable fields of a staff member."""
-    doc_ref = db.collection("allowedUsers").document(email)
-    snap = doc_ref.get()
+    """Update editable fields of a staff member. Handles email changes by migrating Firestore documents."""
+    old_email = normalize_email(email)
+    new_email = normalize_email(payload.email)
+    
+    old_doc_ref = db.collection("allowedUsers").document(old_email)
+    snap = old_doc_ref.get()
     if not snap.exists:
         raise HTTPException(status_code=404, detail="Staff member not found")
 
-    doc_ref.set(
-        {
-            "firstName": payload.firstName,
-            "lastName": payload.lastName,
-            "role": payload.role,
-            "active": payload.active,
-            "updatedAt": firestore.SERVER_TIMESTAMP,
-        },
-        merge=True,
-    )
-    return {"success": True}
+    # Get existing data to preserve fields not in the update
+    existing_data = snap.to_dict()
+    
+    # Prepare updated data
+    updated_data = {
+        "firstName": payload.firstName,
+        "lastName": payload.lastName,
+        "role": payload.role,
+        "active": payload.active,
+        "updatedAt": firestore.SERVER_TIMESTAMP,
+    }
+    
+    # Preserve createdAt and other important fields
+    if "createdAt" in existing_data:
+        updated_data["createdAt"] = existing_data["createdAt"]
+    
+    # If email changed, create new document with new email as ID and delete old one
+    if old_email != new_email:
+        # Check if new email already exists
+        new_doc_ref = db.collection("allowedUsers").document(new_email)
+        if new_doc_ref.get().exists:
+            raise HTTPException(status_code=400, detail="New email already exists in the system")
+        
+        # Create new document with new email as document ID
+        new_doc_ref.set(updated_data)
+        
+        # Delete old document
+        old_doc_ref.delete()
+        
+        return {"success": True, "emailChanged": True, "newEmail": new_email}
+    else:
+        # Email unchanged, just update the existing document
+        old_doc_ref.set(updated_data, merge=True)
+        return {"success": True, "emailChanged": False}
+
+
+@router.post("/staff/migrate-email")
+def migrate_email(old_email: str, new_email: str):
+    """Migrate a user's Firestore document from one email to another. Used for fixing email sync issues."""
+    old_email = normalize_email(old_email)
+    new_email = normalize_email(new_email)
+    
+    old_doc_ref = db.collection("allowedUsers").document(old_email)
+    snap = old_doc_ref.get()
+    
+    if not snap.exists:
+        raise HTTPException(status_code=404, detail=f"Document with email {old_email} not found")
+    
+    # Get all data from old document
+    data = snap.to_dict()
+    
+    # Create new document with new email as ID
+    new_doc_ref = db.collection("allowedUsers").document(new_email)
+    new_doc_ref.set(data)
+    
+    # Delete old document
+    old_doc_ref.delete()
+    
+    return {"success": True, "message": f"Migrated from {old_email} to {new_email}"}

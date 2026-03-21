@@ -9,6 +9,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   updatePassword,
+  verifyBeforeUpdateEmail,
 } from "firebase/auth";
 import { auth } from "@/app/_utils/firebase";
 import Image from "next/image";
@@ -29,6 +30,7 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
     newPassword: "",
     confirmPassword: "",
   });
+  const [originalEmail, setOriginalEmail] = useState("");
 
   // ─── UI state ────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
@@ -57,13 +59,15 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
         return res.json();
       })
       .then((data) => {
+        const emailValue = data.email ?? userEmail;
         setFormData((prev) => ({
           ...prev,
           firstName: data.firstName ?? "",
           lastName: data.lastName ?? "",
-          email: data.email ?? userEmail,
+          email: emailValue,
           status: data.active === true ? "Active" : "Inactive",
         }));
+        setOriginalEmail(emailValue);
         setLoading(false);
       })
       .catch((err) => {
@@ -148,6 +152,10 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
           newErrors.email = "Must be a SAIT or Gmail email.";
       }
 
+      if (formData.email !== originalEmail && !currentPasswordVerified) {
+        newErrors.email = "Please verify your current password before changing email.";
+      }
+
       if (formData.newPassword) {
         if (!currentPasswordVerified)
           newErrors.currentPassword = "Please verify your current password first.";
@@ -181,7 +189,52 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
     setSaving(true);
     setSaveError(null);
     try {
-      // 1. Save profile info to Firestore via backend
+      const emailChanged = formData.email !== originalEmail;
+      let emailVerificationSent = false;
+
+      // 1. If email changed, send verification email via Firebase Auth
+      // Note: We don't update Firestore email until verification is complete
+      if (!isAdmin && emailChanged) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Not signed in");
+        
+        if (!currentPasswordVerified || !formData.currentPassword) {
+          throw new Error("Please verify your current password before changing email");
+        }
+
+        try {
+          // Reauthenticate before email change
+          const credential = EmailAuthProvider.credential(
+            currentUser.email,
+            formData.currentPassword
+          );
+          await reauthenticateWithCredential(currentUser, credential);
+          
+          // Send verification email to new address
+          await verifyBeforeUpdateEmail(currentUser, formData.email);
+          emailVerificationSent = true;
+          
+          // Show message and don't update Firestore yet
+          setNotificationMsg("Verification email sent! Please check your new email and click the verification link. Your email will be updated after verification.");
+          setShowNotification(true);
+          setTimeout(() => setShowNotification(false), 8000);
+          setSaving(false);
+          return; // Exit early - don't update Firestore until verified
+        } catch (emailError) {
+          console.error("Email verification error:", emailError);
+          if (emailError.code === "auth/email-already-in-use") {
+            throw new Error("This email is already in use by another account");
+          } else if (emailError.code === "auth/invalid-email") {
+            throw new Error("Invalid email format");
+          } else if (emailError.code === "auth/requires-recent-login") {
+            throw new Error("Please log out and log back in before changing your email");
+          } else {
+            throw new Error(`Failed to send verification email: ${emailError.message}`);
+          }
+        }
+      }
+
+      // 2. Save profile info to Firestore via backend (only if email didn't change)
       const res = await fetch(
         `http://localhost:8000/auth/staff/${encodeURIComponent(userEmail)}`,
         {
@@ -190,6 +243,7 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
           body: JSON.stringify({
             firstName: formData.firstName,
             lastName: formData.lastName,
+            email: originalEmail, // Keep original email in Firestore until verified
             role: viewerRole,
             active: formData.status === "Active",
           }),
@@ -200,7 +254,7 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
         throw new Error(body.detail ?? "Failed to save profile");
       }
 
-      // 2. If password change requested (staff only), update Firebase Auth password
+      // 3. If password change requested (staff only), update Firebase Auth password
       if (!isAdmin && formData.newPassword && currentPasswordVerified) {
         const currentUser = auth.currentUser;
         if (currentUser) {
@@ -214,13 +268,26 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
           confirmPassword: "",
         }));
         setCurrentPasswordVerified(false);
-        setNotificationMsg("Profile and password updated successfully!");
-      } else {
-        setNotificationMsg("Profile updated successfully!");
       }
 
+      // Update original email after successful save
+      if (emailChanged) {
+        setOriginalEmail(formData.email);
+      }
+
+      // Set success message
+      let successMsg = "Profile updated successfully!";
+      if (emailVerificationSent && formData.newPassword) {
+        successMsg = "Profile and password updated! Please check your new email to verify the email change.";
+      } else if (emailVerificationSent) {
+        successMsg = "Profile updated! Please check your new email to verify the email change.";
+      } else if (formData.newPassword) {
+        successMsg = "Profile and password updated successfully!";
+      }
+      setNotificationMsg(successMsg);
+
       setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 4000);
+      setTimeout(() => setShowNotification(false), 6000);
     } catch (err) {
       setSaveError(err.message);
     } finally {
@@ -272,7 +339,7 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
       {/* Save error banner */}
       {saveError && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm flex items-start gap-2">
-          <svg className="h-5 w-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="h-5 w-5 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7-4a1 1 0 10-2 0v4a1 1 0 002 0V6zm-1 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
           </svg>
           {saveError}
@@ -317,26 +384,18 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
 
         <div className="flex flex-col">
           <label className="font-semibold text-gray-800 mb-1">Email</label>
-          {isAdmin ? (
-            <>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                readOnly
-                className="border rounded-lg p-3 bg-gray-100 text-gray-500 cursor-not-allowed"
-              />
-              <p className="text-xs text-gray-400 mt-1">Email cannot be changed.</p>
-            </>
-          ) : (
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
-            />
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
+          />
+          {formData.email !== originalEmail && (
+            <p className="text-xs text-blue-600 mt-1">
+              ⚠️ After saving, you'll receive a verification email. Until you verify, continue logging in with your current email: {originalEmail}
+            </p>
           )}
           {errors.email && (
             <p className="text-red-500 text-sm mt-1">{errors.email}</p>

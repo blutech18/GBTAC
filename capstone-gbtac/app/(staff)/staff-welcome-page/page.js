@@ -9,15 +9,41 @@ import Navbar from "../../_components/Navbar";
 import Footer from "../../_components/Footer";
 import Image from "next/image";
 import Link from "next/link";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../../_utils/firebase";
 
 export default function StaffHome() {
   const [recent, setRecent] = useState([]);
-  const [user, setUser] = useState("Temiloluwa Bankole");
+  const [user, setUser] = useState("");
 
   useEffect(() => {
     const savedDashboards = loadRecentDashboards().filter((d) => d.saved);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecent(savedDashboards);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser?.email) {
+        try {
+          const response = await fetch(
+            `http://localhost:8000/auth/staff/${encodeURIComponent(currentUser.email)}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const firstName = data.firstName || "";
+            const lastName = data.lastName || "";
+            setUser(`${firstName} ${lastName}`);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user profile:", error);
+        }
+      } else {
+        setUser("");
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return (
