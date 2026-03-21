@@ -72,10 +72,12 @@ export default function EnergyDashboard() {
 
   // Base stats
   const [stats, setStats] = useState([
-    { label: "Max Generation", value: "-"},
-    { label: "Min Generation", value: "-"},
-    { label: "Max Consumption", value: "-"},
-    { label: "Min Consumption", value: "-"},
+    { label: "Average Generation", value: "-"},
+    { label: "Maximum Generation", value: "-"},
+    { label: "Minimum Generation", value: "-"},
+    { label: "Average Generation", value: "-"},
+    { label: "Maximum Consumption", value: "-"},
+    { label: "Minimum Consumption", value: "-"},
   ])
 
   const fetchStats = async() => {
