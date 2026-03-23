@@ -17,7 +17,7 @@ export default function Page() {
 
     const handleGenerate = async () => {
         console.log(selectedSensors);
-        const res = await fetch(`http://127.0.0.1:8000/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`);
+        const res = await fetch(`http://localhost:8000/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`, {credentials: "include",});
         const pdf = await res.blob();
         setPdfBlob(pdf);
 
