@@ -199,7 +199,7 @@ export default function Page() {
 
   return (
     <DashboardLayout title="">
-      <div className="mx-auto w-full max-w-7xl -mt-2 md:-mt-4">
+      <div className="w-full -mt-2 md:-mt-4">
         <h1 className="text-3xl font-semibold text-gray-800 mb-6">
           Create Custom Chart
         </h1>

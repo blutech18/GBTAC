@@ -8,6 +8,7 @@ import TimeGranularityDropdown from "../TimeGranularityDropdown";
 
 export default function ReportControls({
   selectedSensors, onSensorsChange,
+  chartTitle, onChartTitleChange,
   from, onFromChange,
   to, onToChange,
   timeInterval, onTimeIntervalChange,
@@ -17,6 +18,10 @@ export default function ReportControls({
   const [sensors, setSensors] = useState();
   
   const handleGenerateReport = () => {
+    if (!chartTitle || chartTitle.trim().length === 0) {
+      setErrorMessage("Please enter a report title.");
+      return;
+    }
     if (selectedSensors.length === 0) {
       setErrorMessage("Please select at least one sensor.");
       return;
@@ -65,20 +70,41 @@ export default function ReportControls({
     <div className="space-y-6">
       <SensorPanel sensors={sensors} selectedSensors={selectedSensors} onSelect={onSensorsChange} />
 
-      <div className="flex flex-col w-full space-y-2 text-[#212529]" style={{ fontFamily: "var(--font-titillium)" }}>
-        <div className="flex flex-wrap gap-4 items-end mb-2">
+      <div className="flex flex-col w-full space-y-2 text-[#212529]">
+        <div>
+          <label className="block text-sm mb-1">Report Title</label>
+          <input
+            type="text"
+            value={chartTitle}
+            onChange={(e) => onChartTitleChange(e.target.value)}
+            placeholder="Enter report title"
+            maxLength={30}
+            className="border mb-1 border-gray-500 text-gray-700 rounded px-3 py-2 w-full"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-4 items-end">
           <div>
             <label className="block text-sm mb-1 ">From</label>
-            <input type="date" value={from} onChange={(e) => onFromChange(e.target.value)} className="border border-gray-500 text-gray-500 rounded px-3 py-2" />
+            <input type="date" value={from} onChange={(e) => onFromChange(e.target.value)} className="border mb-1 border-gray-500 text-gray-500 rounded px-3 py-2" />
           </div>
           <div>
             <label className="block text-sm mb-1">To</label>
-            <input type="date" value={to} onChange={(e) => onToChange(e.target.value)} className="border border-gray-500 text-gray-500 rounded px-3 py-2" />
+            <input type="date" value={to} onChange={(e) => onToChange(e.target.value)} className="border mb-1 border-gray-500 text-gray-500 rounded px-3 py-2" />
           </div>
         </div>
-      </div>
 
-      <TimeGranularityDropdown value={timeInterval} onChange={onTimeIntervalChange} />
+      
+      <div className="w-full text-[#212529]">
+        <label className="block text-sm mb-1">Time Interval</label>
+        <TimeGranularityDropdown
+          value={timeInterval}
+          onChange={onTimeIntervalChange}
+          className="w-full"
+        />
+      </div>
+    </div>
+
 
       <div className="flex flex-col items-center">
         <button

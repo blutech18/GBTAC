@@ -4,22 +4,29 @@
 "use client";
 import { useState } from "react";
 
-export default function TimeGranularityDropdown({ onChange = () => {} }) {
+export default function TimeGranularityDropdown({
+  value,
+  onChange = () => {},
+  className = "",
+}) {
   const [timeInterval, setTimeInterval] = useState("none");
+  const selectedValue = value ?? timeInterval;
 
   const handleChange = (e) => {
     const selectedInterval = e.target.value;
-    setTimeInterval(selectedInterval);
+    if (value === undefined) {
+      setTimeInterval(selectedInterval);
+    }
     onChange(selectedInterval);
   };
 
   return (
-    <div className="flex flex-col">
+    <div className={`flex flex-col ${className}`.trim()}>
       <div className="flex flex-col">
         <select
-          value={timeInterval}
+          value={selectedValue}
           onChange={handleChange}
-          className="border p-2 rounded text-gray-600"
+          className="border p-2 rounded text-gray-600 w-full"
         >
           <option value="none">None</option>
           <option value="H">Hourly</option>

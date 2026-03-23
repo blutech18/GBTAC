@@ -6,12 +6,12 @@
 export default function PDFViewer({ pdfBlob, onClear }) {
   return (
  
-    <div className="w-full max-w-4xl mx-auto bg-white shadow-lg border border-gray-200 rounded-xl p-6 space-y-6">
+    <div className="w-full max-w-4xl mx-auto bg-white shadow-lg border border-gray-200 rounded-xl p-6 h-full flex flex-col gap-6">
       <p className="text-center my-2 italic textfont-semibold">
         Preview
       </p>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 min-h-[400px] flex justify-center items-center">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 min-h-100 flex-1 flex justify-center items-center">
         {!pdfBlob && (
           <div className="text-gray-500">
             No report generated yet.
@@ -28,7 +28,7 @@ export default function PDFViewer({ pdfBlob, onClear }) {
         )}
       </div>
 
-      <div className="flex justify-center mt-10">
+      <div className="flex justify-center mt-auto">
         <button
           className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
           onClick={onClear}
