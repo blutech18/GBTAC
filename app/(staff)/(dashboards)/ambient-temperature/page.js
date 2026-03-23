@@ -300,46 +300,39 @@ export default function AmbientTempDashboard() {
 
   return (
     <DashboardLayout title="Ambient Temperature Dashboard">
-      <div className="mb-6">
-        <DatePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          errors={errors}
-          onDateChange={(field, value) => {
-             setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
+      <div className="flex flex-wrap gap-6 items-start mb-6">
+        <div>
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value) => {
+              setState((prev) => ({
+                ...prev,
+                [field === "from" ? "fromDate" : "toDate"]: value,
+              }));
             }}
-          setDate={({ fromDate, toDate }) => {
-            const nextState = { ...state, fromDate, toDate };
-            setState(nextState);
-            setKpiStats(null);
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              setState(nextState);
+              setKpiStats(null);
 
-            if (fromDate && toDate && validateAll(fromDate, toDate)) {
-              setAppliedState({
-                fromDate,
-                toDate,
-                floors: nextState.floors,
-                orientations: nextState.orientations,
-              });
-            } else {
-              setAppliedState(null);
-            }
-          }}
-          aggregation={aggregation}
-          setAggregation={setAggregation}
-        />
-      </div>
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({
+                  fromDate,
+                  toDate,
+                  floors: nextState.floors,
+                  orientations: nextState.orientations,
+                });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+            aggregation={aggregation}
+            setAggregation={setAggregation}
+          />
+        </div>
 
-      <div className="lg:hidden mb-6">
-        <Carousel items={stats} horizontal />
-      </div>
-      <div className="hidden lg:block">
-        <InfoCard
-          colsClass="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          items={stats}
-        />
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-6 items-start">
         <div>
           <label className="block text-sm font-medium mb-1">Floor Levels</label>
           <div className="flex flex-wrap gap-2">
@@ -389,6 +382,16 @@ export default function AmbientTempDashboard() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="lg:hidden mb-6">
+        <Carousel items={stats} horizontal />
+      </div>
+      <div className="hidden lg:block">
+        <InfoCard
+          colsClass="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          items={stats}
+        />
       </div>
 
       <div
