@@ -93,6 +93,8 @@ async def generate_table_report(sensors, start, end, agg= "none", type= "mean"):
             df_agg = df.resample(agg.lower()).sum()
             
         res = df_agg.reset_index()
+    else:
+        res = df
 
     # pdf and table generation
     buffer = io.BytesIO()
