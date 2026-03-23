@@ -7,7 +7,7 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../../_utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "http://localhost:8000";
 
 export default function LoginForm() {
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -128,15 +128,41 @@ export default function LoginForm() {
   const checkAllowedUserWithToken = async (idToken) => {
     const res = await fetch(`${API_BASE}/auth/check-allowed-user`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ idToken }),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      console.error("Allowed user check failed:", res.status, data);
+      throw new Error(
+        typeof data?.detail === "string"
+          ? data.detail
+          : JSON.stringify(data?.detail || data || "Failed to check allowed user")
+      );
+    }
+
+    return data;
+  };
+
+  const createSessionLogin = async (idToken) => {
+    const res = await fetch(`${API_BASE}/auth/session-login`, {
+      method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
     });
 
+    const data = await res.json();
+
     if (!res.ok) {
-      throw new Error("Failed to check allowed user");
+      throw new Error(data.detail || "Failed to create session");
     }
 
-    return res.json();
+    return data;
   };
 
   const requestPasswordReset = async (email) => {
@@ -313,6 +339,9 @@ export default function LoginForm() {
         return;
       }
 
+      console.log("Before createSessionLogin");
+      await createSessionLogin(idToken);
+      console.log("After createSessionLogin");
       await resetLoginAttempts(emailLower);
 
       setErrors({});

@@ -61,12 +61,13 @@ export default function EnergyDashboard() {
     return `As of: ${fromFormatted} - ${toFormatted}`;
   };
   // Unit state: kWh or W
-  const [unit, setUnit] = useState("kWh");
+  const [unit, setUnit] = useState("W");
 
   const [aggregation, setAggregation] = useState("none");
 
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
+    fetchStats();
   }, [state]);
 
   //validate dates on every change to show errors immediately
@@ -78,17 +79,25 @@ export default function EnergyDashboard() {
 
 
   // Base stats
-  const stats = [
-    { label: "Average", value: 98 },
-    { label: "Minimum", value: 180 },
-    { label: "Maximum", value: 950 },
-    { label: "Utility Bill Calgary kWh", value: 1234 },
-  ];
+  const [stats, setStats] = useState([
+    { label: "Average Generation", value: "-"},
+    { label: "Maximum Generation", value: "-"},
+    { label: "Minimum Generation", value: "-"},
+    { label: "Average Generation", value: "-"},
+    { label: "Maximum Consumption", value: "-"},
+    { label: "Minimum Consumption", value: "-"},
+  ])
+
+  const fetchStats = async() => {
+    const res = await fetch(`http://localhost:8000/energy/cards?start=${appliedState?.fromDate}&end=${appliedState?.toDate}`);
+    const data = await res.json();
+    setStats(data);
+  }
 
   // Compute displayed values based on unit
   const displayStats = stats.map((item) => ({
     ...item,
-    value: unit === "W" ? item.value * 1000 : item.value,
+    value: unit === "kWh" ? item.value / 1000 : item.value,
     unit: unit,
     subtitle: formatDateRange(appliedState?.fromDate, appliedState?.toDate),
   }));

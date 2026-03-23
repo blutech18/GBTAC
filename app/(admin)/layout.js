@@ -1,30 +1,54 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../_utils/auth-context";
+
+const API_BASE = "http://localhost:8000";
 
 export default function AdminLayout({ children }) {
-  const { user, loading, isAllowed, role } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    setMounted(true);
+  }, []);
 
-    if (!user || !isAllowed) {
-      router.replace("/login");
-      return;
-    }
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          credentials: "include",
+        });
 
-    if (role === "staff") {
-      router.replace("/staff-welcome-page");
-      return;
-    }
-  }, [user, loading, isAllowed, role, router]);
+        if (!res.ok) {
+          router.replace("/");
+          return;
+        }
 
-  if (loading) return null;
-  if (!user || !isAllowed) return null;
-  if (role !== "admin") return null;
+        const data = await res.json();
+
+        if (data.role !== "admin") {
+          router.replace("/staff-welcome-page");
+          return;
+        }
+
+        setLoading(false);
+      } catch (error) {
+        router.replace("/");
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="h-8 w-8 rounded-full border-4 border-gray-300 border-t-[#005EB8] animate-spin"></div>
+      </div>
+    );
+  }
 
   return children;
 }

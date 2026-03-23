@@ -10,7 +10,7 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 
 Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
-const API_ENDPOINT = "http://127.0.0.1:8000";
+const API_ENDPOINT = "http://localhost:8000";
 
 export default function LineHandler({
     chartType,
@@ -69,6 +69,20 @@ export default function LineHandler({
     const [yMin, setYMin] = useState();
     const [yMax, setYMax] = useState();
 
+    const getAuthHeaders = async () => {
+        const user = auth.currentUser;
+
+        if (!user) {
+            throw new Error("No authenticated user found");
+        }
+
+        const token = await user.getIdToken();
+
+        return {
+            Authorization: `Bearer ${token}`,
+        };
+    };
+
     const fetchData = async (list = sensorList, from = startDate, to = endDate) => {
         try {
             setLoading(true);
@@ -77,7 +91,7 @@ export default function LineHandler({
             if (aggType) query.set("type", aggType);
             const results = await Promise.all(
                 list.map((code) =>
-                    fetch(`${API_ENDPOINT}/graphs/data/${code}?${query}`)
+                    fetch(`${API_ENDPOINT}/graphs/data/${code}?${query}`, {credentials: "include",})
                         .then((r) => {
                             if (!r.ok) return [];
                             return r.json();
@@ -100,7 +114,7 @@ export default function LineHandler({
             const named = await Promise.all(
                 list.map(async (code, i) => {
                     try {
-                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`);
+                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`, {credentials: "include",});
                         const data = await res.json();
                         return { id: i, code, name: data };
                     } catch {

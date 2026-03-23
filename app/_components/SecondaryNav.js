@@ -7,6 +7,8 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "../_utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
+const API_BASE = "http://localhost:8000";
+
 export default function SecondaryNav() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
@@ -41,10 +43,18 @@ export default function SecondaryNav() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
+
+  const handleLogout = async (e) => {
+    e.preventDefault();
+
     try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
       await signOut(auth);
-      router.push("/login");
+      router.push("/");
       router.refresh();
     } catch (err) {
       alert("Logout failed: " + err.message);
