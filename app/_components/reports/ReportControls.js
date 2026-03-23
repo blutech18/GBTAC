@@ -50,7 +50,7 @@ export default function ReportControls({
   };
   
   const loadSensors = async () => {
-    const res = await fetch("http://127.0.0.1:8000/graphs/codesnames")
+    const res = await fetch("http://localhost:8000/graphs/codesnames", {credentials: "include",})
     const data = await res.json()
     setSensors(data)
   }

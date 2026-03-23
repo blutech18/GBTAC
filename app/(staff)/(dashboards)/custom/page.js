@@ -58,7 +58,7 @@ export default function Page() {
   const [sensorList, setSensorList] = useState([])
   const fetchSensors = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/graphs/codesnames")
+      const res = await fetch("http://localhost:8000/graphs/codesnames", {credentials: "include",})
       const data = await res.json()
       setSensorList(data)
     }catch (e){
