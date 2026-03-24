@@ -29,7 +29,7 @@ export default function DateRangePicker({
   return (
     <div className="flex flex-wrap gap-4 items-end">
       <div className="flex flex-col">
-        <label className="block text-sm text-gray-600 mb-1">From</label>
+        <label className="block text-sm mb-1">From</label>
         <input
           type="date"
           value={tempFrom}
@@ -47,7 +47,7 @@ export default function DateRangePicker({
       </div>
 
       <div className="flex flex-col">
-        <label className="block text-sm text-gray-600 mb-1">To</label>
+        <label className="block text-sm mb-1">To</label>
           <input
             type="date"
             value={tempTo}
@@ -65,7 +65,7 @@ export default function DateRangePicker({
       </div>
 
       <div className="flex flex-col">
-        <label className="block text-sm text-gray-600 mb-1">Aggregation</label>
+        <label className="block text-sm mb-1">Aggregation</label>
         <TimeGranularityDropdown value={tempAggregation} onChange={setTempAggregation} />
         <div className="h-4 mt-1"/>
     </div>

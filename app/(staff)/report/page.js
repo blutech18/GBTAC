@@ -10,11 +10,13 @@ import { useState } from "react";
 export default function Page() {
 
     const [selectedSensors, setSelectedSensors] = useState([]);
+    const [chartTitle, setChartTitle] = useState("");
     const [from, setFrom] = useState("2025-12-31");
     const [to, setTo] = useState("2025-12-31");
     const [timeInterval, setTimeInterval] = useState("none");
     const [pdfBlob, setPdfBlob] = useState(null);
 
+    //calls backend API returning the blob to display generated report
     const handleGenerate = async () => {
         console.log(selectedSensors);
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`, {credentials: "include",});
@@ -24,6 +26,7 @@ export default function Page() {
     }
     const handleClear = () => {
         setSelectedSensors([]);
+      setChartTitle("");
         setFrom("");
         setTo("");
         setTimeInterval("hourly");
@@ -50,6 +53,8 @@ export default function Page() {
             <ReportControls
               selectedSensors={selectedSensors}
               onSensorsChange={setSelectedSensors}
+              chartTitle={chartTitle}
+              onChartTitleChange={setChartTitle}
               from={from}
               onFromChange={setFrom}
               to={to}
@@ -59,7 +64,7 @@ export default function Page() {
               onGenerate={handleGenerate}
             />
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 flex">
             <PDFViewer pdfBlob={pdfBlob} onClear={handleClear} />
           </div>
         </div>

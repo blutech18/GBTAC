@@ -74,13 +74,12 @@ export default function Page() {
       console.log(e)
     }
   }
-
   useEffect(()=> {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSensors()
   }, [])
 
-  // Reset chart to default
+  //Reset chart to default
   const resetChart = () => {
     setCurrentChartId(null);
     setTempChartSettings(chartSettingDefaults);
@@ -97,7 +96,7 @@ export default function Page() {
     setTempAggregationSettings(aggregationSettingsDefaults)
   }
 
-  // Load a chart into state
+  //Load a chart into state
   const loadChart = (chart) => {
     setError("");
     const chartSensors = Array.isArray(chart?.selectedSensors)
@@ -121,8 +120,24 @@ export default function Page() {
     setTempAggregationSettings({time: chartAggTime, type: chartAggType})
   }
 
-  // Apply button handler
+  //Apply button handler
   const handleApply = async () => {
+    if (
+      !tempChartSettings.chartTitle ||
+      !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.chartTitle) ||
+      tempChartSettings.chartTitle.length > 50 ||
+      (tempChartSettings.xAxisTitle && !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.xAxisTitle)) ||
+      (tempChartSettings.yAxisTitle && !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.yAxisTitle)) ||
+      !["line", "bar"].includes(tempChartSettings.chartType)
+    ) {
+      setError("Please handle all errors in Chart Settings before applying.");
+      return;
+    }
+    if (!["H", "D", "M", "Y"].includes(tempAggregationSettings.time) ||
+    !["mean", "sum"].includes(tempAggregationSettings.type)) {
+      setError("Please handle all errors in Time and Aggregation Settings before applying.");
+      return;
+    }
     if (tempSelectedSensors.length === 0) {
       setError("Please select at least one sensor");
       return;
@@ -183,7 +198,7 @@ export default function Page() {
 
   return (
     <DashboardLayout title="">
-      <div className="mx-auto w-full max-w-7xl -mt-2 md:-mt-4">
+      <div className="w-full -mt-2 md:-mt-4">
         <h1 className="text-3xl font-semibold text-gray-800 mb-6">
           Create Custom Chart
         </h1>

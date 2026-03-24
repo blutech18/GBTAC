@@ -10,11 +10,19 @@ export default function ChartSettings({ settings, setSettings }) {
     if (field === "chartTitle") {
       if (!value) return "Chart title is required";
       if (value.length > 50) return "Chart title must be under 50 characters";
+      if (!/^[a-zA-Z0-9\s\-]*$/.test(value)) return "Only letters, numbers, and hyphens allowed";
     }
-    if (field === "xAxisTitle" && value.length > 30)
-      return "X-Axis title must be under 30 characters";
-    if (field === "yAxisTitle" && value.length > 30)
-      return "Y-Axis title must be under 30 characters";
+    if (field === "xAxisTitle"){
+      if (value && !/^[a-zA-Z0-9\s\-]*$/.test(value)) return "Only letters, numbers, and hyphens allowed";
+      if (value.length > 30) return "X-Axis title must be under 30 characters";
+    }
+    if (field === "yAxisTitle") {
+      if (value && !/^[a-zA-Z0-9\s\-]*$/.test(value)) return "Only letters, numbers, and hyphens allowed";
+      if (value.length > 30) return "Y-Axis title must be under 30 characters";
+    }
+    if (field === "chartType") {
+      if (!["line", "bar"].includes(value)) return "Invalid chart type";
+    }
     return null;
   };
 
@@ -46,12 +54,15 @@ export default function ChartSettings({ settings, setSettings }) {
           <label className="text-sm text-black mb-1">Chart Type</label>
           <select
             value={settings.chartType}
-            onChange={(e) => setSettings(prev => ({...prev, chartType: e.target.value}))}
-            className="border p-2 rounded text-gray-500"
+            onChange={(e) => handleChange("chartType", e.target.value)}
+            className={`border p-2 rounded text-gray-500 ${errors.chartType ? "border-red-500" : ""}`}
           >
             <option value="line">Line</option>
             <option value="bar">Bar</option>
           </select>
+          {errors.chartType && (
+            <p className="text-red-500 text-xs mt-1">{errors.chartType}</p>
+          )}
         </div>
 
         <div className="flex flex-col">

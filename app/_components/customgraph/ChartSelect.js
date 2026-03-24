@@ -18,7 +18,7 @@ export default function ChartSelect({
   const [charts, setCharts] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Fetch previously saved charts from Firestore
+  //Fetch previously saved charts from Firestore
   useEffect(() => {
     const loadCharts = async () => {
       const user = auth.currentUser;
@@ -33,7 +33,7 @@ export default function ChartSelect({
     loadCharts();
   }, [refreshChart]);
 
-  // Handle chart selection from dropdown
+  //Handle chart selection from dropdown
   const handleSelect = async (e) => {
     const id = e.target.value;
     if (id === "new") {
@@ -44,14 +44,14 @@ export default function ChartSelect({
     const user = auth.currentUser;
     if (!user) return;
     try {
-      const chart = await fetchChartById(user.email, id);
+      const chart = await fetchChartById(user.email, id); //fetches the selected chart's data from Firestore
       if (chart) onLoadChart(chart);
     } catch (err) {
       console.error("Failed to fetch chart:", err);
     }
   };
 
-  // Handle chart deletion
+  //Handle chart deletion
   const handleDelete = async () => {
     setShowDeleteModal(false);
 

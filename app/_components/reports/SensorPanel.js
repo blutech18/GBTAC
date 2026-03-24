@@ -23,10 +23,7 @@ export default function SensorPanel({ sensors = [], selectedSensors = [], onSele
   };
   return (
     <div className="flex flex-col h-62 overflow-y-auto border p-5 rounded shadow-sm">
-      <label
-        className="text-lg text-[#212529] mb-2 font-semibold"
-        style={{ fontFamily: "var(--font-titillium)" }}
-      >
+      <label className="text-[#212529] block text-md mb-1 font-semibold">
         Select Sensors
       </label>
       <input
@@ -36,16 +33,13 @@ export default function SensorPanel({ sensors = [], selectedSensors = [], onSele
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
-      <label
-        className="text-base text-[#212529] mb-2"
-        style={{ fontFamily: "var(--font-titillium)" }}
-      >
+      <label className="text-sm text-[#212529] mb-2">
         {sensors.length} sensors available
       </label>
       <div className="flex flex-col gap-1">
         {filteredSensors.length > 0 ? (
           filteredSensors.map((sensor) => (
-            <label key={sensor.id} className="flex items-center gap-2">
+            <label key={sensor.code} className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={selectedSensors.some(s => s.code === sensor.code)}
