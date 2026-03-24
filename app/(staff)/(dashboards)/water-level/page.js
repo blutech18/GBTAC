@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import InfoCard from "../../../_components/InfoCard";
@@ -90,6 +90,15 @@ export default function WaterLevelDashboard() {
     },
   ];
 
+  //validate dates on every change to show errors immediately
+  useEffect(() => {
+    if (state.fromDate && state.toDate) {
+      validateAll(state.fromDate, state.toDate);
+    }
+  }, [  state.fromDate, state.toDate, validateAll]);
+
+
+
   const handleSaveScreen = () => {
     saveDashboardState(STORAGE_KEY, state);
 
@@ -120,9 +129,9 @@ export default function WaterLevelDashboard() {
             fromDate={fromDate}
             toDate={toDate}
             errors={errors}
-            onDateChange={(field, value, otherDate) => {
-              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
-            }}
+            onDateChange={(field, value) => {
+               setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
+              }}
             setDate={({ fromDate, toDate }) => {
               const nextState = { ...state, fromDate, toDate };
               handleStateChange(nextState);

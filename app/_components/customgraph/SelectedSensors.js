@@ -5,7 +5,7 @@
 "use client";
 
 export default function SelectedSensors({ selectedSensors = [], setSelectedSensors }) {
-  // remove a sensor by id
+  //remove a sensor by id
   const removeSensor = (code) => {
     setSelectedSensors(selectedSensors.filter(sensor => sensor.code !== code));
   };

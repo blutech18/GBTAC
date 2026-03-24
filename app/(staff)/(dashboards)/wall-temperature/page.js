@@ -122,7 +122,7 @@ export default function WallTempDashboard() {
     };
   });
 
-  const { errors, setErrors, validate, validateAll } = useDateValidation({
+  const { errors, validateAll } = useDateValidation({
     earliestDate: "2018-10-13",
     latestDate: "2026-01-07",
   });
@@ -133,6 +133,13 @@ export default function WallTempDashboard() {
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
+
+  //validate dates on every change to show errors immediately
+  useEffect(() => {
+    if (state.fromDate && state.toDate) {
+      validateAll(state.fromDate, state.toDate);
+    }
+  }, [  state.fromDate, state.toDate, validateAll]);
 
   const floorFiltered = !appliedState
     ? []
@@ -234,8 +241,11 @@ export default function WallTempDashboard() {
             fromDate={fromDate}
             toDate={toDate}
             errors={errors}
-            onDateChange={(field, value, otherDate) => {
-              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
+            onDateChange={(field, value) => {
+              setState((prev) => ({
+                ...prev,
+                [field === "from" ? "fromDate" : "toDate"]: value,
+              }));
             }}
             setDate={({ fromDate, toDate }) => {
               const nextState = { ...state, fromDate, toDate };

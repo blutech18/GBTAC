@@ -21,7 +21,8 @@ export default function Page() {
   const today = new Date().toISOString().split("T")[0];
 
   const STORAGE_KEY = "dashboard-natural-gas";
-   // Unit state: kWh or W
+  
+  //Unit state: kWh or W
   const [unit, setUnit] = useState("kWh");
 
   const [state, setState] = useState(() =>
@@ -41,7 +42,7 @@ export default function Page() {
     return null;
   });
   
-  const { errors, setErrors, validate, validateAll } = useDateValidation({
+  const { errors, validateAll } = useDateValidation({
     earliestDate: "2023-01-04",
     latestDate: today,
   });
@@ -49,6 +50,14 @@ export default function Page() {
   useEffect(() => {
     saveDashboardState(STORAGE_KEY, state);
   }, [state]);
+
+  //Validate dates on every change to show errors immediately
+  useEffect(() => {
+    if (state.fromDate && state.toDate) {
+      validateAll(state.fromDate, state.toDate);
+    }
+  }, [  state.fromDate, state.toDate, validateAll]);
+
 
 
   const handleSaveScreen = () => {
@@ -108,9 +117,9 @@ export default function Page() {
             fromDate={state.fromDate}
             toDate={state.toDate}
             errors={errors}
-            onDateChange={(field, value, otherDate) => {
-              setErrors((prev) => ({ ...prev, [field]: validate(field, value, otherDate) }));
-            }}
+            onDateChange={(field, value) => {
+               setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
+              }}
             setDate={({ fromDate, toDate }) => {
               const nextState = { ...state, fromDate, toDate };
               setState(nextState);
@@ -122,9 +131,6 @@ export default function Page() {
               }
             }}
           />
-          <div className="mb-6">
-  
-          </div>
         </div>
 
         <InfoCard
@@ -163,12 +169,12 @@ export default function Page() {
           )}
           
             <div className="flex justify-end gap-4 mt-3">
-                <button
-                  onClick={handleSaveScreen}
-                  className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
-                >
-                  Save Screen
-                </button>
+              <button
+                onClick={handleSaveScreen}
+                className="px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition"
+              >
+                Save Screen
+              </button>
             <ExportPDFButton chartRef={chartRef2} fileName="natural-gas-chart-2" />
           </div>
         </div>
