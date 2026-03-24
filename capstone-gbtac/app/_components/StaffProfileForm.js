@@ -191,6 +191,7 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
     try {
       const emailChanged = formData.email !== originalEmail;
       let emailVerificationSent = false;
+      let passwordChanged = false;
 
       // 1. If email changed, send verification email via Firebase Auth
       // Note: We don't update Firestore email until verification is complete
@@ -210,16 +211,17 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
           );
           await reauthenticateWithCredential(currentUser, credential);
           
-          // Send verification email to new address
-          await verifyBeforeUpdateEmail(currentUser, formData.email);
-          emailVerificationSent = true;
+          // Store the old email in localStorage so we can update backend after verification
+          localStorage.setItem('emailChangeOldEmail', currentUser.email);
           
-          // Show message and don't update Firestore yet
-          setNotificationMsg("Verification email sent! Please check your new email and click the verification link. Your email will be updated after verification.");
-          setShowNotification(true);
-          setTimeout(() => setShowNotification(false), 8000);
-          setSaving(false);
-          return; // Exit early - don't update Firestore until verified
+          // Send verification email to new address with action code settings
+          const actionCodeSettings = {
+            url: window.location.origin + '/auth-action',
+            handleCodeInApp: false,
+          };
+          
+          await verifyBeforeUpdateEmail(currentUser, formData.email, actionCodeSettings);
+          emailVerificationSent = true;
         } catch (emailError) {
           console.error("Email verification error:", emailError);
           if (emailError.code === "auth/email-already-in-use") {
@@ -235,23 +237,25 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
       }
 
       // 2. Save profile info to Firestore via backend (only if email didn't change)
-      const res = await fetch(
-        `http://localhost:8000/auth/staff/${encodeURIComponent(userEmail)}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: originalEmail, // Keep original email in Firestore until verified
-            role: viewerRole,
-            active: formData.status === "Active",
-          }),
+      if (!emailChanged) {
+        const res = await fetch(
+          `http://localhost:8000/auth/staff/${encodeURIComponent(userEmail)}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: originalEmail,
+              role: viewerRole,
+              active: formData.status === "Active",
+            }),
+          }
+        );
+        if (!res.ok) {
+          const body = await res.json();
+          throw new Error(body.detail ?? "Failed to save profile");
         }
-      );
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.detail ?? "Failed to save profile");
       }
 
       // 3. If password change requested (staff only), update Firebase Auth password
@@ -259,6 +263,7 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
         const currentUser = auth.currentUser;
         if (currentUser) {
           await updatePassword(currentUser, formData.newPassword);
+          passwordChanged = true;
         }
         // Reset password fields after successful update
         setFormData((prev) => ({
@@ -270,24 +275,19 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
         setCurrentPasswordVerified(false);
       }
 
-      // Update original email after successful save
-      if (emailChanged) {
-        setOriginalEmail(formData.email);
-      }
-
       // Set success message
       let successMsg = "Profile updated successfully!";
-      if (emailVerificationSent && formData.newPassword) {
-        successMsg = "Profile and password updated! Please check your new email to verify the email change.";
+      if (emailVerificationSent && passwordChanged) {
+        successMsg = "Password updated! Verification email sent to your new address. Check your inbox (including spam) and click the link. Continue logging in with your current email until verified.";
       } else if (emailVerificationSent) {
-        successMsg = "Profile updated! Please check your new email to verify the email change.";
-      } else if (formData.newPassword) {
+        successMsg = "Verification email sent! Check your new email inbox (including spam folder) and click the verification link. Your email will be updated after verification. Continue logging in with your current email.";
+      } else if (passwordChanged) {
         successMsg = "Profile and password updated successfully!";
       }
       setNotificationMsg(successMsg);
 
       setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 6000);
+      setTimeout(() => setShowNotification(false), 8000);
     } catch (err) {
       setSaveError(err.message);
     } finally {
@@ -393,8 +393,8 @@ export default function StaffProfileForm({ viewerRole = "staff", userEmail = "" 
             className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
           />
           {formData.email !== originalEmail && (
-            <p className="text-xs text-blue-600 mt-1">
-              ⚠️ After saving, you'll receive a verification email. Until you verify, continue logging in with your current email: {originalEmail}
+            <p className="text-xs text-blue-600 mt-1 bg-blue-50 p-2 rounded">
+              ⚠️ After saving, you'll receive a verification email at <strong>{formData.email}</strong>. Click the link to verify. Continue logging in with <strong>{originalEmail}</strong> until verified.
             </p>
           )}
           {errors.email && (
