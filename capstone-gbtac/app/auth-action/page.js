@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { applyActionCode, checkActionCode } from "firebase/auth";
+import { applyActionCode, checkActionCode, signOut } from "firebase/auth";
 import { auth } from "@/app/_utils/firebase";
 import Link from "next/link";
 
@@ -114,8 +114,15 @@ function AuthActionContent() {
               }
             }
             
+            // Sign out the user so they can log in with new email
+            try {
+              await auth.signOut();
+            } catch (signOutError) {
+              console.error("Failed to sign out:", signOutError);
+            }
+            
             setStatus("success");
-            setMessage("Email changed successfully! You can now log in with your new email address.");
+            setMessage("Email changed successfully! Please log in with your new email address.");
             break;
 
           case "resetPassword":
