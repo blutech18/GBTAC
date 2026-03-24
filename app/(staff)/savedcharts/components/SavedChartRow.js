@@ -1,0 +1,1 @@
+//Contains one saved chart item in the list of saved charts

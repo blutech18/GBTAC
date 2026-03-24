@@ -1,0 +1,1 @@
+//Component to display an empty state when there are no saved charts to show
