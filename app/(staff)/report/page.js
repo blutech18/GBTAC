@@ -10,14 +10,14 @@ import { useState } from "react";
 export default function Page() {
 
     const [selectedSensors, setSelectedSensors] = useState([]);
-    const [from, setFrom] = useState("");
-    const [to, setTo] = useState("");
-    const [timeInterval, setTimeInterval] = useState("hourly");
+    const [from, setFrom] = useState("2025-12-31");
+    const [to, setTo] = useState("2025-12-31");
+    const [timeInterval, setTimeInterval] = useState("none");
     const [pdfBlob, setPdfBlob] = useState(null);
 
     const handleGenerate = async () => {
         console.log(selectedSensors);
-        const res = await fetch(`http://localhost:8000/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`, {credentials: "include",});
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`, {credentials: "include",});
         const pdf = await res.blob();
         setPdfBlob(pdf);
 

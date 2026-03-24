@@ -12,16 +12,22 @@ import LineHandler from "@/app/_components/graphs/handlers/LineHandler";
 import PieHandler from "@/app/_components/graphs/handlers/PieHandler";
 import InfoCard from "@/app/_components/InfoCard";
 
+import { getDataRange } from "@/app/_utils/get-data-range";
+
+const dataRange = await getDataRange();
+// defaults
+const stateDefaults = { fromDate: dataRange.newest, toDate: dataRange.newest}
+
 const STORAGE_KEY = "dashboard-energy";
 
 export default function EnergyDashboard() {
   const [state, setState] = useState(() =>
-    loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" })
+    loadDashboardState(STORAGE_KEY, stateDefaults)
   );
 
   //initialize from saved state so charts load immediately on page load
   const [appliedState, setAppliedState] = useState(() => {
-    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    const saved = loadDashboardState(STORAGE_KEY, stateDefaults);
     if (saved.fromDate && saved.toDate) {
       return { fromDate: saved.fromDate, toDate: saved.toDate };
     }
@@ -31,9 +37,8 @@ export default function EnergyDashboard() {
   //errors from date validation
   const { errors, setErrors, validate, validateAll } = useDateValidation({
     earliestDate: "2019-02-13",
-    latestDate: "2026-01-8",
+    latestDate: dataRange.forecast,
   });
-
 
   const parseLocalDate = (dateStr) => {
     if (!dateStr) return null;
@@ -81,7 +86,7 @@ export default function EnergyDashboard() {
   ])
 
   const fetchStats = async() => {
-    const res = await fetch(`http://localhost:8000/energy/cards?start=${appliedState?.fromDate}&end=${appliedState?.toDate}`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/energy/cards?start=${appliedState?.fromDate}&end=${appliedState?.toDate}`, {credentials: "include"});
     const data = await res.json();
     setStats(data);
   }
@@ -186,7 +191,7 @@ export default function EnergyDashboard() {
           startDate={appliedState?.fromDate}
           endDate={appliedState?.toDate}
           graphTitle={`Solar Panel Generation, ${appliedState?.fromDate} to ${appliedState?.toDate < "2025-12-31" ? appliedState?.toDate : "2025-12-31"}`}
-          label={"kWh"} // **check: unsure if right unit
+          label={"Wh"} // **check: unsure if right unit
         />
       </div>
       <div className="flex justify-end mt-6">

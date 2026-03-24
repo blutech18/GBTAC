@@ -12,6 +12,16 @@ import ExportPDFButton from "@/app/_components/ExportPDFButton";
 import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 import { FiInfo } from "react-icons/fi";
 import { useRef } from "react";
+import { getDataRange } from "@/app/_utils/get-data-range";
+
+const dataRange = await getDataRange();
+// defaults
+const stateDefaults = {
+  fromDate: dataRange.newest, 
+  toDate: dataRange.newest,
+  floors: [],
+  orientations: [],
+}
 
 export default function Page() {
   const chartRef = useRef(null);
@@ -25,16 +35,11 @@ export default function Page() {
   const [unit, setUnit] = useState("kWh");
 
   const [state, setState] = useState(() =>
-    loadDashboardState(STORAGE_KEY, {
-      fromDate: "",
-      toDate: "",
-      floors: [],
-      orientations: [],
-    }),
+    loadDashboardState(STORAGE_KEY, stateDefaults),
   );
    //initialize from saved state so it loads immediately
   const [appliedState, setAppliedState] = useState(() => {
-    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    const saved = loadDashboardState(STORAGE_KEY, { fromDate: stateDefaults.fromDate, toDate: stateDefaults.toDate });
     if (saved.fromDate && saved.toDate) {
       return { fromDate: saved.fromDate, toDate: saved.toDate };
     }
@@ -43,7 +48,7 @@ export default function Page() {
   
   const { errors, setErrors, validate, validateAll } = useDateValidation({
     earliestDate: "2023-01-04",
-    latestDate: today,
+    latestDate: dataRange.newest,
   });
 
   useEffect(() => {

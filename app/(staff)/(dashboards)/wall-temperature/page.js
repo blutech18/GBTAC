@@ -7,10 +7,12 @@ import DatePicker from "../../../_components/DatePicker";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import { useDateValidation } from "../../../_components/hooks/useDateValidation";
+import { getDataRange } from "@/app/_utils/get-data-range";
 
+const dataRange = await getDataRange();
 const STORAGE_KEY = "dashboard-wall-temp";
 const DEFAULT_FROM_DATE = "2018-10-13";
-const DEFAULT_TO_DATE = "2025-12-31";
+const DEFAULT_TO_DATE = dataRange.newest;
 
 // Mapping for the 24 Wall sensors derived from database naming
 const FLOOR_SENSOR_MAP = {
@@ -124,7 +126,7 @@ export default function WallTempDashboard() {
 
   const { errors, setErrors, validate, validateAll } = useDateValidation({
     earliestDate: "2018-10-13",
-    latestDate: "2026-01-07",
+    latestDate: dataRange.forecast,
   });
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
