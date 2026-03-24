@@ -3,7 +3,8 @@ import pandas as pd
 from helpers.forecasting import get_forecast
 from pathlib import Path 
 from helpers.rate_limit import limiter
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
+from helpers.auth_dependencies import get_current_user_from_session
 from datetime import datetime
 
 router = APIRouter(prefix="/graphs")
@@ -37,14 +38,14 @@ def load_natural_gas():
     return monthly
 
 # url format "http://127.0.0.1:8000/graphs/data/{sensor code}?start={start date}&end={end date}"
-# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-14
+# example url: http://127.0.0.1:8000/graphs/data/20000_TL92?start=2025-06-13&end=2025-06-18&agg=D
 # - code is the end part of the sensor name (not including the 'SaitSolarLab' part), mandatory
 # - start and end date, YYYY-MM-DD
 # - agg is the time range, H for hourly, D for daily, W for weekly, M for monthly, Y for yearly
 # - type is for kind of aggregation, mean or sum
 @router.get("/data/{sensor_code}")
 @limiter.limit("10/minute")
-async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="none", type="mean"):
+async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="none", type="mean", _user=Depends(get_current_user_from_session)):
     
     #validation:
     san_code = validateCode(sensor_code)
@@ -80,108 +81,6 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
 
-    if agg == "none":
-        try:
-            start_dt = datetime.strptime(str(san_start), "%Y-%m-%d")
-            end_dt = datetime.strptime(str(san_end), "%Y-%m-%d")
-            days = (end_dt - start_dt).days + 1
-        except Exception:
-            days = 1
-
-        if san_end == san_start:
-            query = f"""
-                SELECT DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) = ?
-                GROUP BY DATEADD(minute, (DATEDIFF(minute, 0, ts) / 15) * 15, 0)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start,))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
-
-        elif days <= 60:
-            query = f"""
-                SELECT CAST(ts AS DATE) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) >= ?
-                AND CAST(ts AS DATE) <= ?
-                GROUP BY CAST(ts AS DATE)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start, san_end))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
-
-        elif days <= 730:
-            query = f"""
-                SELECT DATEADD(month, DATEDIFF(month, 0, ts), 0) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) >= ?
-                AND CAST(ts AS DATE) <= ?
-                GROUP BY DATEADD(month, DATEDIFF(month, 0, ts), 0)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start, san_end))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
-
-        else:
-            query = f"""
-                SELECT DATEFROMPARTS(YEAR(ts), 1, 1) AS ts,
-                       AVG(CAST({column_name} AS FLOAT)) AS data
-                FROM GBTAC_data
-                WHERE {column_name} IS NOT NULL
-                AND CAST(ts AS DATE) >= ?
-                AND CAST(ts AS DATE) <= ?
-                GROUP BY YEAR(ts)
-                ORDER BY ts
-            """
-            curs.execute(query, (san_start, san_end))
-            rows = curs.fetchall()
-
-            res = []
-            for row in rows:
-                res.append({
-                    "ts": row[0],
-                    "data": row[1]
-                })
-
-            conn.close()
-            return res
 
     query = f"""
         SELECT ts, {column_name}
@@ -212,7 +111,7 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
     
     # forecast data if end date is in the future
     if san_end > NEWEST:
-        forecasted_data = await get_forecast(san_code, NEWEST, san_end)
+        forecasted_data = get_forecast(san_code, NEWEST, san_end)
         res = res + forecasted_data
 
     # aggregates data
@@ -223,18 +122,18 @@ async def get_data(request: Request, sensor_code, start=NEWEST, end="", agg="non
         df = df.set_index("ts")
 
         if type == "mean":
-            df_agg = df.resample(agg).mean()
+            df_agg = df.resample(agg.lower()).mean()
         else:
-            df_agg = df.resample(agg).sum()
-            
-        # df_agg = df_agg.dropna()
+            df_agg = df.resample(agg.lower()).sum()
+
+        df_agg = df_agg.astype(object).where(pd.notna(df_agg), other=None)
         res = df_agg.reset_index().to_dict(orient="records")
 
     return res
 
 @router.get("/total-energy/{sensor_code}")
 @limiter.limit("10/minute")
-async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""):
+async def total_energy(request: Request, sensor_code, start="2023-01-01", end="", _user=Depends(get_current_user_from_session)):
     # validation
     san_code = validateCode(sensor_code)
     if san_code == False:
@@ -318,7 +217,7 @@ async def total_energy(request: Request, sensor_code, start="2023-01-01", end=""
 # example url: http://127.0.0.1:8000/graphs/name/20000_TL92
 @router.get("/name/{sensor_code}")
 @limiter.limit("30/minute")
-async def get_name(request: Request, sensor_code):
+async def get_name(request: Request, sensor_code, _user=Depends(get_current_user_from_session)):
 
     # validation
     san_code = validateCode(sensor_code)
@@ -345,7 +244,7 @@ async def get_name(request: Request, sensor_code):
 
 @router.get("/codesnames")
 @limiter.limit("30/minute")
-async def get_codesnames(request: Request):
+async def get_codesnames(request: Request, _user=Depends(get_current_user_from_session)):
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
@@ -371,7 +270,7 @@ async def get_codesnames(request: Request):
     return res
 
 @router.get("/newest")
-async def get_newest():
+async def get_newest(_user=Depends(get_current_user_from_session)):
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()
@@ -392,7 +291,7 @@ async def get_newest():
     return res.date()
 
 @router.get("/oldest")
-async def get_oldest():
+async def get_oldest(_user=Depends(get_current_user_from_session)):
     # open connection
     conn = pyodbc.connect(connection_str)
     curs = conn.cursor()

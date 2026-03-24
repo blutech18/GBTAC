@@ -2,10 +2,18 @@
 //The component also includes basic styling to match the overall design of the application.
 //This component also has two other dropdowns containing the times (Hourly, Daily, Monthly, Yearly) and the aggregation.
 "use client";
+import { useDateValidation } from "../hooks/useDateValidation";
 import { useState } from "react";
 
 export default function DateRange({ dateRange, setDateRange, aggSettings, setAggSettings }) {
-  const [errors, setErrors] = useState({});
+
+  const { errors, setErrors, validate} = useDateValidation({
+    earliestDate: "2017-01-01",
+    latestDate: "2025-12-31"
+  });
+
+  const [aggErrors, setAggErrors] = useState({});
+
   const safeDateRange = {
     from: dateRange?.from ?? "",
     to: dateRange?.to ?? ""
@@ -15,33 +23,6 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
     type: aggSettings?.type ?? "mean"
   };
 
-  const validate = (field, value, otherDate) => {
-    if (field === "from") {
-      if (!value) return "From date is required";
-      if (otherDate && value > otherDate) return "From date must be before To date";
-    }
-    if (field === "to") {
-      if (!value) return "To date is required";
-      if (otherDate && value < otherDate) return "To date must be after From date";
-    }
-    if (field === "from") {
-      if (!value) return "i  date is required";
-      if (otherDate && value > otherDate) return "From date must be before To date";
-      const today = new Date();
-      const from = new Date(value);
-      const diffYears = (today - from) / (1000 * 60 * 60 * 24 * 365);
-      if (diffYears > 8) return "Start date cannot be more than 8 years ago";
-    }
-    if (field === "to") {
-    if (!value) return "To date is required";
-    if (otherDate && value < otherDate) return "To date must be after From date";
-    const maxToDate = new Date("2025-12-31");
-    const toDate = new Date(value);
-    if (toDate > maxToDate) return "To date cannot be past December 31, 2025";
-  }
-    return null;
-  };
-
   const handleChange = (field, value) => {
     if (!setDateRange) return;
     setDateRange(prev => ({ ...prev, [field]: value }));
@@ -49,11 +30,19 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
     setErrors(prev => ({ ...prev, [field]: validate(field, value, otherDate) }));
   };
 
+  const handleAggChange = (field, value) => {
+  setAggSettings?.(prev => ({ ...prev, [field]: value }));
+  if (field === "time" && !["H", "D", "M", "Y"].includes(value)) {
+    setAggErrors(prev => ({ ...prev, time: "Invalid time interval" }));
+  } else if (field === "type" && !["mean", "sum"].includes(value)) {
+    setAggErrors(prev => ({ ...prev, type: "Invalid aggregation type" }));
+  } else {
+    setAggErrors(prev => ({ ...prev, [field]: null }));
+  }
+};
+
   return (
-    <div
-      style={{ fontFamily: "var(--font-titillium)" }}
-      className="bg-white rounded-sm shadow-sm p-4 w-full h-full"
-    >
+    <div className="bg-white rounded-sm shadow-sm p-4 w-full h-full">
       <h2 className="font-semibold text-black mb-4">Time and Aggregation Settings</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -90,26 +79,32 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
         <label className="text-sm text-black mb-1">Time Interval</label>
         <select
           value={safeAggSettings.time}
-          onChange={(e) => setAggSettings?.(prev => ({...prev, time: e.target.value}))}
-          className="border p-2 rounded text-gray-500"
+          onChange={(e) => handleAggChange("time", e.target.value)}
+          className={`border p-2 rounded text-gray-500 ${aggErrors.time ? "border-red-500" : ""}`}
         >
           <option value="H">Hourly</option>
           <option value="D">Daily</option>
           <option value="M">Monthly</option>
           <option value="Y">Yearly</option>
         </select>
+        {aggErrors.time && (
+          <p className="text-red-500 text-xs mt-1">{aggErrors.time}</p>
+        )}
       </div>
 
       <div className="flex flex-col">
         <label className="text-sm text-black mb-1">Aggregation</label>
         <select
           value={safeAggSettings.type}
-          onChange={(e) => setAggSettings?.(prev => ({...prev, type: e.target.value}))}
-          className="border p-2 rounded text-gray-500"
+          onChange={(e) => handleAggChange("type", e.target.value)}
+          className={`border p-2 rounded text-gray-500 ${aggErrors.type ? "border-red-500" : ""}`}
         >
           <option value="mean">Average</option>
           <option value="sum">Sum</option>
         </select>
+        {aggErrors.type && (
+          <p className="text-red-500 text-xs mt-1">{aggErrors.type}</p>
+        )}
       </div>
     </div>
 

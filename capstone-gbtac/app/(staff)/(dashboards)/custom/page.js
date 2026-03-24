@@ -20,7 +20,7 @@ export default function Page() {
 
   //State variables
   const [currentChartId, setCurrentChartId] = useState(null);
-  // Temp state (user edits these before clicking Apply)
+  //Temp state (user edits these before clicking Apply)
   const [tempChartSettings, setTempChartSettings] = useState({
     chartTitle: "",
     chartType: "line",
@@ -53,28 +53,24 @@ export default function Page() {
     // {code: "30000_TL253", name: "Rooftop"}
   ]);
 
-  
-  
 
-  
-  // full list of sensors and codes
+  //full list of sensors and codes
   const [sensorList, setSensorList] = useState([])
   const fetchSensors = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/graphs/codesnames")
+      const res = await fetch("http://localhost:8000/graphs/codesnames", {credentials: "include",})
       const data = await res.json()
       setSensorList(data)
     }catch (e){
       console.log(e)
     }
   }
-
   useEffect(()=> {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSensors()
   }, [])
 
-  // Reset chart to default
+  //Reset chart to default
   const resetChart = () => {
     setCurrentChartId(null);
     setTempChartSettings({
@@ -94,7 +90,7 @@ export default function Page() {
     setDateRange({ from: "", to: "" });
     setAggregationSettings({time: "H", type: "mean"})
 
-    // Also reset temp state
+    //Also reset temp state
     setTempChartSettings({
       chartTitle: "",
       chartType: "line",
@@ -106,7 +102,7 @@ export default function Page() {
     setTempAggregationSettings({time: "H", type: "mean"})
   }
 
-  // Load a chart into state
+  //Load a chart into state
   const loadChart = (chart) => {
     setError("");
     const chartSensors = Array.isArray(chart?.selectedSensors)
@@ -128,7 +124,7 @@ export default function Page() {
     setDateRange({ from: chartFrom, to: chartTo });
     setAggregationSettings({time: chartAggTime, type: chartAggType})
 
-    // Also update temp state so the inputs match loaded chart
+    //Also update temp state so the inputs match loaded chart
     setTempChartSettings(chart.settings ?? {
       chartTitle: "",
       chartType: "line",
@@ -140,8 +136,24 @@ export default function Page() {
     setTempAggregationSettings({time: chartAggTime, type: chartAggType})
   }
 
-  // Apply button handler
+  //Apply button handler
   const handleApply = () => {
+    if (
+      !tempChartSettings.chartTitle ||
+      !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.chartTitle) ||
+      tempChartSettings.chartTitle.length > 50 ||
+      (tempChartSettings.xAxisTitle && !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.xAxisTitle)) ||
+      (tempChartSettings.yAxisTitle && !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.yAxisTitle)) ||
+      !["line", "bar"].includes(tempChartSettings.chartType)
+    ) {
+      setError("Please handle all errors in Chart Settings before applying.");
+      return;
+    }
+    if (!["H", "D", "M", "Y"].includes(tempAggregationSettings.time) ||
+    !["mean", "sum"].includes(tempAggregationSettings.type)) {
+      setError("Please handle all errors in Time and Aggregation Settings before applying.");
+      return;
+    }
     if (tempSelectedSensors.length === 0) {
       setError("Please select at least one sensor");
       return;
@@ -154,7 +166,7 @@ export default function Page() {
       setError("Start date cannot be after end date.");
       return;
     }
-    // If all validations pass, update the main state with temp values
+    //If all validations pass, update the main state with temp values
     setChartSettings(tempChartSettings);
     setSelectedSensors(tempSelectedSensors);
     setDateRange(tempDateRange);
@@ -187,7 +199,7 @@ export default function Page() {
 
   return (
     <DashboardLayout title="">
-      <div className="mx-auto w-full max-w-7xl -mt-2 md:-mt-4">
+      <div className="w-full -mt-2 md:-mt-4">
         <h1 className="text-3xl font-semibold text-gray-800 mb-6">
           Create Custom Chart
         </h1>

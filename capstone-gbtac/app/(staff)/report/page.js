@@ -10,16 +10,23 @@ import { useState } from "react";
 export default function Page() {
 
     const [selectedSensors, setSelectedSensors] = useState([]);
+  const [chartTitle, setChartTitle] = useState("");
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
     const [timeInterval, setTimeInterval] = useState("hourly");
     const [pdfBlob, setPdfBlob] = useState(null);
 
-    const handleGenerate = () => {
-        console.log("Generating report with:", { selectedSensors, from, to, timeInterval });
+    //calls backend API returning the blob to display generated report
+    const handleGenerate = async () => {
+        console.log(selectedSensors);
+      const res = await fetch(`http://127.0.0.1:8000/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`);
+        const pdf = await res.blob();
+        setPdfBlob(pdf);
+
     }
     const handleClear = () => {
         setSelectedSensors([]);
+      setChartTitle("");
         setFrom("");
         setTo("");
         setTimeInterval("hourly");
@@ -27,25 +34,27 @@ export default function Page() {
     }
   
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 text-[#212529]" style={{ fontFamily: "var(--font-titillium)" }}>
+    <div className="flex flex-col min-h-screen bg-gray-100 text-[#212529]">
       <SecondaryNav
         displayLogout={true}
         displayProfile={true}
         displayLogin={false}
       />
-      <Navbar displayDashboards displayHome={false} displayAbout={false} />
+      <Navbar displayDashboards displayHome={false} displayAbout={false} displayReports={true} />
       <main className="flex-1 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 py-8">
         <h1 className="text-3xl font-semibold mb-6 text-[#212529]">
           Reports
         </h1>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="col-span-1 p-6 bg-white shadow-md rounded-xl border space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="col-span-2 md:col-span-1 p-6 bg-white shadow-md rounded-xl border space-y-6">
             <div className="text-xl font-semibold mb-4 text-[#212529]">
               Report Controls
             </div>
             <ReportControls
               selectedSensors={selectedSensors}
               onSensorsChange={setSelectedSensors}
+              chartTitle={chartTitle}
+              onChartTitleChange={setChartTitle}
               from={from}
               onFromChange={setFrom}
               to={to}
@@ -55,7 +64,7 @@ export default function Page() {
               onGenerate={handleGenerate}
             />
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 flex">
             <PDFViewer pdfBlob={pdfBlob} onClear={handleClear} />
           </div>
         </div>

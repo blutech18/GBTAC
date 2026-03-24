@@ -20,7 +20,7 @@ export default function CreateStaffForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(formData);
-    // TODO: Connect to API
+    //TODO: Connect to API
   };
 
   return (

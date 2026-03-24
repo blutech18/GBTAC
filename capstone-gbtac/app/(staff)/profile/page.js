@@ -9,18 +9,19 @@ import Link from "next/link";
 import { useAuth } from "../../_utils/auth-context";
 
 export default function ProfilePage() {
-  const { role, user } = useAuth();
+  const { role } = useAuth(); 
   const isAdmin = role === "admin";
-  const userEmail = user?.email ?? "";
 
 
   return (
-    <main
-      className="min-h-screen bg-gray-50 flex flex-col"
-      style={{ fontFamily: "var(--font-titillium)" }}
-    >
+    <main className="min-h-screen bg-gray-50 flex flex-col">
       <SecondaryNav displayLogin={false} displayLogout displayProfile={true} />
-      <Navbar />
+      <Navbar 
+        displayHome={!isAdmin} 
+        displayAbout={false} 
+        displayAccountMngmt={isAdmin} 
+        displayDashboardMngmt={isAdmin} 
+      />
 
       <div className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
@@ -37,7 +38,7 @@ export default function ProfilePage() {
           </h1>
 
           <div className="bg-white shadow-md rounded-2xl p-8">
-            <StaffProfileForm viewerRole={role} userEmail={userEmail} />
+            <StaffProfileForm viewerRole={role} />
           </div>
 
         </div>

@@ -12,10 +12,14 @@ def initialize_firebase_admin():
         if not service_account_path:
             raise ValueError("FIREBASE_SERVICE_ACCOUNT_PATH is not set")
 
+        print("Using Firebase service account path:", service_account_path)
+
         cred = credentials.Certificate(service_account_path)
         firebase_admin.initialize_app(cred)
 
-    return firebase_admin.get_app()
+    app = firebase_admin.get_app()
+    print("Firebase Admin project:", app.project_id)
+    return app
 
 def get_firebase_auth():
     initialize_firebase_admin()

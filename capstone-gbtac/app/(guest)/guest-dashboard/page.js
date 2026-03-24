@@ -18,42 +18,23 @@ export default function GuestDashboard() {
     setIsOpen(false);
   };
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-black font-sans">
+    <div className="flex flex-col min-h-screen bg-gray-100 font-sans">
       <SecondaryNav displayDashboards={true} />
       <Navbar />
       <div className="bg-gray-100">
         <Breadcrumbs />
       </div>
       <main className="flex-1 sm:px-6 md:px-10 lg:px-16 xl:px-24 2xl:px-32 px-4 py-8">
-        <section className="mx-auto bg-white dark:bg-neutral-900 rounded-md shadow-sm px-12 py-16">
+        <section className="mx-auto bg-white rounded-md shadow-sm px-12 py-16">
           {/* Title */}
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 mb-6">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
             GBTAC Graphs
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl md:text-2xl font-light text-gray-600 dark:text-gray-300 mb-10 max-w-3xl">
+          <p className="text-xl md:text-2xl font-light text-gray-600 mb-10 max-w-3xl">
             Explore real-time and historical building performance analytics.
           </p>
-
-          {/* CTA / Navigation placeholder
-          <div className="mb-16 flex flex-col sm:flex-row flex-wrap gap-6">
-            <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
-              Ambient Temperature
-            </button>
-            <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
-              Water Level
-            </button>
-            <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
-              Wall Temperature
-            </button>
-            <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
-              Natural Gas
-            </button>
-            <button className="px-6 py-3 bg-[#005EB8] text-white rounded-sm hover:bg-[#004080] font-bold transition">
-              Energy
-            </button>
-          </div> */}
 
           <div className="w-full py-6 pb-8 z-10 flex justify-center sm:justify-start">
             <div className="relative inline-block">
@@ -132,7 +113,7 @@ export default function GuestDashboard() {
           {/* Sample image placeholder for graphs */}
           <div className="mt-10 relative">
             <Image
-              src="/graph-placeholder.jpg" // replace with actual graph images later
+              src="/graph-placeholder.jpg"
               alt="Graph Placeholder"
               width={1200}
               height={700}

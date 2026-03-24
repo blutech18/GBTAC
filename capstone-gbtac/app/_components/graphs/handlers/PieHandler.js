@@ -7,9 +7,16 @@ import PieChart from "../PieChart"
 
 Chart.register(CategoryScale);
 
-const API_ENDPOINT = "http://127.0.0.1:8000";
+const API_ENDPOINT = "http://localhost:8000";
 
 export default function PieHandler({sensorList, startDate, endDate, graphTitle, label}){
+    const canFetch =
+        Array.isArray(sensorList) &&
+        sensorList.length > 0 &&
+        startDate &&
+        endDate;
+
+    const sensorKey = sensorList.join(",");
     
     // sensor id (array position) and sensor code (part after SaitSolarLab_)
     const [sensors, setSensors] = useState(() =>
@@ -22,26 +29,28 @@ export default function PieHandler({sensorList, startDate, endDate, graphTitle, 
     );
     
     const [fetched, setFetched] = useState(false); // if data has been fetched or not
+    const [loading, setLoading] = useState(true); // loading state for UI
     
     // takes sensors array and fetches data based off of codes, puts it in the sensorData array
     // ** NOTE: add warning if no data is available (no sensor data during time period) 
-    const fetchData = async () => {
+    const fetchData = async (list = sensorList) => {
         try {
-            
+            setLoading(true);
+            setFetched(false);
             const withData = await Promise.all(
-                sensors.map(async (sensor) =>{
-                    const res = await fetch(`${API_ENDPOINT}/energy/sum/${sensor.code}?start=${startDate}&end=${endDate}`);
+                list.map(async (code, i) =>{
+                    const res = await fetch(`${API_ENDPOINT}/energy/sum/${code}?start=${startDate}&end=${endDate}`, {credentials: "include",});
                     const data = await res.json();
-                    let name = sensor.code
+                    let name = code
                     try{
-                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${sensor.code}`);
+                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`, {credentials: "include",});
                         const data = await res.json();
                         name = data
                     } catch {
                         console.log("name error")
                     }
 
-                    return {...sensor, sum: data, name: name}
+                    return { id: i, code, name, sum: data }
                 })
             )
             setSensors(withData)
@@ -50,14 +59,22 @@ export default function PieHandler({sensorList, startDate, endDate, graphTitle, 
         } catch(e){
             console.log("Error fetching data");
             // ** should probably display an error to user ?
+        } finally {
+            setLoading(false);
         }
     }
 
 
     // fetches data on render and date changes
     useEffect(() => {
-        fetchData();
-    }, [startDate, endDate]);
+        if (!canFetch) {
+            setSensors(sensorList.map((code, i) => ({ id: i, code, name: null, sum: 0 })));
+            setFetched(false);
+            setLoading(false);
+            return;
+        }
+        fetchData(sensorList);
+    }, [sensorKey, startDate, endDate, canFetch]);
 
     
     // sets defaults
@@ -102,10 +119,36 @@ export default function PieHandler({sensorList, startDate, endDate, graphTitle, 
         },
     };
 
+    if (!canFetch) {
+        return (
+            <div className="relative min-h-75 flex items-center justify-center text-gray-400 text-sm">
+                Graph Placeholder
+            </div>
+        );
+    }
+
+    const hasData = sensors.some((sensor) => sensor.sum != null);
+
     // passes graph info onto LineChart component and displays it
     return (
-        <div>
-            <PieChart options={graphOptions} data={graphData}/>
+        <div className="relative min-h-75">
+            {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10 rounded">
+                    <div className="flex flex-col items-center gap-2 text-gray-600">
+                        <svg className="animate-spin h-8 w-8 text-[#6D2077]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                        <span className="text-sm font-medium">Loading data...</span>
+                    </div>
+                </div>
+            )}
+            {!loading && fetched && !hasData && (
+                <div className="flex items-center justify-center h-75 text-gray-400 text-sm">
+                    No data available for the selected date range.
+                </div>
+            )}
+            {!loading && hasData && <PieChart options={graphOptions} data={graphData}/>}
         </div>
     )
 }

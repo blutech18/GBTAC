@@ -10,7 +10,7 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 
 Chart.register(CategoryScale, TimeScale, zoomPlugin);
 
-const API_ENDPOINT = "http://127.0.0.1:8000";
+const API_ENDPOINT = "http://localhost:8000";
 
 export default function LineHandler({
     chartType,
@@ -69,6 +69,20 @@ export default function LineHandler({
     const [yMin, setYMin] = useState();
     const [yMax, setYMax] = useState();
 
+    const getAuthHeaders = async () => {
+        const user = auth.currentUser;
+
+        if (!user) {
+            throw new Error("No authenticated user found");
+        }
+
+        const token = await user.getIdToken();
+
+        return {
+            Authorization: `Bearer ${token}`,
+        };
+    };
+
     const fetchData = async (list = sensorList, from = startDate, to = endDate) => {
         try {
             setLoading(true);
@@ -77,8 +91,12 @@ export default function LineHandler({
             if (aggType) query.set("type", aggType);
             const results = await Promise.all(
                 list.map((code) =>
-                    fetch(`${API_ENDPOINT}/graphs/data/${code}?${query}`)
-                        .then((r) => r.json())
+                    fetch(`${API_ENDPOINT}/graphs/data/${code}?${query}`, {credentials: "include",})
+                        .then((r) => {
+                            if (!r.ok) return [];
+                            return r.json();
+                        })
+                        .then((data) => Array.isArray(data) ? data : [])
                         .catch(() => [])
                 )
             );
@@ -96,7 +114,7 @@ export default function LineHandler({
             const named = await Promise.all(
                 list.map(async (code, i) => {
                     try {
-                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`);
+                        const res = await fetch(`${API_ENDPOINT}/graphs/name/${code}`, {credentials: "include",});
                         const data = await res.json();
                         return { id: i, code, name: data };
                     } catch {
@@ -128,7 +146,7 @@ export default function LineHandler({
         setFetched(false);
         fetchData(sensorList, startDate, endDate);
         fetchNames(sensorList);
-    }, [sensorKey, startDate, endDate, canFetch]);
+    }, [sensorKey, startDate, endDate, canFetch, aggTime, aggType]);
     
     // sets defaults
     const labels = 0; // x axis labels
@@ -160,7 +178,7 @@ export default function LineHandler({
 
     // runs when sensorData or sensor names change
     useEffect(() => {
-        if(fetched && sensorData.length > 0){
+        if(fetched && sensorData.length > 0 && Array.isArray(sensorData[0]) && sensorData[0].length > 0 && sensors.every(s => s.name !== null)){
             const labels = sensorData[0].map(d => new Date(d.ts));
 
             setXMin(labels[0]);
@@ -266,9 +284,8 @@ export default function LineHandler({
             else if(unit == "month") setMinZoom(2 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month                
             else if(unit == "year") setMinZoom(2 * 12 * 30.5 * 24 * 60 * 60 * 1000) //may be wrong due to variable days in a month
             
-            
         }
-    }, [sensorData, sensors, fetched, onStatsReady]);
+    }, [sensorData, sensors, fetched, onStatsReady, aggTime]);
 
     const displayUnit = unit || getTimeUnit();
 
@@ -348,24 +365,6 @@ export default function LineHandler({
         )
     ) : null;
 
-    if (chartType === "bar" || chartType === "line") {
-        return (
-            <div>
-                {loading && (
-                    <div className="flex items-center justify-center p-8 text-gray-500 text-sm">
-                        Loading data...
-                    </div>
-                )}
-                {!loading && fetched && !hasData && (
-                    <div className="flex items-center justify-center p-8 text-gray-400 text-sm">
-                        No data available for the selected date range.
-                    </div>
-                )}
-                {!loading && hasData && chartContent}
-            </div>
-        );
-    }
-
     return (
         <div className="relative min-h-75">
             {loading && (
@@ -384,9 +383,7 @@ export default function LineHandler({
                     No data available for the selected date range.
                 </div>
             )}
-            {(!loading || fetched) && hasData && (
-                <LineChart options={graphOptions} data={graphData}/>
-            )}
+            {!loading && hasData && chartContent}
         </div>
     );
 }

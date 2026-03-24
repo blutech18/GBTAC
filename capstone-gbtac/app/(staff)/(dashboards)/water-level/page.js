@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import InfoCard from "../../../_components/InfoCard";
@@ -8,11 +8,12 @@ import GraphPlaceholder from "../../../_components/GraphPlaceholder";
 import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
 import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import Carousel from "@/app/_components/Carousel";
+import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
+import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
 
 const STORAGE_KEY = "dashboard-water-level";
 
 export default function WaterLevelDashboard() {
-  const [appliedState, setAppliedState] = useState(null);
   const [state, setState] = useState(() =>
     loadDashboardState(STORAGE_KEY, {
       fromDate: "",
@@ -20,6 +21,20 @@ export default function WaterLevelDashboard() {
       visibleGraphs: {},
     }),
   );
+
+  //initialize from saved state so it loads immediately
+  const [appliedState, setAppliedState] = useState(() => {
+    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    if (saved.fromDate && saved.toDate) {
+      return { fromDate: saved.fromDate, toDate: saved.toDate };
+    }
+    return null;
+  });
+
+   const { errors, setErrors, validate, validateAll } = useDateValidation({
+    earliestDate: "2018-10-13",
+    latestDate: "2026-01-07",
+  });
 
   const { fromDate, toDate } = state;
 
@@ -75,13 +90,22 @@ export default function WaterLevelDashboard() {
     },
   ];
 
+  //validate dates on every change to show errors immediately
+  useEffect(() => {
+    if (state.fromDate && state.toDate) {
+      validateAll(state.fromDate, state.toDate);
+    }
+  }, [  state.fromDate, state.toDate, validateAll]);
+
+
+
   const handleSaveScreen = () => {
     saveDashboardState(STORAGE_KEY, state);
 
     saveRecentDashboard({
       id: "water-level",
       title: "Cistern Level Dashboard",
-      path: "/dashboards/water-level",
+      path: "/water-level?from=staff-welcome-page",
       summary: {
         fromDate: state.fromDate,
         toDate: state.toDate,
@@ -99,20 +123,35 @@ export default function WaterLevelDashboard() {
 
   return (
     <DashboardLayout title="Cistern Level Dashboard">
-      <DatePicker
-        fromDate={fromDate}
-        toDate={toDate}
-        setDate={({ fromDate, toDate }) => {
-          const nextState = { ...state, fromDate, toDate };
-          handleStateChange(nextState);
+      <div className="flex flex-wrap gap-6 mb-6 items-start">
+        <div>
+          <DatePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            errors={errors}
+            onDateChange={(field, value) => {
+               setState((prev) => ({ ...prev, [field === "from" ? "fromDate" : "toDate"]: value }));
+              }}
+            setDate={({ fromDate, toDate }) => {
+              const nextState = { ...state, fromDate, toDate };
+              handleStateChange(nextState);
 
-          if (fromDate && toDate) {
-            setAppliedState({ fromDate, toDate });
-          } else {
-            setAppliedState(null);
-          }
-        }}
-      />
+              if (fromDate && toDate && validateAll(fromDate, toDate)) {
+                setAppliedState({ fromDate, toDate });
+              } else {
+                setAppliedState(null);
+              }
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Time Interval
+          </label>
+          <TimeGranularityDropdown />
+        </div>
+      </div>
+
       <div className="lg:hidden mb-6">
         <Carousel items={stats} horizontal />
       </div>

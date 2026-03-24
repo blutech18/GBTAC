@@ -83,13 +83,13 @@ export default function About() {
 
             {/* ===== Our Facilities ===== */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 ">
+              <h2 className="text-3xl font-bold text-gray-900">
                 Our Facilities
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Card 1 */}
-                <div className="bg-gray-50 dark:bg-neutral-800 rounded-md shadow-sm overflow-hidden">
+                <div className="bg-gray-50 rounded-md shadow-sm overflow-hidden mt-8">
                   <Image
                     src="/image3.png"
                     alt="Green Building Technology Lab"
@@ -110,7 +110,7 @@ export default function About() {
                 </div>
 
                 {/* Card 2 */}
-                <div className="bg-gray-50 dark:bg-neutral-800 rounded-md shadow-sm overflow-hidden">
+                <div className="bg-gray-50 rounded-md shadow-sm overflow-hidden mt-8">
                   <Image
                     src="/image4.png"
                     alt="Solar Roller Mobile Lab"
@@ -131,7 +131,7 @@ export default function About() {
                 </div>
 
                 {/* Card 3 */}
-                <div className="bg-gray-50 dark:bg-neutral-800 rounded-md shadow-sm overflow-hidden">
+                <div className="bg-gray-50 rounded-md shadow-sm overflow-hidden mt-8">
                   <Image
                     src="/image5.png"
                     alt="Integrated Solar and Rainwater Harvesting Labs"
