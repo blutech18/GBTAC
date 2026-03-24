@@ -133,7 +133,7 @@ export default function Page() {
       setError("Please handle all errors in Chart Settings before applying.");
       return;
     }
-    if (!["H", "D", "M", "Y"].includes(tempAggregationSettings.time) ||
+    if (!["none", "H", "D", "M", "Y"].includes(tempAggregationSettings.time) ||
     !["mean", "sum"].includes(tempAggregationSettings.type)) {
       setError("Please handle all errors in Time and Aggregation Settings before applying.");
       return;

@@ -6,22 +6,29 @@ import Footer from "@/app/_components/Footer";
 import ReportControls from "@/app/_components/reports/ReportControls";
 import PDFViewer from "../../_components/reports/PdfViewer";
 import { useState } from "react";
+import { checkSafety } from "@/app/_utils/content-safety";
+import { getDataRange } from "@/app/_utils/get-data-range";
+
+const dataRange = await getDataRange();
 
 export default function Page() {
 
     const [selectedSensors, setSelectedSensors] = useState([]);
     const [chartTitle, setChartTitle] = useState("");
-    const [from, setFrom] = useState("2025-12-31");
-    const [to, setTo] = useState("2025-12-31");
+    const [from, setFrom] = useState(dataRange.newest);
+    const [to, setTo] = useState(dataRange.newest);
     const [timeInterval, setTimeInterval] = useState("none");
     const [pdfBlob, setPdfBlob] = useState(null);
 
     //calls backend API returning the blob to display generated report
     const handleGenerate = async () => {
-        console.log(selectedSensors);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean`, {credentials: "include",});
-        const pdf = await res.blob();
-        setPdfBlob(pdf);
+      if(! await checkSafety(chartTitle)){
+        alert("Chart title contains inappropriate content. Please modify and try again.");
+        return;
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/report/?sensors=${selectedSensors.map(s => s.code).join(",")}&start=${from}&end=${to}&agg=${timeInterval}&agg_type=mean&title=${chartTitle}`, {credentials: "include",});
+      const pdf = await res.blob();
+      setPdfBlob(pdf);
 
     }
     const handleClear = () => {
