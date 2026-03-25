@@ -140,7 +140,7 @@ export default function VerifyCodeForm() {
             ))}
           </div>
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-600">
           To protect your account, do not share this code with anyone.
         </p>
       </div>
