@@ -151,16 +151,21 @@ export default function Page() {
       return;
     }
     
-    if(! await checkSafety(tempChartSettings.chartTitle)){
-      setError("Title must be appropriate");
-      return;
-    }
-    if(! await checkSafety(tempChartSettings.xAxisTitle)){
-      setError("X Axis Title must be appropriate");
-      return;
-    }
-    if(! await checkSafety(tempChartSettings.yAxisTitle)){
-      setError("Y Axis Title must be appropriate");
+    // if(! await checkSafety(tempChartSettings.chartTitle)){
+    //   setError("Title must be appropriate");
+    //   return;
+    // }
+    // if(! await checkSafety(tempChartSettings.xAxisTitle)){
+    //   setError("X Axis Title must be appropriate");
+    //   return;
+    // }
+    // if(! await checkSafety(tempChartSettings.yAxisTitle)){
+    //   setError("Y Axis Title must be appropriate");
+    //   return;
+    // }
+    let titles = tempChartSettings.chartTitle + " " + tempChartSettings.xAxisTitle + " " + tempChartSettings.yAxisTitle
+    if(! await checkSafety(titles)){
+      setError("Chart title or axis titles contain inappropriate content. Please modify and try again.");
       return;
     }
 
