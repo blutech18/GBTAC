@@ -1,4 +1,5 @@
 from helpers.auth_dependencies import get_current_user_from_session
+from helpers.names import replace_name
 from routers import *
 from fastapi.responses import StreamingResponse
 from fastapi import APIRouter, Request, Depends
@@ -79,7 +80,7 @@ async def generate_table_report(sensors, start, end, agg= "none", type= "mean", 
         res.append(dataset)
         
     query = f"""
-        SELECT sensor_name_report
+        SELECT sensor_name_source, sensor_name_report
         FROM sensor_names
         WHERE sensor_name_source IN ({', '.join('?' for _ in san_sensors)})
     """
@@ -87,9 +88,14 @@ async def generate_table_report(sensors, start, end, agg= "none", type= "mean", 
     curs.execute(query, san_sensors)
     rows = curs.fetchall()
 
-    names = []
+    name_map = {}
     for row in rows:
-        names.append(row[0])
+        name = replace_name(row[0])
+        if name == False:
+            name = row[1]
+        name_map[row[0]] = name
+
+    names = [name_map[sensor] for sensor in san_sensors]
 
     conn.close()
 
