@@ -19,6 +19,9 @@ export default function ProfilePage() {
 
       <div className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          </div>
           <div className="bg-white shadow-md rounded-2xl p-8">
             <StaffProfileForm viewerRole="staff" />
           </div>

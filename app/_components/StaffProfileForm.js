@@ -51,7 +51,7 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
     if (name === "currentPassword" && value.trim().length === 0) {
       setCurrentPasswordVerified(false); //reset password verification if current password changes
     }
-  };
+  }
   const handleConfirmSave = () => {
     setShowConfirmModal(false);
     console.log("Submitted:", formData);
