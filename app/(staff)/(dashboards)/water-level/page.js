@@ -10,21 +10,25 @@ import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import Carousel from "@/app/_components/Carousel";
 import TimeGranularityDropdown from "@/app/_components/TimeGranularityDropdown";
 import { useDateValidation } from "@/app/_components/hooks/useDateValidation";
+import { getDataRange } from "@/app/_utils/get-data-range";
 
+const dataRange = await getDataRange();
+// defaults
+const stateDefaults = {
+  fromDate: dataRange.oldest,
+  toDate: dataRange.newest,
+  visibleGraphs: {},
+}
 const STORAGE_KEY = "dashboard-water-level";
 
 export default function WaterLevelDashboard() {
   const [state, setState] = useState(() =>
-    loadDashboardState(STORAGE_KEY, {
-      fromDate: "",
-      toDate: "",
-      visibleGraphs: {},
-    }),
+    loadDashboardState(STORAGE_KEY, stateDefaults),
   );
 
   //initialize from saved state so it loads immediately
   const [appliedState, setAppliedState] = useState(() => {
-    const saved = loadDashboardState(STORAGE_KEY, { fromDate: "", toDate: "" });
+    const saved = loadDashboardState(STORAGE_KEY, { fromDate: stateDefaults.fromDate, toDate: stateDefaults.toDate });
     if (saved.fromDate && saved.toDate) {
       return { fromDate: saved.fromDate, toDate: saved.toDate };
     }
@@ -33,7 +37,7 @@ export default function WaterLevelDashboard() {
 
    const { errors, setErrors, validate, validateAll } = useDateValidation({
     earliestDate: "2018-10-13",
-    latestDate: "2026-01-07",
+    latestDate: dataRange.forecast,
   });
 
   const { fromDate, toDate } = state;

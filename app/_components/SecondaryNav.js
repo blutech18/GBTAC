@@ -7,8 +7,6 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "../_utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
-const API_BASE = "http://localhost:8000";
-
 export default function SecondaryNav() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
@@ -48,7 +46,7 @@ export default function SecondaryNav() {
     e.preventDefault();
 
     try {
-      await fetch(`${API_BASE}/auth/logout`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

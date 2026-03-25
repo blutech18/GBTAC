@@ -14,51 +14,60 @@ import NotificationModal from "@/app/_components/NotificationModal";
 import { saveCustomDashboard } from "@/app/utils/saveCustomizedCharts";
 import { auth } from "@/app/_utils/firebase";
 import { useRef, useState, useEffect } from "react";
+import { checkSafety } from "@/app/_utils/content-safety";
+import { getDataRange } from "@/app/_utils/get-data-range";
+
+const dataRange = await getDataRange();
+
+// set defaults for state variables
+const chartSettingDefaults = {
+  chartTitle: "",
+  chartType: "line",
+  xAxisTitle: "",
+  yAxisTitle: ""
+}
+const aggregationSettingsDefaults = {
+  time: "none", 
+  type: "mean"
+}
+const dateRangeDefaults = { 
+  from: dataRange.newest, 
+  to: dataRange.newest, 
+  timeInterval: aggregationSettingsDefaults.time, 
+  aggregation: aggregationSettingsDefaults.type 
+}
 
 export default function Page() {
   const chartRef = useRef(null);
 
   //State variables
   const [currentChartId, setCurrentChartId] = useState(null);
-  //Temp state (user edits these before clicking Apply)
-  const [tempChartSettings, setTempChartSettings] = useState({
-    chartTitle: "",
-    chartType: "line",
-    xAxisTitle: "",
-    yAxisTitle: ""
-  });
-  const [tempDateRange, setTempDateRange] = useState({
-    from: "",
-    to: "",
-    timeInterval: "hourly",
-    aggregation: "sum"
-  });
-  const [aggregationSettings, setAggregationSettings] = useState({time: "H", type: "mean"})
-  const [tempSelectedSensors, setTempSelectedSensors] = useState([]);
-  // const [selectedSensors, setSelectedSensors] = useState([]);
-  const [dateRange, setDateRange] = useState({ from: "2025-12-31", to: "2025-12-31" });
+  const [chartSettings, setChartSettings] = useState(chartSettingDefaults)
+  const [aggregationSettings, setAggregationSettings] = useState(aggregationSettingsDefaults)
+  const [dateRange, setDateRange] = useState(dateRangeDefaults);
+  const [selectedSensors, setSelectedSensors] = useState([]);
+  // const [selectedSensors, setSelectedSensors] = useState([
+  //   {code: "30000_TL252", name: "Carport"},
+  //   {code: "30000_TL253", name: "Rooftop"}
+  // ]);
+
+  // Temp state (user edits these before clicking Apply)
+  const [tempChartSettings, setTempChartSettings] = useState(chartSettings);
+  const [tempDateRange, setTempDateRange] = useState(dateRange);
+  const [tempAggregationSettings, setTempAggregationSettings] = useState(aggregationSettings)
+  const [tempSelectedSensors, setTempSelectedSensors] = useState(selectedSensors);
+  
   const [refreshChart, setRefreshChart] = useState(0); // Used to trigger re-render of graph when loading/saving charts
   const [error, setError] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [showErrorNotification, setShowErrorNotification] = useState(false);
-  const [tempAggregationSettings, setTempAggregationSettings] = useState(aggregationSettings)
-  const [chartSettings, setChartSettings] = useState({
-    chartTitle: "",
-    chartType: "line",
-    // chartType: "bar",
-  })
-  const [selectedSensors, setSelectedSensors] = useState([ // temp for testing
-    // {code: "30000_TL252", name: "Carport"},
-    // {code: "30000_TL253", name: "Rooftop"}
-  ]);
-
-
-  //full list of sensors and codes
+  
+  // full list of sensors and codes
   const [sensorList, setSensorList] = useState([])
   const fetchSensors = async () => {
     try {
-      const res = await fetch("http://localhost:8000/graphs/codesnames", {credentials: "include",})
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/graphs/codesnames`, {credentials: "include",})
       const data = await res.json()
       setSensorList(data)
     }catch (e){
@@ -73,33 +82,18 @@ export default function Page() {
   //Reset chart to default
   const resetChart = () => {
     setCurrentChartId(null);
-    setTempChartSettings({
-      chartTitle: "",
-      chartType: "line",
-      xAxisTitle: "",
-      yAxisTitle: ""
-    });
-    setTempDateRange({
-      from: "",
-      to: "",
-      timeInterval: "hourly",
-      aggregation: "sum"
-    });
+    setTempChartSettings(chartSettingDefaults);
+    setTempDateRange(dateRangeDefaults);
     setTempSelectedSensors([]);
     setSelectedSensors([]);
-    setDateRange({ from: "", to: "" });
-    setAggregationSettings({time: "H", type: "mean"})
+    setDateRange(dateRangeDefaults);
+    setAggregationSettings(aggregationSettingsDefaults)
 
-    //Also reset temp state
-    setTempChartSettings({
-      chartTitle: "",
-      chartType: "line",
-      yAxisTitle: "",
-      chartType: "line",
-    })
+    // Also reset temp state
+    setTempChartSettings(chartSettingDefaults)
     setTempSelectedSensors([]);
-    setTempDateRange({ from: "", to: "" });
-    setTempAggregationSettings({time: "H", type: "mean"})
+    setTempDateRange(dateRangeDefaults);
+    setTempAggregationSettings(aggregationSettingsDefaults)
   }
 
   //Load a chart into state
@@ -108,36 +102,26 @@ export default function Page() {
     const chartSensors = Array.isArray(chart?.selectedSensors)
       ? chart.selectedSensors
       : (Array.isArray(chart?.sensors) ? chart.sensors : []);
-    const chartFrom = chart?.dateRange?.from ?? chart?.dateFrom ?? "";
-    const chartTo = chart?.dateRange?.to ?? chart?.dateTo ?? "";
-    const chartAggTime = chart?.aggSettings?.time ?? chart?.time ?? "H";
-    const chartAggType = chart?.aggSettings?.type ?? chart?.type ?? "mean";
+    const chartFrom = chart?.dateRange?.from ?? chart?.dateFrom ?? dateRangeDefaults.from;
+    const chartTo = chart?.dateRange?.to ?? chart?.dateTo ?? dateRangeDefaults.to;
+    const chartAggTime = chart?.aggSettings?.time ?? chart?.time ?? dateRangeDefaults.time;
+    const chartAggType = chart?.aggSettings?.type ?? chart?.type ?? dateRangeDefaults.type;
 
     setCurrentChartId(chart.id);
-    setChartSettings(chart.settings ?? {
-      chartTitle: "",
-      chartType: "line",
-      xAxisTitle: "",
-      yAxisTitle: ""
-    });
+    setChartSettings(chart.settings ?? chartSettingDefaults);
     setSelectedSensors(chartSensors);
     setDateRange({ from: chartFrom, to: chartTo });
     setAggregationSettings({time: chartAggTime, type: chartAggType})
 
-    //Also update temp state so the inputs match loaded chart
-    setTempChartSettings(chart.settings ?? {
-      chartTitle: "",
-      chartType: "line",
-      xAxisTitle: "",
-      yAxisTitle: ""
-    });
+    // Also update temp state so the inputs match loaded chart
+    setTempChartSettings(chart.settings ?? chartSettingDefaults);
     setTempSelectedSensors(chartSensors);
     setTempDateRange({ from: chartFrom, to: chartTo });
     setTempAggregationSettings({time: chartAggTime, type: chartAggType})
   }
 
   //Apply button handler
-  const handleApply = () => {
+  const handleApply = async () => {
     if (
       !tempChartSettings.chartTitle ||
       !/^[a-zA-Z0-9\s-]*$/.test(tempChartSettings.chartTitle) ||
@@ -149,7 +133,7 @@ export default function Page() {
       setError("Please handle all errors in Chart Settings before applying.");
       return;
     }
-    if (!["H", "D", "M", "Y"].includes(tempAggregationSettings.time) ||
+    if (!["none", "H", "D", "M", "Y"].includes(tempAggregationSettings.time) ||
     !["mean", "sum"].includes(tempAggregationSettings.type)) {
       setError("Please handle all errors in Time and Aggregation Settings before applying.");
       return;
@@ -166,11 +150,31 @@ export default function Page() {
       setError("Start date cannot be after end date.");
       return;
     }
-    //If all validations pass, update the main state with temp values
+    
+    // if(! await checkSafety(tempChartSettings.chartTitle)){
+    //   setError("Title must be appropriate");
+    //   return;
+    // }
+    // if(! await checkSafety(tempChartSettings.xAxisTitle)){
+    //   setError("X Axis Title must be appropriate");
+    //   return;
+    // }
+    // if(! await checkSafety(tempChartSettings.yAxisTitle)){
+    //   setError("Y Axis Title must be appropriate");
+    //   return;
+    // }
+    let titles = tempChartSettings.chartTitle + " " + tempChartSettings.xAxisTitle + " " + tempChartSettings.yAxisTitle
+    if(! await checkSafety(titles)){
+      setError("Chart title or axis titles contain inappropriate content. Please modify and try again.");
+      return;
+    }
+
+    // If all validations pass, update the main state with temp values
     setChartSettings(tempChartSettings);
     setSelectedSensors(tempSelectedSensors);
     setDateRange(tempDateRange);
     setAggregationSettings(tempAggregationSettings)
+    setError("")
   };
 
    //Function to save chart to Firestore

@@ -7,8 +7,6 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../../_utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
-const API_BASE = "http://localhost:8000";
-
 export default function LoginForm() {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -84,7 +82,7 @@ export default function LoginForm() {
   };
 
   const checkLockout = async (email) => {
-    const res = await fetch(`${API_BASE}/auth/check-lockout`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check-lockout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -98,7 +96,7 @@ export default function LoginForm() {
   };
 
   const recordFailedLogin = async (email) => {
-    const res = await fetch(`${API_BASE}/auth/record-failed-login`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/record-failed-login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -112,7 +110,7 @@ export default function LoginForm() {
   };
 
   const resetLoginAttempts = async (email) => {
-    const res = await fetch(`${API_BASE}/auth/reset-login-attempts`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/reset-login-attempts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -126,7 +124,7 @@ export default function LoginForm() {
   };
 
   const checkAllowedUserWithToken = async (idToken) => {
-    const res = await fetch(`${API_BASE}/auth/check-allowed-user`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check-allowed-user`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -149,7 +147,7 @@ export default function LoginForm() {
   };
 
   const createSessionLogin = async (idToken) => {
-    const res = await fetch(`${API_BASE}/auth/session-login`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/session-login`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -166,7 +164,7 @@ export default function LoginForm() {
   };
 
   const requestPasswordReset = async (email) => {
-    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -180,7 +178,7 @@ export default function LoginForm() {
   };
 
   const verifyCaptcha = async (token) => {
-    const res = await fetch(`${API_BASE}/auth/verify-captcha`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-captcha`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ captcha_token: token }),
