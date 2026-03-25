@@ -346,3 +346,43 @@ def logout(
         "success": True,
         "message": "Logged out",
     }
+
+# Endpoint to update user email in Firestore (for email verification flow)
+class UpdateEmailRequest(BaseModel):
+    oldEmail: EmailStr
+    newEmail: EmailStr
+
+@router.post("/update-email")
+def update_email(payload: UpdateEmailRequest):
+    old_email = normalize_email(str(payload.oldEmail))
+    new_email = normalize_email(str(payload.newEmail))
+    
+    try:
+        # Get old document
+        old_doc_ref = db.collection("allowedUsers").document(old_email)
+        old_doc = old_doc_ref.get()
+        
+        if not old_doc.exists:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get user data
+        user_data = old_doc.to_dict()
+        
+        # Create new document with new email
+        new_doc_ref = db.collection("allowedUsers").document(new_email)
+        user_data["email"] = new_email
+        user_data["updatedAt"] = firestore.SERVER_TIMESTAMP
+        new_doc_ref.set(user_data)
+        
+        # Delete old document
+        old_doc_ref.delete()
+        
+        return {
+            "success": True,
+            "message": "Email updated successfully",
+            "oldEmail": old_email,
+            "newEmail": new_email
+        }
+    except Exception as e:
+        print("UPDATE EMAIL ERROR:", repr(e))
+        raise HTTPException(status_code=500, detail=str(e))
