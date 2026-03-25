@@ -140,7 +140,6 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
     <form
       onSubmit={handleSubmit}
       className="space-y-10 text-[#212529]"
-      style={{ fontFamily: "var(--font-titillium)" }}
     >
       <div className="space-y-6">
         <h2 className="text-lg border-b pb-2 font-semibold text-gray-800">
