@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const API_BASE = "http://localhost:8000";
-
 export default function AdminLayout({ children }) {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -17,7 +15,7 @@ export default function AdminLayout({ children }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch(`${API_BASE}/auth/me`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
           credentials: "include",
         });
 
