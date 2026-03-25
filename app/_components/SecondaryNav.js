@@ -38,7 +38,26 @@ export default function SecondaryNav() {
       }
     });
 
-    return () => unsubscribe();
+    // Listen for profile updates
+    const handleProfileUpdate = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = doc(db, "allowedUsers", user.email);
+        const docSnap = await getDoc(userDoc);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setFirstName(data.firstName || "");
+          setLastName(data.lastName || "");
+        }
+      }
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
 

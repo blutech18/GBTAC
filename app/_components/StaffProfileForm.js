@@ -3,14 +3,25 @@
 //Form fields actions adjust based on viewer's role (admin vs staff).
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import ConfirmModal from "./ConfirmModal";
 import NotificationModal from "./NotificationModal";
 import Image from "next/image";
+import { auth, db } from "@/app/_utils/firebase";
+import { 
+  EmailAuthProvider, 
+  reauthenticateWithCredential,
+  verifyBeforeUpdateEmail,
+  updatePassword,
+  onAuthStateChanged
+} from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function StaffProfileForm({ viewerRole = "staff" }) {
   const isAdmin = viewerRole === "admin";
+  const [currentUser, setCurrentUser] = useState(null);
+  const [originalEmail, setOriginalEmail] = useState("");
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -30,13 +41,112 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
     new: false,
     confirm: false,
   });
-  //TODO: set currentPasswordVerified to true once Firebase confirms currentPassword is correct
-  //Call setCurrentPasswordVerified(true) inside handleSubmit after Firebase reauthentication succeeds
   const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalData, setOriginalData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    status: "Active"
+  });
+
+  const isEmailChanged = () => {
+    return formData.email !== originalEmail;
+  };
+  
   const isFormValid =
     formData.firstName.trim().length >= 2 &&
     formData.lastName.trim().length >= 2 &&
-    formData.email.trim().length;
+    formData.email.trim().length &&
+    hasChanges &&
+    (!isEmailChanged() || currentPasswordVerified);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCurrentUser(user);
+        setOriginalEmail(user.email);
+        
+        // Fetch user data from Firestore
+        try {
+          const userRef = doc(db, "allowedUsers", user.email);
+          const userSnap = await getDoc(userRef);
+          
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const initialData = {
+              firstName: userData.firstName || "",
+              lastName: userData.lastName || "",
+              email: user.email || "",
+              status: userData.active ? "Active" : "Inactive",
+              currentPassword: "",
+              newPassword: "",
+              confirmPassword: ""
+            };
+            setFormData(initialData);
+            setOriginalData({
+              firstName: userData.firstName || "",
+              lastName: userData.lastName || "",
+              email: user.email || "",
+              status: userData.active ? "Active" : "Inactive"
+            });
+          } else {
+            // If no Firestore data, just set email
+            const initialData = {
+              firstName: "",
+              lastName: "",
+              email: user.email || "",
+              status: "Active",
+              currentPassword: "",
+              newPassword: "",
+              confirmPassword: ""
+            };
+            setFormData(initialData);
+            setOriginalData({
+              firstName: "",
+              lastName: "",
+              email: user.email || "",
+              status: "Active"
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          // Fallback to just setting email
+          const initialData = {
+            firstName: "",
+            lastName: "",
+            email: user.email || "",
+            status: "Active",
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          };
+          setFormData(initialData);
+          setOriginalData({
+            firstName: "",
+            lastName: "",
+            email: user.email || "",
+            status: "Active"
+          });
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Check if there are changes
+  useEffect(() => {
+    const changed = 
+      formData.firstName !== originalData.firstName ||
+      formData.lastName !== originalData.lastName ||
+      formData.email !== originalData.email ||
+      formData.status !== originalData.status ||
+      formData.newPassword.trim().length > 0;
+    
+    setHasChanges(changed);
+  }, [formData, originalData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,19 +155,227 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
       if (name === "currentPassword" && value.trim().length === 0) {
         updated.newPassword = "";
         updated.confirmPassword = "";
+        setCurrentPasswordVerified(false);
+      }
+      // Reset password verification if email changes
+      if (name === "email" && value !== originalEmail) {
+        setCurrentPasswordVerified(false);
       }
       return updated;
     });
-    if (name === "currentPassword" && value.trim().length === 0) {
-      setCurrentPasswordVerified(false); //reset password verification if current password changes
+  };
+
+  const verifyCurrentPassword = async () => {
+    if (!formData.currentPassword) {
+      setErrors(prev => ({ 
+        ...prev, 
+        currentPassword: "Please enter your current password" 
+      }));
+      return false;
     }
-  }
-  const handleConfirmSave = () => {
+
+    if (!currentUser) {
+      setErrors(prev => ({ 
+        ...prev, 
+        currentPassword: "User not authenticated" 
+      }));
+      return false;
+    }
+
+    setIsVerifying(true);
+    const credential = EmailAuthProvider.credential(
+      currentUser.email,
+      formData.currentPassword
+    );
+    
+    try {
+      await reauthenticateWithCredential(currentUser, credential);
+      setCurrentPasswordVerified(true);
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.currentPassword;
+        return newErrors;
+      });
+      setIsVerifying(false);
+      return true;
+    } catch (reauthError) {
+      // Handle authentication error silently - no need to log to console
+      // The error is expected when password is incorrect
+      setErrors(prev => ({ 
+        ...prev, 
+        currentPassword: "Incorrect password" 
+      }));
+      setIsVerifying(false);
+      return false;
+    }
+  };
+
+  const handleConfirmSave = async () => {
     setShowConfirmModal(false);
-    console.log("Submitted:", formData);
-    setShowNotification(true);
-    setTimeout(() => setShowNotification(false), 3000);
-    //TODO: Connect to API
+    
+    try {
+      const emailChanged = formData.email !== originalEmail;
+      const passwordChanged = formData.newPassword && formData.confirmPassword;
+      const nameChanged = formData.firstName !== originalData.firstName || 
+                          formData.lastName !== originalData.lastName;
+      const statusChanged = formData.status !== originalData.status;
+      
+      // Handle email change (requires verification email)
+      if (emailChanged && !isAdmin) {
+        if (!currentPasswordVerified) {
+          setErrors(prev => ({ 
+            ...prev, 
+            currentPassword: "Please verify your password first before changing email" 
+          }));
+          return;
+        }
+
+        localStorage.setItem('emailChangeOldEmail', currentUser.email);
+
+        const actionCodeSettings = {
+          url: window.location.origin + '/auth-action',
+          handleCodeInApp: false,
+        };
+
+        try {
+          await verifyBeforeUpdateEmail(currentUser, formData.email, actionCodeSettings);
+          
+          setShowNotification(true);
+          setTimeout(() => {
+            setShowNotification(false);
+            alert("A verification email has been sent to your new email address. Please check your inbox and click the verification link to complete the email change.");
+          }, 1000);
+          return;
+        } catch (emailError) {
+          if (emailError.code === 'auth/operation-not-allowed') {
+            setErrors(prev => ({ 
+              ...prev, 
+              email: "Email verification is not enabled. Please contact support." 
+            }));
+          } else if (emailError.code === 'auth/invalid-email') {
+            setErrors(prev => ({ 
+              ...prev, 
+              email: "Invalid email address" 
+            }));
+          } else if (emailError.code === 'auth/email-already-in-use') {
+            setErrors(prev => ({ 
+              ...prev, 
+              email: "This email is already in use" 
+            }));
+          } else {
+            setErrors(prev => ({ 
+              ...prev, 
+              email: `Failed to send verification email: ${emailError.message}` 
+            }));
+          }
+          return;
+        }
+      }
+      
+      // Handle password change
+      if (passwordChanged && !isAdmin) {
+        if (!currentPasswordVerified) {
+          setErrors(prev => ({ 
+            ...prev, 
+            currentPassword: "Please verify your password first" 
+          }));
+          return;
+        }
+        
+        try {
+          await updatePassword(currentUser, formData.newPassword);
+          
+          // Clear password fields after successful change
+          setFormData(prev => ({
+            ...prev,
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          }));
+          setCurrentPasswordVerified(false);
+          
+          // Update original data if name/status also changed
+          if (nameChanged || statusChanged) {
+            await updateFirestoreProfile();
+          }
+          
+          setShowNotification(true);
+          setTimeout(() => {
+            setShowNotification(false);
+            alert("Password changed successfully!");
+          }, 1000);
+          return;
+        } catch (passwordError) {
+          setErrors(prev => ({ 
+            ...prev, 
+            newPassword: `Failed to update password: ${passwordError.message}` 
+          }));
+          return;
+        }
+      }
+      
+      // Handle name/status changes (update Firestore)
+      if (nameChanged || statusChanged) {
+        await updateFirestoreProfile();
+        
+        setShowNotification(true);
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 3000);
+      }
+      
+    } catch (error) {
+      setErrors(prev => ({ 
+        ...prev, 
+        general: "An error occurred. Please try again." 
+      }));
+    }
+  };
+
+  const updateFirestoreProfile = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: currentUser.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          active: formData.status === "Active"
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update profile');
+      }
+
+      const result = await response.json();
+      console.log('Profile updated:', result);
+      
+      // Update original data to reflect saved changes
+      setOriginalData(prev => ({
+        ...prev,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        status: formData.status
+      }));
+      
+      // Trigger a custom event to notify SecondaryNav to refresh
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
+      
+      return true;
+    } catch (error) {
+      console.error("Profile update error:", error);
+      setErrors(prev => ({ 
+        ...prev, 
+        general: `Failed to update profile: ${error.message}` 
+      }));
+      return false;
+    }
   };
 
   const handleCancelSave = () => {
@@ -94,12 +412,14 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
         newErrors.email = "Must be a SAIT or Gmail email.";
     }
 
+    if (!isAdmin && formData.email !== originalEmail && !currentPasswordVerified) {
+      newErrors.currentPassword = "Please verify your password before changing email.";
+    }
+
     if (!isAdmin) {
       if (formData.newPassword && !formData.currentPassword)
         newErrors.currentPassword = "Current password is required.";
 
-      //TODO: Add backend check to verify current password is correct before allowing new password validation
-      //If it doesn't match, show error "Current password is incorrect." (This will require an API call, so may need to move this validation to handleConfirmSave instead of here in validate)
       if (formData.newPassword) {
         if (formData.newPassword.length < 8)
           newErrors.newPassword = "Must be at least 8 characters.";
@@ -126,12 +446,6 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      //TODO: verify currentPassword against Firebase before showing confirm modal
-      //const isVerified = await verifyCurrentPassword(formData.currentPassword);
-      //if (!isVerified) {
-      //setErrors(prev => ({ ...prev, currentPassword: "Incorrect password, please try again." }));
-      //return;
-      // }
       setShowConfirmModal(true);
     }
   };
@@ -192,6 +506,11 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
           {errors.email && (
             <p className="text-red-500 text-sm mt-1">{errors.email}</p>
           )}
+          {!isAdmin && formData.email !== originalEmail && !currentPasswordVerified && (
+            <p className="text-orange-600 text-sm mt-1 font-semibold">
+              ⚠ You must verify your current password before changing your email.
+            </p>
+          )}
         </div>
 
         {isAdmin && (
@@ -221,6 +540,9 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
           <div className="flex flex-col">
             <label className="font-semibold text-gray-800">
               Current Password
+              {formData.email !== originalEmail && (
+                <span className="text-red-500"> *</span>
+              )}
             </label>
             <div className="relative">
               <input
@@ -228,13 +550,14 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
                 type={showPassword.current ? "text" : "password"}
                 value={formData.currentPassword}
                 onChange={handleChange}
-                placeholder="Current Password"
+                placeholder="Enter current password to change password"
                 className="w-full pr-10 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
+                disabled={currentPasswordVerified}
               />
 
               <button
                 type="button"
-                className="absolute right-3 top-4 "
+                className="absolute right-3 top-4"
                 onMouseDown={() =>
                   setShowPassword((prev) => ({ ...prev, current: true }))
                 }
@@ -266,6 +589,21 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
             {errors.currentPassword && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.currentPassword}
+              </p>
+            )}
+            {!currentPasswordVerified && (
+              <button
+                type="button"
+                onClick={verifyCurrentPassword}
+                disabled={isVerifying || !formData.currentPassword}
+                className="mt-2 px-4 py-2 bg-[#005EB8] text-white font-semibold rounded hover:bg-[#004080] transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isVerifying ? "Verifying..." : "Verify Password"}
+              </button>
+            )}
+            {currentPasswordVerified && (
+              <p className="text-green-600 text-sm mt-1">
+                ✓ Password verified. You can now change your password.
               </p>
             )}
           </div>
@@ -378,18 +716,32 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
         </div>
       )}
 
+      {errors.general && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {errors.general}
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8 border-t mt-8">
         {showNotification && (
           <NotificationModal
             title="Success"
-            message="Profile updated successfully!"
+            message={
+              formData.email !== originalEmail
+                ? "Verification email sent! Please check your inbox."
+                : "Profile updated successfully!"
+            }
             onClose={() => setShowNotification(false)}
           />
         )}
         {showConfirmModal && (
           <ConfirmModal
             title="Save Changes?"
-            message="Are you sure you want to save these changes?"
+            message={
+              formData.email !== originalEmail
+                ? "You are changing your email address. A verification email will be sent to your new address. Do you want to continue?"
+                : "Are you sure you want to save these changes?"
+            }
             confirmText="Yes, Save"
             cancelText="Cancel"
             onConfirm={handleConfirmSave}
