@@ -13,6 +13,7 @@ import {
   EmailAuthProvider, 
   reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
+  updatePassword,
   onAuthStateChanged
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -215,9 +216,12 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
     try {
       const emailChanged = formData.email !== originalEmail;
       const passwordChanged = formData.newPassword && formData.confirmPassword;
+      const nameChanged = formData.firstName !== originalData.firstName || 
+                          formData.lastName !== originalData.lastName;
+      const statusChanged = formData.status !== originalData.status;
       
+      // Handle email change (requires verification email)
       if (emailChanged && !isAdmin) {
-        // For email change, we need password verification
         if (!currentPasswordVerified) {
           setErrors(prev => ({ 
             ...prev, 
@@ -241,9 +245,8 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
             setShowNotification(false);
             alert("A verification email has been sent to your new email address. Please check your inbox and click the verification link to complete the email change.");
           }, 1000);
+          return;
         } catch (emailError) {
-          console.error("Email verification error:", emailError);
-          
           if (emailError.code === 'auth/operation-not-allowed') {
             setErrors(prev => ({ 
               ...prev, 
@@ -267,8 +270,10 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
           }
           return;
         }
-      } else if (passwordChanged && !isAdmin) {
-        // Handle password change
+      }
+      
+      // Handle password change
+      if (passwordChanged && !isAdmin) {
         if (!currentPasswordVerified) {
           setErrors(prev => ({ 
             ...prev, 
@@ -276,20 +281,100 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
           }));
           return;
         }
-        console.log("Password change requested");
-        setShowNotification(true);
-        setTimeout(() => setShowNotification(false), 3000);
-      } else {
-        console.log("Submitted:", formData);
-        setShowNotification(true);
-        setTimeout(() => setShowNotification(false), 3000);
+        
+        try {
+          await updatePassword(currentUser, formData.newPassword);
+          
+          // Clear password fields after successful change
+          setFormData(prev => ({
+            ...prev,
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+          }));
+          setCurrentPasswordVerified(false);
+          
+          // Update original data if name/status also changed
+          if (nameChanged || statusChanged) {
+            await updateFirestoreProfile();
+          }
+          
+          setShowNotification(true);
+          setTimeout(() => {
+            setShowNotification(false);
+            alert("Password changed successfully!");
+          }, 1000);
+          return;
+        } catch (passwordError) {
+          setErrors(prev => ({ 
+            ...prev, 
+            newPassword: `Failed to update password: ${passwordError.message}` 
+          }));
+          return;
+        }
       }
+      
+      // Handle name/status changes (update Firestore)
+      if (nameChanged || statusChanged) {
+        await updateFirestoreProfile();
+        
+        setShowNotification(true);
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 3000);
+      }
+      
     } catch (error) {
-      console.error("Error in handleConfirmSave:", error);
       setErrors(prev => ({ 
         ...prev, 
         general: "An error occurred. Please try again." 
       }));
+    }
+  };
+
+  const updateFirestoreProfile = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: currentUser.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          active: formData.status === "Active"
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update profile');
+      }
+
+      const result = await response.json();
+      console.log('Profile updated:', result);
+      
+      // Update original data to reflect saved changes
+      setOriginalData(prev => ({
+        ...prev,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        status: formData.status
+      }));
+      
+      // Trigger a custom event to notify SecondaryNav to refresh
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
+      
+      return true;
+    } catch (error) {
+      console.error("Profile update error:", error);
+      setErrors(prev => ({ 
+        ...prev, 
+        general: `Failed to update profile: ${error.message}` 
+      }));
+      return false;
     }
   };
 

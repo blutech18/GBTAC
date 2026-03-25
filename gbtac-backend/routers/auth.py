@@ -386,3 +386,40 @@ def update_email(payload: UpdateEmailRequest):
     except Exception as e:
         print("UPDATE EMAIL ERROR:", repr(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint to update user profile (firstName, lastName, status)
+class UpdateProfileRequest(BaseModel):
+    email: EmailStr
+    firstName: str
+    lastName: str
+    active: bool
+
+@router.post("/update-profile")
+def update_profile(payload: UpdateProfileRequest):
+    email = normalize_email(str(payload.email))
+    
+    try:
+        doc_ref = db.collection("allowedUsers").document(email)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update user data
+        update_data = {
+            "firstName": payload.firstName,
+            "lastName": payload.lastName,
+            "active": payload.active,
+            "updatedAt": firestore.SERVER_TIMESTAMP
+        }
+        
+        doc_ref.update(update_data)
+        
+        return {
+            "success": True,
+            "message": "Profile updated successfully",
+            "email": email
+        }
+    except Exception as e:
+        print("UPDATE PROFILE ERROR:", repr(e))
+        raise HTTPException(status_code=500, detail=str(e))
