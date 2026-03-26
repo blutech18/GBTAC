@@ -4,8 +4,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_BASE = "http://localhost:8000";
-
 const AuthContext = createContext({
   user: null,
   loading: true,
@@ -22,7 +20,7 @@ export function AuthContextProvider({ children }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch(`${API_BASE}/auth/me`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
           credentials: "include",
         });
 
@@ -53,7 +51,7 @@ export function AuthContextProvider({ children }) {
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE}/auth/logout`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

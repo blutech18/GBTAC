@@ -454,7 +454,6 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
     <form
       onSubmit={handleSubmit}
       className="space-y-10 text-[#212529]"
-      style={{ fontFamily: "var(--font-titillium)" }}
     >
       <div className="space-y-6">
         <h2 className="text-lg border-b pb-2 font-semibold text-gray-800">
@@ -470,6 +469,7 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
               onChange={handleChange}
               required
               className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
+              maxLength={50}
             />
             {errors.firstName && (
               <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
@@ -484,6 +484,7 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
               onChange={handleChange}
               required
               className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
+              maxLength={50}
             />
             {errors.lastName && (
               <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
@@ -500,6 +501,7 @@ export default function StaffProfileForm({ viewerRole = "staff" }) {
             onChange={handleChange}
             required
             className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
+            maxLength={100}
           />
           {errors.email && (
             <p className="text-red-500 text-sm mt-1">{errors.email}</p>

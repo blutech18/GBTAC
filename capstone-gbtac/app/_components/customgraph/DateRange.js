@@ -19,7 +19,7 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
     to: dateRange?.to ?? ""
   };
   const safeAggSettings = {
-    time: aggSettings?.time ?? "H",
+    time: aggSettings?.time ?? "none",
     type: aggSettings?.type ?? "mean"
   };
 
@@ -82,6 +82,7 @@ export default function DateRange({ dateRange, setDateRange, aggSettings, setAgg
           onChange={(e) => handleAggChange("time", e.target.value)}
           className={`border p-2 rounded text-gray-500 ${aggErrors.time ? "border-red-500" : ""}`}
         >
+          <option value="none">None</option>
           <option value="H">Hourly</option>
           <option value="D">Daily</option>
           <option value="M">Monthly</option>
