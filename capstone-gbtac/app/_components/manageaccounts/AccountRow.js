@@ -19,7 +19,7 @@ export default function AccountRow({ account }) {
       </td>
 
       <td className="px-6 py-4 whitespace-nowrap place-items-center gap-2">
-        <Link href={`/admin/edit-staff/${account.id}`}>
+        <Link href={`/edit-staff/${encodeURIComponent(account.email)}`}>
           <button className="bg-[#005EB8] hover:bg-[#004080] text-white font-semibold px-4 py-2 mr-2.5 rounded-md transition-colors">
             Edit
           </button>
