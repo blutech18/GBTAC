@@ -17,10 +17,59 @@ export default function CreateStaffForm() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    //TODO: Connect to API
+
+    try {
+      const response = await fetch("http://localhost:8000/auth/create-staff", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          active: formData.status === "Active",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        let errorMessage = "Failed to create staff account";
+
+        if (typeof data.detail === "string") {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+          let rawMsg = data.detail[0].msg || errorMessage;
+
+          if (rawMsg.toLowerCase().includes("email address")) {
+            errorMessage = "Not a valid email address: must contain an @ symbol";
+          } else {
+            errorMessage = rawMsg;
+          }
+        } else if (typeof data.detail === "object" && data.detail !== null) {
+          errorMessage = data.detail.message || JSON.stringify(data.detail);
+        }
+
+        alert(errorMessage);
+        return;
+      }
+
+      alert("Staff account created successfully");
+
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        status: "Active",
+      });
+    } catch (error) {
+      console.error("Create staff error:", error);
+      alert("Something went wrong while creating the staff account.");
+    }
   };
 
   return (
