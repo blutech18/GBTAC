@@ -5,11 +5,14 @@
 
 import { useState, useEffect } from "react";
 import AccountRow from "./AccountRow";
+import ConfirmModal from "../ConfirmModal";
 
 export default function AccountsTable({search = ""}) {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -54,6 +57,54 @@ export default function AccountsTable({search = ""}) {
     account.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleDeleteClick = (account) => {
+    setSelectedAccount(account);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedAccount) return;
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/delete-staff`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: selectedAccount.email,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.detail || "Failed to delete staff");
+        return;
+      }
+
+      setAccounts((prev) =>
+        prev.filter((acc) => acc.email !== selectedAccount.email)
+      );
+
+      setShowDeleteModal(false);
+      setSelectedAccount(null);
+      alert("Staff deleted successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setSelectedAccount(null);
+  };
+
   if (loading) {
     return (
       <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 max-h-96">
@@ -75,7 +126,8 @@ export default function AccountsTable({search = ""}) {
   }
   
   return (
-    <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 max-h-96">
+    <>
+      <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 max-h-96">
       <table className="min-w-full divide-y table-fixed divide-gray-200">
         <thead className="sticky top-0 z-10" style={{ backgroundColor: "#F6F7F9" }}>
           <tr>
@@ -88,10 +140,28 @@ export default function AccountsTable({search = ""}) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200 overflow-y-auto">
           {filteredAccounts.map((account) => (
-            <AccountRow key={account.id} account={account} />
+            <AccountRow 
+              key={account.id} 
+              account={account} 
+              index={account.id - 1}
+              onDeleteClick={handleDeleteClick}
+            />
           ))}
         </tbody>
       </table>
-</div>
+    </div>
+
+    {showDeleteModal && selectedAccount && (
+      <ConfirmModal
+        title="Delete Staff"
+        message={`Are you sure you want to delete ${selectedAccount.email}?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+    )}
+    </>
   );
 }
