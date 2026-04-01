@@ -3,7 +3,8 @@ auth_dependencies.py
 
 FastAPI dependency functions for session-based authentication. Verifies Firebase
 session cookies, checks idle timeout against Firestore active sessions, and
-provides role-based access control (require_admin).
+provides role-based access control (require_admin). Used by the auth endpoints
+that support Edit Staff Profile and Edit Staff (admin).
 
 Author: Dominique Lee
 """

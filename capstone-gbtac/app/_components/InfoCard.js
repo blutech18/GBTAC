@@ -36,6 +36,7 @@ const GRID_COLS = {
  * - GRID_COLS caps at 4 columns; pass colsClass explicitly for wider grids.
  *
  * @author Cintya Lara Flores
+ * @author Dominique Lee
  */
 
 export default function InfoCard({ items, horizontal = false, colsClass }) {

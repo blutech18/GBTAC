@@ -24,6 +24,7 @@ import { doc, getDoc } from "firebase/firestore";
  * @returns A responsive top navigation bar
  *
  * @author Frontend Developer: [Cintya Lara Flores]
+ * @author Dominique Lee
  */
 
 export default function SecondaryNav() {

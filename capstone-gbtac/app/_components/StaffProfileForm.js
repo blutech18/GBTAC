@@ -1,27 +1,8 @@
-/**
- * StaffProfileForm
- *
- * Shared form for viewing and editing a staff member's profile. Used by both
- * the staff profile page and the admin edit-staff page. Form fields and
- * available actions adjust based on the viewer's role (admin vs staff).
- *
- * @param {string} [viewerRole="staff"] - Role of the current viewer ("staff" or "admin").
- *   Staff users can change their own password and email (with re-authentication).
- *   Admin users can toggle account status but cannot change passwords.
- *
- * @returns The staff profile edit form
- *
- * Notes:
- * - Email changes require current-password verification and trigger a
- *   Firebase verification email to the new address.
- * - Password changes also require current-password verification.
- * - Profile name/status updates are persisted to Firestore via the
- *   /auth/update-profile backend endpoint.
- * - A custom "profileUpdated" window event is dispatched after a successful
- *   save so SecondaryNav can refresh the displayed name.
- *
- * @author Dominique Lee
- */
+//This component is the main form for staff to view/edit their profile.
+//It is also the admins view of a staff members profile when accessed from the account manager.
+//Form fields actions adjust based on viewer's role (admin vs staff).
+//
+// @author Dominique Lee
 "use client";
 
 import { useState, useEffect } from "react";

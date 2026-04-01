@@ -25,6 +25,7 @@ import { useState } from "react";
  *   so tempTo still reflects the latest committed To value at that point.
  *
  * @author Cintya Lara Flores
+ * @author Dominique Lee
  */
 
 export default function DateRangePicker({

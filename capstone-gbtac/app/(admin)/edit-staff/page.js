@@ -1,14 +1,3 @@
-/**
- * AdminEditProfilePage
- *
- * Admin-facing page that renders the StaffProfileForm in "admin" mode.
- * Allows an admin to edit a staff member's name, email, and account status.
- * Password changes are intentionally blocked for admin viewers.
- *
- * @returns The admin edit-staff page
- *
- * @author Dominique Lee
- */
 "use client";
 
 import SecondaryNav from "../../_components/SecondaryNav";

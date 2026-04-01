@@ -1,5 +1,7 @@
 //This component will display a table of accounts with columns for ID, Name, Email, Status, and Action buttons (Edit/Delete).
 //It uses the AccountRow component to render each row and accepts a `search` prop to filter the displayed accounts based on the search term.
+//
+// @author Dominique Lee
 
 "use client";
 

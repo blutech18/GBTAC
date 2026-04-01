@@ -1,6 +1,8 @@
 //This component represents a single row within the accounts table.
 //Accepts an `account` prop with id, name, email, status, role, etc.
 //Optionally you could pass callbacks for edit/delete if needed in future.
+//
+// @author Dominique Lee
 "use client";
 
 import Link from "next/link";

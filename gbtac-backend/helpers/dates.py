@@ -2,7 +2,8 @@
 dates.py
 
 Utility functions for querying the newest and oldest timestamps from GBTAC_data
-and converting between date strings and date objects.
+and converting between date strings and date objects. Used to establish the
+valid date range for the Ambient Temperature and Wall Temperature dashboards.
 
 Author: Dominique Lee
 """

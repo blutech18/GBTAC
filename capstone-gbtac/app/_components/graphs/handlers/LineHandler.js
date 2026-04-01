@@ -1,3 +1,4 @@
+// @author Dominique Lee
 "use client"
 
 import Chart from "chart.js/auto";
@@ -24,6 +25,7 @@ export default function LineHandler({
     aggType = "mean",
     onStatsReady,
     unit,
+    apiPrefix = "/graphs",
 }){
 
     // Auto-compute the chart x-axis time unit — must match backend aggregation tiers
@@ -90,7 +92,7 @@ export default function LineHandler({
             if (aggType) query.set("type", aggType);
             const results = await Promise.all(
                 list.map((code) =>
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/graphs/data/${code}?${query}`, {credentials: "include",})
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}${apiPrefix}/data/${code}?${query}`, {credentials: "include",})
                         .then((r) => {
                             if (!r.ok) return [];
                             return r.json();
@@ -113,7 +115,7 @@ export default function LineHandler({
             const named = await Promise.all(
                 list.map(async (code, i) => {
                     try {
-                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/graphs/name/${code}`, {credentials: "include",});
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${apiPrefix}/name/${code}`, {credentials: "include",});
                         const data = await res.json();
                         return { id: i, code, name: data };
                     } catch {

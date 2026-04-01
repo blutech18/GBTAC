@@ -3,7 +3,8 @@ forecasting.py
 
 Generates and caches Prophet-based time-series forecasts for individual sensors.
 Forecasts are stored as JSON files in a /forecasts directory and reused until
-they fall within 7 days of the newest actual reading.
+they fall within 7 days of the newest actual reading. Used by the graphs router
+to extend data beyond the latest recorded date for the temperature dashboards.
 
 Author: Dominique Lee
 """

@@ -3,7 +3,8 @@ graphs.py
 
 Router for sensor graph data endpoints. Provides time-series data retrieval,
 sensor name lookups, code-name listings, and newest/oldest timestamp queries
-against the GBTAC_data and sensor_names tables.
+against the GBTAC_data and sensor_names tables. Used by the Ambient Temperature
+and Wall Temperature dashboards.
 
 Author: Dominique Lee
 """

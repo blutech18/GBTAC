@@ -3,7 +3,8 @@ validation.py (helpers)
 
 Date and sensor code validation helpers that use the actual database date
 boundaries (newest/oldest) resolved at import time, plus a 7-day forecast
-window for future date allowance.
+window for future date allowance. Used by the graph endpoints that serve
+the Ambient Temperature and Wall Temperature dashboards.
 
 Author: Dominique Lee
 """
