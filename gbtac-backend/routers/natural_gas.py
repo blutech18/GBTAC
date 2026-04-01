@@ -1,12 +1,3 @@
-"""
-natural_gas.py
-
-Router for natural gas consumption data. Reads monthly usage from a local CSV,
-converts GJ to kWh, and returns filtered monthly totals for a given date range.
-
-Author: Dominique Lee
-"""
-
 from fastapi import APIRouter, Request, Depends
 from helpers.auth_dependencies import get_current_user_from_session
 from helpers.rate_limit import limiter

@@ -1,12 +1,3 @@
-"""
-content.py
-
-Router for Azure AI Content Safety text analysis. Accepts user-submitted text
-and returns severity scores for hate, self-harm, sexual, and violence categories.
-
-Author: Dominique Lee
-"""
-
 from routers import *
 from helpers.rate_limit import limiter
 from fastapi import APIRouter, Request, Depends

@@ -1,13 +1,3 @@
-"""
-report.py
-
-Router for generating PDF sensor data reports. Queries GBTAC_data for the
-requested sensors and date range, optionally aggregates, then builds a
-styled PDF table using ReportLab and returns it as a streaming response.
-
-Author: Dominique Lee
-"""
-
 from helpers.auth_dependencies import get_current_user_from_session
 from helpers.names import replace_name
 from routers import *

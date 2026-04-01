@@ -1,13 +1,3 @@
-"""
-energy.py
-
-Router for energy-related endpoints. Provides sensor sum queries, KPI card
-data for generation/consumption, and total energy calculations that combine
-electricity readings with natural gas CSV data.
-
-Author: Dominique Lee
-"""
-
 import pandas as pd
 
 from routers import *

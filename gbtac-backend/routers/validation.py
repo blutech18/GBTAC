@@ -1,13 +1,3 @@
-"""
-validation.py (routers)
-
-Standalone date and sensor code validation using strict regex patterns.
-This module is separate from helpers/validation.py and uses hardcoded date
-bounds rather than querying the database.
-
-Author: Dominique Lee
-"""
-
 import re
 
 def validateDate(date):
