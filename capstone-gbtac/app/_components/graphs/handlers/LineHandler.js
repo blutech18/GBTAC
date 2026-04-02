@@ -1,4 +1,36 @@
-// @author Dominique Lee
+/**
+ * LineHandler
+ *
+ * Fetches time-series sensor data from the backend and renders it as a
+ * line or bar chart using Chart.js. Supports multiple sensors, time
+ * aggregation, zoom/pan, and optional KPI stat callbacks.
+ *
+ * @param {string}   [chartType]          - "bar" for bar chart, defaults to line
+ * @param {string[]} sensorList           - Array of sensor codes to fetch and plot
+ * @param {object}   [sensorLabels]       - Optional map of sensor code → display label
+ * @param {string}   startDate            - Start date in YYYY-MM-DD format
+ * @param {string}   endDate              - End date in YYYY-MM-DD format
+ * @param {string}   graphTitle           - Chart title text
+ * @param {string}   yTitle               - Y-axis label
+ * @param {string}   xTitle               - X-axis label
+ * @param {string}   [xUnit]              - Time unit for x-axis (hour, day, month, year)
+ * @param {string}   [aggTime="none"]     - Aggregation interval (none, H, D, M, Y)
+ * @param {string}   [aggType="mean"]     - Aggregation type (mean or sum)
+ * @param {Function} [onStatsReady]       - Callback receiving computed KPI stats
+ * @param {string}   [unit]               - Display unit for value conversion
+ * @param {string}   [apiPrefix="/graphs"] - API route prefix, use "/graphs/guest" for
+ *                                           unauthenticated access
+ *
+ * @returns A line or bar chart with loading and empty-state handling
+ *
+ * Notes:
+ * - Sensor data and names are re-fetched whenever sensorList, dates, or
+ *   aggregation props change.
+ * - The apiPrefix prop allows guest pages to hit public endpoints without
+ *   session authentication while keeping the default behaviour for staff pages.
+ *
+ * @author Dominique Lee
+ */
 "use client"
 
 import Chart from "chart.js/auto";

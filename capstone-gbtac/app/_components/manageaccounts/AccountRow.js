@@ -1,8 +1,22 @@
-//This component represents a single row within the accounts table.
-//Accepts an `account` prop with id, name, email, status, role, etc.
-//Optionally you could pass callbacks for edit/delete if needed in future.
-//
-// @author Dominique Lee
+/**
+ * AccountRow
+ *
+ * Renders a single row in the staff accounts table. Displays the staff
+ * member's index, name, email, active status, and action buttons for
+ * editing or deleting the account.
+ *
+ * @param {object}   account       - Staff account object with name, email, status, role
+ * @param {number}   index         - Row index for display numbering
+ * @param {Function} onDeleteClick - Callback invoked with the account when delete is confirmed
+ *
+ * @returns A table row with staff details and action buttons
+ *
+ * Notes:
+ * - Edit navigates to /edit-staff/[email] via a Link component.
+ * - Delete shows a ConfirmModal before invoking onDeleteClick.
+ *
+ * @author Dominique Lee
+ */
 "use client";
 
 import Link from "next/link";

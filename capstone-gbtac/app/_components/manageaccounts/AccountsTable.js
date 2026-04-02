@@ -1,7 +1,21 @@
-//This component will display a table of accounts with columns for ID, Name, Email, Status, and Action buttons (Edit/Delete).
-//It uses the AccountRow component to render each row and accepts a `search` prop to filter the displayed accounts based on the search term.
-//
-// @author Dominique Lee
+/**
+ * AccountsTable
+ *
+ * Fetches and displays all staff accounts in a sortable table. Supports
+ * filtering by a search prop and handles account deletion with a
+ * confirmation modal.
+ *
+ * @param {string} [search=""] - Search term to filter accounts by name or email
+ *
+ * @returns A table of staff accounts with edit and delete actions
+ *
+ * Notes:
+ * - Staff data is fetched from /auth/staff on mount.
+ * - Uses AccountRow to render each row.
+ * - Delete calls /auth/delete-staff and removes the row from local state.
+ *
+ * @author Dominique Lee
+ */
 
 "use client";
 

@@ -1,4 +1,19 @@
-// @author Dominique Lee
+/**
+ * AuthActionContent
+ *
+ * Handles Firebase authentication action links (email verification, password
+ * reset) by reading the mode and oobCode from the URL query parameters. On
+ * successful email verification, updates the user's email in Firestore via
+ * the backend /auth/update-email endpoint.
+ *
+ * @returns The auth action confirmation page with status message
+ *
+ * Notes:
+ * - Wrapped in Suspense because useSearchParams requires it in Next.js App Router.
+ * - Redirects to /login after a short delay on success.
+ *
+ * @author Dominique Lee
+ */
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
