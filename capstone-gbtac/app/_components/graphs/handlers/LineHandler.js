@@ -123,6 +123,26 @@ export default function LineHandler({
             const query = new URLSearchParams({ start: from, end: to });
             if (aggTime && aggTime !== "none") query.set("agg", aggTime);
             if (aggType) query.set("type", aggType);
+
+            // Try batch endpoint first (single DB query for all sensors)
+            const batchUrl = `${process.env.NEXT_PUBLIC_API_URL}${apiPrefix}/data/batch?sensors=${list.join(",")}&${query}`;
+            try {
+                const batchRes = await fetch(batchUrl, { credentials: "include" });
+                if (batchRes.ok) {
+                    const batchData = await batchRes.json();
+                    const results = list.map((code) => {
+                        const data = batchData[code] || [];
+                        return Array.isArray(data) ? data : [];
+                    });
+                    setSensorData(results);
+                    setFetched(true);
+                    return;
+                }
+            } catch {
+                // batch not available, fall back to individual requests
+            }
+
+            // Fallback: individual requests per sensor
             const results = await Promise.all(
                 list.map((code) =>
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}${apiPrefix}/data/${code}?${query}`, {credentials: "include",})
@@ -179,7 +199,12 @@ export default function LineHandler({
         setSensorData([]);
         setFetched(false);
         fetchData(sensorList, startDate, endDate);
-        fetchNames(sensorList);
+        // Skip name fetch if labels are already provided by the parent
+        if (!sensorLabels || Object.keys(sensorLabels).length === 0) {
+            fetchNames(sensorList);
+        } else {
+            setSensors(sensorList.map((code, i) => ({ id: i, code, name: sensorLabels[code] || code })));
+        }
     }, [sensorKey, startDate, endDate, canFetch, aggTime, aggType]);
     
     // sets defaults
