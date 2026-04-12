@@ -137,8 +137,8 @@ export default function WallTempDashboard() {
     return {
       fromDate: saved.fromDate || DEFAULT_FROM_DATE,
       toDate: saved.toDate || DEFAULT_TO_DATE,
-      floors: saved.floors || DEFAULT_FLOORS,
-      orientations: saved.orientations || DEFAULT_ORIENTATIONS,
+      floors: saved.floors?.length ? saved.floors : DEFAULT_FLOORS,
+      orientations: saved.orientations?.length ? saved.orientations : DEFAULT_ORIENTATIONS,
     };
   });
 
@@ -148,8 +148,8 @@ export default function WallTempDashboard() {
     return {
       fromDate: saved.fromDate || DEFAULT_FROM_DATE,
       toDate: saved.toDate || DEFAULT_TO_DATE,
-      floors: saved.floors || DEFAULT_FLOORS,
-      orientations: saved.orientations || DEFAULT_ORIENTATIONS,
+      floors: saved.floors?.length ? saved.floors : DEFAULT_FLOORS,
+      orientations: saved.orientations?.length ? saved.orientations : DEFAULT_ORIENTATIONS,
     };
   });
 
