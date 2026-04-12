@@ -1,0 +1,35 @@
+"use client";
+
+import SecondaryNav from "@/app/_components/SecondaryNav";
+import Navbar from "@/app/_components/Navbar";
+import Footer from "@/app/_components/Footer";
+import ResetPasswordForm from "@/app/_components/ResetPasswordForm";
+
+/**
+ * ProfilePage
+ *
+ * Displays the user profile page with a password reset form. Renders the
+ * secondary navigation and main navbar with specific options disabled, and
+ * includes footer at the bottom.
+ *
+ * @author Temi Bankole
+ * @returns The profile page layout
+ */
+export default function ProfilePage() {
+  return (
+    <main className="min-h-screen bg-gray-50 flex flex-col">
+      <SecondaryNav displayLogin={false} displayLogout displayProfile={false} />
+      <Navbar displayHome={false} displayAbout={false} />
+
+      <div className="flex-1 container mx-auto px-4 py-12">
+        <div className="max-w-md mx-auto">
+          <div className="bg-white shadow-md rounded-2xl p-8">
+            <ResetPasswordForm />
+          </div>
+        </div>
+      </div>
+
+      <Footer />
+    </main>
+  );
+}

@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+capstone-gbtac/node_modules/
+capstone-gbtac/.next/
+
+# Env files
+.env
+.env.local
+capstone-gbtac/.env.local
+gbtac-backend/.env
+
+# Secrets
+gbtac-backend/secrets/
+
+# Python
+__pycache__/
+venv/
+
+# Misc
+.DS_Store
+*.pem

@@ -1,0 +1,78 @@
+[
+  {
+    "name": "Cintya Lara Flores",
+    "role": "Frontend Developer",
+    "bio": "Cintya is a Software Development student at SAIT with experience as a Data Analysis Assistant and QA Tester, where she developed strong analytical and problem-solving skills. During the project, she discovered a passion for frontend development and UI/UX design, contributing to the creation of user-friendly interfaces and ensuring a seamless user experience. Outside of work, she enjoys playing video games, collecting and playing Magic: The Gathering and exploring the work of J.R.R. Tolkien through books, films, and collectibles.",
+    "image": "/developers-pics/001.jpg",
+    "linkedin": "https://www.linkedin.com/in/cintya-l-a570622a3/",
+    "github": "https://github.com/SoftDevCLF",
+    "contributions": [
+      "Led UI/UX design and development across key application pages, including Home, About Us, Login, multiple Data Dashboards (Energy, Water Level, Ambient & Wall Temperature), Staff Welcome, and Developers pages.",
+      "Implemented responsive and dynamic interfaces using modern frontend practices, ensuring consistency and accessibility across devices.",
+      "Designed and developed reusable, scalable components such as navigation bars, footers, modular UI elements, dashboard layouts, and date pickers",
+      "Developed and integrated navigation logic, state-driven rendering, and real-time data visualization to enhance user interaction and usability.",
+      "Applied input validation and quality assurance practices to ensure data accuracy, reliability, and a seamless user experience."
+    ]
+  },
+  {
+    "name": "Temi Bankole",
+    "role": "Frontend Developer",
+    "bio": "Temi Bankole is a Software Development student at SAIT with a strong foundation in UI/UX design, object oriented programming, and databases. Outside of tech, she has worked as a lifeguard, multi-sport camp coach, and restaurant server through these variety of experiences she has become a natural leader and team player. When she's not coding, she's passionate about playing volleyball for the Trojans and writing poems. She brings a people-first mindset and contagious energy to everything she takes on.",
+    "image": "/developers-pics/02.png",
+    "linkedin": "https://www.linkedin.com/in/temi-bankole-/",
+    "github": "https://github.com/Temsters",
+    "contributions": [
+      "Led admin account management end-to-end, building Manage, Create, and Edit Staff pages with dynamic routing, live validation, status control, and change detection.",
+      "Developed a custom dashboard system and Natural Gas Dashboard with configurable charts (sensors, date ranges, aggregations), persisted settings, export functionality, and user feedback modals.",
+      "Built key staff and user features, including Reports (sensor-based configuration and PDF generation), Staff Profile management, Guest Energy Trends, and password recovery flows.",
+      "Emphasized UX quality and consistency, implementing form validation, input/date guardrails, content-safety checks, clear notifications, and reusable components (navigation, footer, dashboard layouts)."
+    ]
+  },
+  {
+    "name": "Dominique Lee",
+    "role": "Backend Developer",
+    "bio": "Dominique is a Software Development student at SAIT with experience working on web applications and dashboards using tools such as C#, JavaScript, React, SQL, HTML, and CSS. She enjoys building user-friendly interfaces and continuously improving her technical skills through hands-on projects. Outside of school, she enjoys K-pop and watching K-dramas and C-dramas.",
+    "image": "/developers-pics/003.jpg",
+    "linkedin": "https://www.linkedin.com/in/dominique-anne-lee-3a3748377/",
+    "github": "https://github.com/monic421",
+    "contributions": [
+      "Developed Ambient Temperature and Wall Temperature dashboards for data visualization and analysis.",
+      "Implemented Guest Energy Trends dashboard with filtering and trend insights.",
+      "Built Edit Staff Profile and Admin Edit Staff features for user management.",
+      "Contributed to project documentation and overall system refinement."
+    ]
+  },
+  {
+    "name": "Anna Yabut",
+    "role": "Backend Developer",
+    "bio": "Anna is a Software Development student at SAIT, currently in her final semester, with a strong focus on backend development and application security. She has hands-on experience building secure systems using tools like Firebase, including authentication, session management, and API protection. Outside of tech, she enjoys going to the gym, playing basketball, camping, and has recently started learning how to develop her own Roblox game.",
+    "image": "/developers-pics/04.jpg",
+    "linkedin": "https://www.linkedin.com/in/anna-yabut-817b91341/",
+    "github": "https://github.com/isayabs",
+    "contributions": [
+      "Implemented authentication system (login/logout, OTP-based password reset).",
+      "Set up and configured Firebase project.",
+      "Developed session and idle session management.",
+      "Applied security features (SQL injection prevention, rate limiting, CAPTCHA, account lockout).",
+      "Built backend functionality for staff management (create/delete staff).",
+      "Developed Cistern Water Level and Natural Gas dashboards.",
+      "Wrote technical documentation for backend features."
+    ]
+  },
+  {
+    "name": "Kiera Johnson",
+    "role": "Database and Backend Developer",
+    "bio": "Kiera Johnson a Software Development student in her fourth and final semester at SAIT. She has a strong passion for learning and has an interest in backend, full stack and database development. She brings a background of teamwork, problem solving and communication skills from previous employment as a Tutor in French and mathematics and as an Outdoor Host. Outside of school she enjoys playing video games, listening to and playing music, and working on personal projects.",
+    "image": "/developers-pics/005.JPG",
+    "linkedin": "https://www.linkedin.com/in/kiera-johnson-9a1405336/",
+    "github": "https://github.com/kj7639",
+    "contributions": [
+      "Designed and implemented the database schema for our application.",
+      "Developed backend APIs for data retrieval, manipulation and forecasting.",
+      "Implemented content safety features and input sanitization.",
+      "Built generic handlers to handle and display data using the Chart.js library.",
+      "Configured and implemented database structure and connection.",
+      "Optimized database queries for performance and scalability."
+    ]
+  }
+]
