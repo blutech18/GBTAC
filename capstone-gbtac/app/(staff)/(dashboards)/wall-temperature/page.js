@@ -5,7 +5,7 @@ import { saveRecentDashboard } from "../../../utils/saveRecentDashboard";
 import DashboardLayout from "../../../_components/DashboardLayout";
 import DatePicker from "../../../_components/DatePicker";
 import LineHandler from "../../../_components/graphs/handlers/LineHandler";
-import { loadDashboardState, saveDashboardState } from "../../../utils/storage";
+import { saveDashboardState } from "../../../utils/storage";
 import { useDateValidation } from "../../../_components/hooks/useDateValidation";
 
 import ExportPDFButton from "@/app/_components/ExportPDFButton";
@@ -132,25 +132,19 @@ const ORIENTATION_OPTIONS = ["North", "South", "East", "West"];
 export default function WallTempDashboard() {
   const chartRef = useRef(null);
 
-  const [state, setState] = useState(() => {
-    const saved = loadDashboardState(STORAGE_KEY, {});
-    return {
-      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
-      toDate: saved.toDate || DEFAULT_TO_DATE,
-      floors: saved.floors?.length ? saved.floors : DEFAULT_FLOORS,
-      orientations: saved.orientations?.length ? saved.orientations : DEFAULT_ORIENTATIONS,
-    };
+  const [state, setState] = useState({
+    fromDate: DEFAULT_FROM_DATE,
+    toDate: DEFAULT_TO_DATE,
+    floors: DEFAULT_FLOORS,
+    orientations: DEFAULT_ORIENTATIONS,
   });
 
-  // Initialize from saved state so chart loads immediately
-  const [appliedState, setAppliedState] = useState(() => {
-    const saved = loadDashboardState(STORAGE_KEY, {});
-    return {
-      fromDate: saved.fromDate || DEFAULT_FROM_DATE,
-      toDate: saved.toDate || DEFAULT_TO_DATE,
-      floors: saved.floors?.length ? saved.floors : DEFAULT_FLOORS,
-      orientations: saved.orientations?.length ? saved.orientations : DEFAULT_ORIENTATIONS,
-    };
+  // Always start with defaults so the chart loads fast
+  const [appliedState, setAppliedState] = useState({
+    fromDate: DEFAULT_FROM_DATE,
+    toDate: DEFAULT_TO_DATE,
+    floors: DEFAULT_FLOORS,
+    orientations: DEFAULT_ORIENTATIONS,
   });
 
   const [dataRange, setDataRange] = useState({ forecast: "2024-12-31" });
@@ -166,11 +160,6 @@ export default function WallTempDashboard() {
   const [showSaveNotification, setShowSaveNotification] = useState(false);
 
   const { fromDate, toDate, floors = [], orientations = [] } = state;
-
-  // Persist staged state on every change so settings survive a page reload
-  useEffect(() => {
-    saveDashboardState(STORAGE_KEY, state);
-  }, [state]);
 
   // Re-run validation on every date change to keep error UI current
   useEffect(() => {
